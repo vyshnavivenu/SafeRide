@@ -68,48 +68,42 @@
   {% endif %}
 
   <!-- ========================================== -->
-  <!-- 2. DRIVER VERIFICATION GATEWAY (CORE FEATURE) -->
+  <!-- 2. DRIVER VERIFICATION GATEWAY (CORE FEATURE: SNAP QR CODE ONLY) -->
   <!-- ========================================== -->
-  <div class="card rounded-4 border shadow-lg p-4 p-md-5 mb-4" style="background-color: #131C2E !important; border-color: #1E293B !important;">
+  <div class="card rounded-4 border shadow-lg p-4 p-md-5 mb-4 position-relative overflow-hidden" style="background-color: #131C2E !important; border-color: #1E293B !important;">
     <div class="text-center mb-4 pb-2 border-bottom" style="border-color: #1E293B !important;">
       <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-1 rounded-pill fw-bold mb-2 border border-warning">
         <i class="fa-solid fa-qrcode me-1"></i> STEP 1: VERIFY BEFORE BOARDING
       </span>
       <h3 class="fw-bold text-white mb-1 text-uppercase tracking-wider">DRIVER VERIFICATION GATEWAY</h3>
-      <p class="text-white opacity-75 small mb-0">Scan the driver's QR badge or manually enter their vehicle registration number to inspect identity, verification status & safety ratings before starting a trip.</p>
+      <p class="text-white opacity-75 small mb-0">Point your camera and snap the driver's QR code badge to instantly verify credentials, vehicle status, and safety ratings before starting a trip.</p>
     </div>
 
     <div class="row justify-content-center">
-      <div class="col-lg-10">
+      <div class="col-lg-8 col-md-10 text-center">
         
-        <!-- Scan QR Button (Prominent) -->
-        <div class="text-center mb-4">
-          <button type="button" class="btn btn-lg w-100 fw-bold rounded-pill shadow py-3 text-white border border-2 border-warning hover-lift" style="background: linear-gradient(135deg, #1E293B, #0F172A);" onclick="triggerSnapshotCapture()">
-            <i class="fa-solid fa-camera-retro me-2 text-warning fs-5"></i>
-            <span class="fs-5">SNAP DRIVER QR BADGE</span>
-            <span class="badge bg-warning text-dark ms-2 rounded-pill small">Instant Snap</span>
-          </button>
-          <div class="my-3 text-white opacity-50 fw-bold small text-uppercase tracking-widest">— OR ENTER VEHICLE NUMBER —</div>
-        </div>
-
-        <!-- Manual Vehicle Registration Search Form -->
-        <form action="{% url 'verify_driver_search' %}" method="GET" class="mb-2">
+        <!-- Big Prominent Hero Snap QR Button -->
+        <div class="p-4 rounded-4 mb-3" style="background: linear-gradient(145deg, #0B1120, #131C2E); border: 2px dashed rgba(245, 158, 11, 0.45); box-shadow: inset 0 0 20px rgba(0,0,0,0.3);">
           <div class="mb-3">
-            <label class="form-label fw-bold text-light small"><i class="fa-solid fa-car-side text-primary me-1"></i> Vehicle Registration Number :</label>
-            <div class="input-group input-group-lg">
-              <span class="input-group-text border-end-0 text-white" style="background-color: #0F172A; border-color: #334155;">
-                <i class="fa-solid fa-id-badge text-warning"></i>
-              </span>
-              <input type="text" name="query" class="form-control text-uppercase fw-bold fs-5 text-white font-monospace" style="background-color: #0F172A; border-color: #334155;" placeholder="e.g. KL 05 AT 4455" required autofocus>
-              <button type="submit" class="btn btn-primary btn-lg fw-bold px-4 text-uppercase">
-                <i class="fa-solid fa-shield-check me-1"></i> VERIFY & BOARD
-              </button>
+            <div class="d-inline-flex align-items-center justify-content-center rounded-circle p-3 mb-2" style="background: rgba(245, 158, 11, 0.12); width: 80px; height: 80px; border: 1px solid rgba(245, 158, 11, 0.35);">
+              <i class="fa-solid fa-qrcode text-warning" style="font-size: 2.4rem;"></i>
             </div>
-            <small class="text-white opacity-50 d-block mt-2">
-              <i class="fa-solid fa-circle-info me-1"></i> Accepts all formats: <code>KL 05 AT 4455</code>, <code>KL05AT4455</code>, <code>KL-05-AT-4455</code>
-            </small>
           </div>
-        </form>
+
+          <button type="button" class="btn btn-lg w-100 fw-bold rounded-pill shadow-lg py-3 text-white border border-2 border-warning hover-lift" style="background: linear-gradient(135deg, #1E293B, #0F172A); font-size: 1.15rem;" onclick="triggerSnapshotCapture()">
+            <i class="fa-solid fa-camera-retro me-2 text-warning fs-4 align-middle"></i>
+            <span class="align-middle">SNAP DRIVER QR BADGE</span>
+            <span class="badge bg-warning text-dark ms-2 rounded-pill small px-2 py-1 align-middle">Instant Snap</span>
+          </button>
+
+          <div class="d-flex align-items-center justify-content-center gap-3 mt-3 text-white opacity-60 small">
+            <span><i class="fa-solid fa-shield-check text-warning me-1"></i> Auto-detection</span>
+            <span>&bull;</span>
+            <span><i class="fa-solid fa-bolt text-warning me-1"></i> Instant Verification</span>
+            <span>&bull;</span>
+            <span><i class="fa-solid fa-camera text-warning me-1"></i> Native Camera Snap</span>
+          </div>
+        </div>
 
       </div>
     </div>
