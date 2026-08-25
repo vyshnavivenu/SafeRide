@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}PROFILE MANAGEMENT - SafeRide{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+      <div class="card rounded-4 border shadow-lg p-4 p-md-5" style="background-color: #131C2E !important;">
+        
+        <!-- Form Header -->
+        <div class="text-center mb-4 border-bottom pb-3">
+          <h2 class="fw-bold text-white mb-0 text-uppercase tracking-wider">PROFILE MANAGEMENT</h2>
+        </div>
+
+        <!-- Passenger Current Photo Preview -->
+        <div class="text-center mb-4">
+          {% if user.avatar %}
+            <img src="{{ user.avatar.url }}" class="rounded-circle border border-3 border-primary shadow" style="width: 100px; height: 100px; object-fit: cover;" alt="Passenger Photo">
+          {% else %}
+            <div class="rounded-circle shadow d-inline-flex align-items-center justify-content-center text-white fw-bold fs-2" style="width: 100px; height: 100px; background: #1E3A8A;">
+              {{ user.first_name|slice:":1" }}{{ user.last_name|slice:":1"|default:"P" }}
+            </div>
+          {% endif %}
+        </div>
+
+        <form method="POST" enctype="multipart/form-data">
+          {% csrf_token %}
+
+          <!-- Full Name -->
+          <div class="mb-3">
+            <label class="form-label fw-bold text-light">Full Name :</label>
+            <input type="text" name="full_name" class="form-control py-2" placeholder="Full Name" value="{{ user.get_full_name|default:user.username }}" pattern="[a-zA-Z\s\.\'\-]+" minlength="2" maxlength="100" title="Letters and spaces only" required>
+          </div>
+
+          <!-- Email -->
+          <div class="mb-3">
+            <label class="form-label fw-bold text-light">Email :</label>
+            <input type="email" name="email" class="form-control py-2" placeholder="Email" value="{{ user.email|default:'' }}" required>
+          </div>
+
+          <!-- Phone Number -->
+          <div class="mb-3">
+            <label class="form-label fw-bold text-light">Phone Number :</label>
+            <input type="tel" name="phone_number" class="form-control py-2" placeholder="10-digit Mobile (e.g. 9876543210)" pattern="(\+91[\-\s]?)?[6-9]\d{9}" minlength="10" maxlength="15" title="Valid 10-digit mobile number" value="{{ user.phone|default:'' }}" required>
+          </div>
+
+          <!-- Profile Photo -->
+          <div class="mb-4">
+            <label class="form-label fw-bold text-light">Profile Photo :</label>
+            <input type="file" name="profile_photo" class="form-control py-2" accept="image/*">
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary btn-lg fw-bold flex-grow-1 rounded-pill shadow-sm text-uppercase">
+              UPDATE
+            </button>
+            <a href="{% url 'passenger_dashboard' %}" class="btn btn-outline-light btn-lg rounded-pill fw-semibold">
+              Cancel
+            </a>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block floating_sos %}{% endblock %}
+{% block footer %}{% endblock %}

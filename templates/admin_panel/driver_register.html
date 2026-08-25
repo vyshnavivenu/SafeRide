@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}DRIVER REGISTRATION - SafeRide{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-9 col-lg-8">
+      <div class="card rounded-4 border shadow-lg p-4 p-md-5" style="background-color: #131C2E !important;">
+        
+        <!-- Form Header -->
+        <div class="text-center mb-4 border-bottom pb-3">
+          <span class="badge bg-primary px-3 py-1 rounded-pill mb-1">ADMINISTRATIVE ENROLLMENT</span>
+          <h3 class="fw-bold text-white mb-0 text-uppercase tracking-wide">DRIVER REGISTRATION</h3>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data">
+          {% csrf_token %}
+
+          <!-- Driver Name -->
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-light">Driver First Name :</label>
+              {{ form.first_name }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-light">Driver Last Name :</label>
+              {{ form.last_name }}
+            </div>
+          </div>
+
+          <!-- Driver Username & Initial Password -->
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-light">Driver Username :</label>
+              {{ form.username }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-light">Initial Password :</label>
+              {{ form.password }}
+            </div>
+          </div>
+
+          <!-- Phone Number -->
+          <div class="mb-3">
+            <label class="form-label fw-bold small text-light">Phone Number :</label>
+            {{ form.phone }}
+          </div>
+
+          <!-- Email -->
+          <div class="mb-3">
+            <label class="form-label fw-bold small text-light">Email Address :</label>
+            {{ form.email }}
+          </div>
+
+          <!-- License Number -->
+          <div class="mb-3">
+            <label class="form-label fw-bold small text-light">License Number :</label>
+            {{ form.license_number }}
+          </div>
+
+          <!-- License Document -->
+          <div class="mb-3">
+            <label class="form-label fw-bold small text-light">License Document : <span class="text-danger">*Required</span></label>
+            {{ form.license_doc }}
+          </div>
+
+          <!-- Driver Photo & Experience -->
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-light">Driver Photo :</label>
+              {{ form.driver_photo }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-light">Experience (Years) :</label>
+              {{ form.experience_years }}
+            </div>
+          </div>
+
+          <hr class="my-4 border-secondary">
+
+          <!-- Vehicle Number -->
+          <div class="mb-3">
+            <label class="form-label fw-bold small text-light">Vehicle Registration Number (Plate) :</label>
+            {{ form.registration_number }}
+          </div>
+
+          <!-- Vehicle Type Dropdown -->
+          <div class="mb-3">
+            <label class="form-label fw-bold small text-light">Vehicle Type :</label>
+            {{ form.vehicle_type }}
+          </div>
+
+          <!-- Make & Model -->
+          <div class="mb-3">
+            <label class="form-label fw-bold small text-light">Vehicle Model / Make :</label>
+            {{ form.make_model }}
+          </div>
+
+          <!-- RC Document -->
+          <div class="mb-4">
+            <label class="form-label fw-bold small text-light">RC Document : <span class="text-danger">*Required</span></label>
+            {{ form.rc_book_doc }}
+          </div>
+
+          <!-- Auto Approve Option -->
+          <div class="p-3 rounded-3 mb-4 border" style="background-color: #0F172A; border-color: #334155 !important;">
+            <div class="form-check">
+              {{ form.auto_approve }}
+              <label class="form-check-label fw-semibold small text-success" for="{{ form.auto_approve.id_for_label }}">
+                <i class="fa-solid fa-badge-check me-1"></i> Verify & Generate QR Code Immediately
+              </label>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary btn-lg fw-bold flex-grow-1 rounded-pill shadow-sm">
+              Submit & Register Driver
+            </button>
+            <a href="{% url 'admin_driver_list' %}" class="btn btn-outline-light btn-lg rounded-pill fw-semibold">
+              Cancel
+            </a>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

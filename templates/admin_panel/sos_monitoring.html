@@ -1,0 +1,326 @@
+{% extends 'base.html' %}
+
+{% block title %}Emergency SOS Dispatch Center - SafeRide Admin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  .leaflet-container {
+    background: #0f172a !important;
+    border-radius: 12px;
+  }
+  .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+    background: #131C2E !important;
+    color: #FFFFFF !important;
+    border: 1px solid #DC2626 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;
+  }
+  .leaflet-popup-content {
+    margin: 12px 14px !important;
+    line-height: 1.5 !important;
+  }
+  .leaflet-container a.leaflet-popup-close-button {
+    color: #94A3B8 !important;
+    padding: 6px !important;
+  }
+  .leaflet-container a.leaflet-popup-close-button:hover {
+    color: #FFFFFF !important;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Top Command Header Banner -->
+  <div class="card rounded-4 p-4 border-0 shadow-lg mb-4 text-white" style="background: linear-gradient(135deg, #7F1D1D, #DC2626);">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <span class="p-3 rounded-circle" style="background-color: #450A0A; border: 2px solid #FCA5A5;">
+          <i class="fa-solid fa-satellite-dish fs-3 fa-beat text-warning"></i>
+        </span>
+        <div>
+          <span class="badge bg-white text-danger px-3 py-1 rounded-pill fw-bold mb-1">REAL-TIME TELEMETRY MONITORING</span>
+          <h4 class="fw-bold mb-0 text-white">Live Emergency SOS Dispatch Command</h4>
+          <span class="small text-white opacity-75">Visual tracking of active passenger distress signals and police coordination.</span>
+        </div>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="tel:112" class="btn btn-light text-danger fw-bold rounded-pill px-4 shadow">
+          <i class="fa-solid fa-phone me-1"></i> Dial Police Control (112)
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Component 2 (Side Panel): Active Distress Alerts List -->
+    <div class="col-lg-5">
+      <div class="card rounded-4 border shadow-sm p-4 mb-4" style="background-color: #131C2E !important;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold text-danger mb-0">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i> Active Incidents ({{ active_alerts.count }})
+          </h5>
+          <span class="badge bg-danger rounded-pill px-3 py-1 font-monospace">LIVE</span>
+        </div>
+
+        {% if active_alerts %}
+          {% for a in active_alerts %}
+          <div class="card mb-3 p-3 rounded-3 shadow-sm sos-incident-card border-danger" style="background-color: #0F172A; border: 1px solid #DC2626 !important;" id="incident-card-{{ a.alert_id }}">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="badge bg-danger"><i class="fa-solid fa-tower-broadcast fa-fade me-1"></i> DISTRESS BEACON</span>
+              <span class="small text-white opacity-75"><i class="fa-solid fa-clock me-1 text-warning"></i> {{ a.timestamp|date:"H:i:s, M d, Y" }}</span>
+            </div>
+
+            <!-- Passenger Details -->
+            <div class="mb-2">
+              <div class="text-white fw-bold fs-6">
+                <i class="fa-solid fa-circle-user text-primary me-2"></i> Passenger: <span class="text-white">{{ a.passenger.get_full_name|default:a.passenger.username }}</span>
+              </div>
+              <div class="small ps-4 mt-1">
+                <i class="fa-solid fa-phone text-warning me-1"></i> 
+                {% if a.passenger.phone %}
+                <a href="tel:{{ a.passenger.phone }}" class="text-warning fw-semibold">{{ a.passenger.phone }}</a>
+                {% else %}
+                <span class="text-muted">No phone registered</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Driver & Vehicle Details -->
+            <div class="mb-3 ps-4 small">
+              {% if a.driver %}
+              <div class="text-light mb-1">
+                <i class="fa-solid fa-user-tie text-success me-1"></i> <b>Driver:</b> {{ a.driver.name|default:a.driver.user.username }}
+              </div>
+              <div class="text-light">
+                <i class="fa-solid fa-car text-info me-1"></i> <b>Vehicle Plate:</b> 
+                <span class="badge bg-dark border border-warning text-warning font-monospace">{{ a.driver.vehicle_number|default:a.driver.vehicle.registration_number }}</span>
+              </div>
+              {% else %}
+              <span class="text-warning small"><i class="fa-solid fa-person-walking me-1"></i> Standalone Distress (No Trip Driver)</span>
+              {% endif %}
+            </div>
+
+            <!-- GPS Coordinates & Address -->
+            <div class="p-3 rounded text-white small mb-3 border" style="background-color: #1E293B; border-color: #334155 !important;">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="text-white small fw-bold"><i class="fa-solid fa-location-crosshairs text-danger me-1"></i> GPS Coordinates:</span>
+                <span class="badge bg-dark border text-warning font-monospace px-2 py-1">{{ a.latitude|floatformat:4 }}, {{ a.longitude|floatformat:4 }}</span>
+              </div>
+              <div class="pt-2 border-top" style="border-color: #334155 !important;">
+                <span class="small fw-bold text-light d-block mb-1"><i class="fa-solid fa-map-pin text-danger me-1"></i> Distress Location:</span>
+                <div class="p-2 rounded bg-dark border font-monospace text-warning fw-semibold small">
+                  <i class="fa-solid fa-road text-danger me-1"></i> {{ a.location_name|default:"Transit Corridor (Live Beacon)" }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Controls -->
+            <div class="d-flex gap-2 mb-2">
+              <button type="button" class="btn btn-outline-warning btn-sm rounded-pill flex-grow-1 fw-bold" onclick="focusAlertMarker({{ a.latitude }}, {{ a.longitude }}, '{{ a.alert_id }}')">
+                <i class="fa-solid fa-crosshairs me-1"></i> Focus on Map
+              </button>
+              <a href="https://www.google.com/maps/search/?api=1&query={{ a.latitude }},{{ a.longitude }}" target="_blank" class="btn btn-outline-light btn-sm rounded-pill fw-bold" title="Open Google Maps App">
+                <i class="fa-solid fa-map-location-dot"></i>
+              </a>
+            </div>
+
+            <!-- Resolve Form -->
+            <form action="{% url 'admin_resolve_sos' a.alert_id %}" method="POST">
+              {% csrf_token %}
+              <div class="input-group input-group-sm">
+                <input type="text" name="admin_notes" class="form-control text-white" style="background-color: #1E293B; border-color: #334155;" placeholder="Dispatch remarks (e.g. Police dispatched)" required>
+                <button type="submit" class="btn btn-success fw-bold px-3">
+                  <i class="fa-solid fa-check me-1"></i> Resolve
+                </button>
+              </div>
+            </form>
+          </div>
+          {% endfor %}
+        {% else %}
+        <div class="p-5 text-center text-white rounded-3" style="background-color: #0F172A;">
+          <i class="fa-solid fa-shield-check fa-3x text-success mb-2"></i><br>
+          <h6 class="fw-bold text-white mt-2">All Safe!</h6>
+          <p class="small text-white opacity-75 mb-0">No active emergency distress signals at this time.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Component 2 (Map View): SOS Command Center Map -->
+    <div class="col-lg-7">
+      <div class="card rounded-4 border shadow-sm p-4 mb-4" style="background-color: #131C2E !important;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold text-white mb-0">
+            <i class="fa-solid fa-map-location text-danger me-2"></i> SOS Command Center Map
+          </h5>
+          <span class="badge bg-danger bg-opacity-25 text-danger border border-danger">
+            <i class="fa-solid fa-satellite me-1"></i> Live Radar Telemetry
+          </span>
+        </div>
+        <div id="admin-sos-map" class="rounded-3 border" style="height: 520px; border-color: #334155 !important; overflow: hidden; position: relative;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Google Maps JavaScript API with Leaflet OpenStreetMap Fallback -->
+<script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY|default:'' }}&libraries=places,geometry"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  let activeMapInstance = null;
+  const markersMap = {};
+
+  const alertsData = [
+    {% for a in active_alerts %}
+    {
+      id: "{{ a.alert_id }}",
+      lat: {{ a.latitude|default:9.6843 }},
+      lng: {{ a.longitude|default:76.6853 }},
+      passenger: "{{ a.passenger.get_full_name|default:a.passenger.username|default:'Passenger'|escapejs }}",
+      phone: "{{ a.passenger.phone|default:'N/A'|escapejs }}",
+      driver: "{% if a.driver %}{{ a.driver.name|default:a.driver.user.username|escapejs }}{% else %}Standalone (No Driver){% endif %}",
+      vehicle: "{% if a.driver %}{{ a.driver.vehicle_number|default:a.driver.vehicle.registration_number|default:'N/A'|escapejs }}{% else %}N/A{% endif %}",
+      hasDriver: {% if a.driver %}true{% else %}false{% endif %},
+      timestamp: "{{ a.timestamp|date:'H:i:s, M d' }}",
+      locationName: "{{ a.location_name|default:'Transit Corridor (Live Beacon)'|escapejs }}"
+    },
+    {% endfor %}
+  ];
+
+  const defaultCenter = alertsData.length > 0 ? [alertsData[0].lat, alertsData[0].lng] : [9.6843, 76.6853];
+
+  function renderLeafletFallbackMap() {
+    const container = document.getElementById('admin-sos-map');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const map = L.map('admin-sos-map').setView(defaultCenter, 14);
+    activeMapInstance = map;
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors | Google Maps Fallback',
+      maxZoom: 19
+    }).addTo(map);
+
+    // Custom Animated Red Radar Marker Icon
+    const sosIcon = L.divIcon({
+      className: 'sos-radar-marker',
+      html: `
+        <div class="sos-radar-wave"></div>
+        <div class="sos-radar-wave sos-radar-wave-delayed"></div>
+        <div class="sos-radar-core"></div>
+      `,
+      iconSize: [32, 32],
+      iconAnchor: [16, 16]
+    });
+
+    alertsData.forEach(alert => {
+      const marker = L.marker([alert.lat, alert.lng], { icon: sosIcon }).addTo(map);
+      markersMap[alert.id] = marker;
+
+      marker.bindPopup(`
+        <div style="font-family: 'Inter', sans-serif; padding: 2px; color: #FFFFFF; min-width: 220px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+            <span style="background: #DC2626; color: #FFFFFF; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 20px; text-transform: uppercase;">🚨 ACTIVE SOS DISTRESS</span>
+          </div>
+          <p style="margin: 0 0 4px 0; font-size: 14px; font-weight: 700; color: #FFFFFF;">👤 Passenger: ${alert.passenger}</p>
+          <p style="margin: 0 0 4px 0; font-size: 12px; color: #E2E8F0;"><i class="fa-solid fa-phone" style="color: #FBBF24; margin-right: 4px;"></i> <b>Phone:</b> ${alert.phone}</p>
+          <p style="margin: 0 0 4px 0; font-size: 12px; color: #E2E8F0;"><i class="fa-solid fa-user-tie" style="color: #60A5FA; margin-right: 4px;"></i> <b>Driver:</b> ${alert.driver}</p>
+          <p style="margin: 0 0 4px 0; font-size: 12px; color: #E2E8F0;"><i class="fa-solid fa-car" style="color: #FCD34D; margin-right: 4px;"></i> <b>Vehicle:</b> <span style="font-family: monospace; color: #F59E0B;">${alert.vehicle}</span></p>
+          <p style="margin: 0 0 4px 0; font-size: 11px; color: #94A3B8;"><i class="fa-solid fa-clock" style="margin-right: 4px;"></i> <b>Time:</b> ${alert.timestamp}</p>
+          <p style="margin: 0 0 6px 0; font-size: 12px; color: #FCD34D;"><i class="fa-solid fa-location-dot" style="color: #F87171; margin-right: 4px;"></i> <b>Location:</b> ${alert.locationName}</p>
+          <hr style="margin: 6px 0; border-color: #334155;">
+          <a href="https://www.google.com/maps/search/?api=1&query=${alert.lat},${alert.lng}" target="_blank" class="btn btn-sm btn-danger text-white py-1 px-3 rounded-pill fw-bold" style="font-size: 11px; display: inline-block;">Open in Google Maps &rarr;</a>
+        </div>
+      `).openPopup();
+    });
+  }
+
+  function focusAlertMarker(lat, lng, alertId) {
+    if (activeMapInstance) {
+      activeMapInstance.setView([lat, lng], 16);
+      if (markersMap[alertId]) {
+        markersMap[alertId].openPopup();
+      }
+    }
+  }
+
+  function initAdminSOSMap() {
+    const mapElement = document.getElementById('admin-sos-map');
+    if (!mapElement) return;
+
+    if (typeof google === 'undefined' || !google.maps || !google.maps.Map) {
+      renderLeafletFallbackMap();
+      return;
+    }
+
+    try {
+      const map = new google.maps.Map(mapElement, {
+        zoom: 14,
+        center: { lat: defaultCenter[0], lng: defaultCenter[1] },
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        disableDefaultUI: false,
+        zoomControl: true,
+        styles: [
+          { elementType: "geometry", stylers: [{ color: "#1e293b" }] },
+          { elementType: "labels.text.stroke", stylers: [{ color: "#0f172a" }] },
+          { elementType: "labels.text.fill", stylers: [{ color: "#94a3b8" }] },
+          { featureType: "road", elementType: "geometry", stylers: [{ color: "#334155" }] },
+          { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#f8fafc" }] },
+          { featureType: "water", elementType: "geometry", stylers: [{ color: "#0f172a" }] }
+        ]
+      });
+
+      alertsData.forEach(a => {
+        const marker = new google.maps.Marker({
+          position: { lat: a.lat, lng: a.lng },
+          map: map,
+          title: `🚨 SOS Distress: ${a.passenger}`,
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 14,
+            fillColor: "#DC2626",
+            fillOpacity: 1,
+            strokeColor: "#FFFFFF",
+            strokeWeight: 3
+          }
+        });
+
+        const infoWindow = new google.maps.InfoWindow({
+          content: `
+            <div style="color: #0F172A; font-family: 'Inter', sans-serif; padding: 4px; min-width: 200px;">
+              <h6 style="margin: 0; font-weight: 700; color: #DC2626;">🚨 SOS DISTRESS BEACON</h6>
+              <p style="margin: 3px 0 0 0; font-size: 13px;">Passenger: <b>${a.passenger}</b></p>
+              <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748B;">Phone: ${a.phone}</p>
+              <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748B;">Driver: ${a.driver}</p>
+              <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748B;">Vehicle: <b>${a.vehicle}</b></p>
+              <p style="margin: 2px 0 0 0; font-size: 11px; color: #94A3B8;">Time: ${a.timestamp}</p>
+              <span style="display:inline-block; background: #DC2626; color: white; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-top: 4px;">Active Distress</span>
+            </div>
+          `
+        });
+
+        infoWindow.open(map, marker);
+        marker.addListener("click", () => infoWindow.open(map, marker));
+      });
+    } catch (e) {
+      console.warn("Google Maps init error, using fallback:", e);
+      renderLeafletFallbackMap();
+    }
+  }
+
+  // Intercept Google Maps Auth Failure callback if key is invalid
+  window.gm_authFailure = function() {
+    console.warn("Google Maps authentication failed. Engaging resilient fallback map.");
+    renderLeafletFallbackMap();
+  };
+
+  document.addEventListener('DOMContentLoaded', function() {
+    initAdminSOSMap();
+  });
+</script>
+{% endblock %}

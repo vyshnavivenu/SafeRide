@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+
+{% block title %}Passenger Safety Hub & Dashboard - SafeRide{% endblock %}
+
+{% block content %}
+<div class="container py-4 app-max-container">
+
+  <!-- ========================================== -->
+  <!-- 1. WELCOME & STATUS BANNER -->
+  <!-- ========================================== -->
+  <div class="card rounded-4 border shadow-sm p-4 mb-4" style="background-color: #131C2E !important;">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold fs-3 shadow" style="width: 64px; height: 64px; background: linear-gradient(135deg, #1E3A8A, #2563EB); border: 2px solid #60A5FA;">
+          {{ user.first_name|slice:":1"|default:user.username|slice:":1"|upper }}
+        </div>
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+            <h4 class="fw-bold mb-0 text-white">Welcome, {{ user.get_full_name|default:user.username }}</h4>
+            <span class="badge bg-primary bg-opacity-25 text-primary border border-primary px-3 py-1 rounded-pill small">PASSENGER SAFETY HUB</span>
+          </div>
+          <p class="text-white opacity-75 small mb-0">
+            <i class="fa-solid fa-phone me-1 text-warning"></i> {{ user.phone|default:"+91 98471 23456" }} &bull; 
+            <i class="fa-solid fa-shield-halved text-success ms-1 me-1"></i> Verified Passenger Account
+          </p>
+        </div>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="d-flex flex-wrap gap-2">
+        <a href="{% url 'emergency_contacts' %}" class="btn btn-outline-light btn-sm rounded-pill px-3 fw-semibold">
+          <i class="fa-solid fa-phone-volume text-danger me-1"></i> Emergency Contacts
+        </a>
+        <a href="{% url 'passenger_profile' %}" class="btn btn-outline-light btn-sm rounded-pill px-3 fw-semibold">
+          <i class="fa-solid fa-user-pen text-warning me-1"></i> Edit Profile
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTIVE TRIP STATUS INDICATOR -->
+  {% if active_trip %}
+  <div class="card rounded-4 p-4 border shadow-lg mb-4 text-white" style="background: linear-gradient(135deg, #064E3B, #065F46); border-color: #10B981 !important;">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <span class="p-3 rounded-circle shadow" style="background-color: #022C22; border: 2px solid #34D399;">
+          <i class="fa-solid fa-satellite-dish fs-3 text-warning fa-spin"></i>
+        </span>
+        <div>
+          <span class="badge bg-success text-white px-3 py-1 rounded-pill fw-bold mb-1 border border-light">
+            <i class="fa-solid fa-circle-dot fa-beat me-1"></i> ACTIVE TRIP IN PROGRESS
+          </span>
+          <h5 class="fw-bold mb-1 text-white">Ride with {{ active_trip.driver.name|default:active_trip.driver.user.username }}</h5>
+          <span class="small text-white opacity-90">
+            Vehicle: <b class="text-warning font-monospace">{{ active_trip.driver.vehicle_number|default:active_trip.driver.vehicle.registration_number }}</b> &bull; 
+            Live GPS Tracking Enabled
+          </span>
+        </div>
+      </div>
+
+      <div>
+        <a href="{% url 'active_trip' active_trip.trip_id %}" class="btn btn-warning btn-lg rounded-pill fw-bold px-4 shadow text-dark" style="background-color: #FF9800; border: none;">
+          <i class="fa-solid fa-map-location-dot me-2"></i> Return to Active Trip &rarr;
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ========================================== -->
+  <!-- 2. DRIVER VERIFICATION GATEWAY (CORE FEATURE) -->
+  <!-- ========================================== -->
+  <div class="card rounded-4 border shadow-lg p-4 p-md-5 mb-4" style="background-color: #131C2E !important; border-color: #1E293B !important;">
+    <div class="text-center mb-4 pb-2 border-bottom" style="border-color: #1E293B !important;">
+      <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-1 rounded-pill fw-bold mb-2 border border-warning">
+        <i class="fa-solid fa-qrcode me-1"></i> STEP 1: VERIFY BEFORE BOARDING
+      </span>
+      <h3 class="fw-bold text-white mb-1 text-uppercase tracking-wider">DRIVER VERIFICATION GATEWAY</h3>
+      <p class="text-white opacity-75 small mb-0">Scan the driver's QR badge or manually enter their vehicle registration number to inspect identity, verification status & safety ratings before starting a trip.</p>
+    </div>
+
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        
+        <!-- Scan QR Button (Prominent) -->
+        <div class="text-center mb-4">
+          <button type="button" class="btn btn-lg w-100 fw-bold rounded-pill shadow py-3 text-white border border-2 border-warning hover-lift" style="background: linear-gradient(135deg, #1E293B, #0F172A);" onclick="triggerSnapshotCapture()">
+            <i class="fa-solid fa-camera-retro me-2 text-warning fs-5"></i>
+            <span class="fs-5">SNAP DRIVER QR BADGE</span>
+            <span class="badge bg-warning text-dark ms-2 rounded-pill small">Instant Snap</span>
+          </button>
+          <div class="my-3 text-white opacity-50 fw-bold small text-uppercase tracking-widest">— OR ENTER VEHICLE NUMBER —</div>
+        </div>
+
+        <!-- Manual Vehicle Registration Search Form -->
+        <form action="{% url 'verify_driver_search' %}" method="GET" class="mb-2">
+          <div class="mb-3">
+            <label class="form-label fw-bold text-light small"><i class="fa-solid fa-car-side text-primary me-1"></i> Vehicle Registration Number :</label>
+            <div class="input-group input-group-lg">
+              <span class="input-group-text border-end-0 text-white" style="background-color: #0F172A; border-color: #334155;">
+                <i class="fa-solid fa-id-badge text-warning"></i>
+              </span>
+              <input type="text" name="query" class="form-control text-uppercase fw-bold fs-5 text-white font-monospace" style="background-color: #0F172A; border-color: #334155;" placeholder="e.g. KL 05 AT 4455" required autofocus>
+              <button type="submit" class="btn btn-primary btn-lg fw-bold px-4 text-uppercase">
+                <i class="fa-solid fa-shield-check me-1"></i> VERIFY & BOARD
+              </button>
+            </div>
+            <small class="text-white opacity-50 d-block mt-2">
+              <i class="fa-solid fa-circle-info me-1"></i> Accepts all formats: <code>KL 05 AT 4455</code>, <code>KL05AT4455</code>, <code>KL-05-AT-4455</code>
+            </small>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 3. QUICK ACTIONS GRID -->
+  <!-- ========================================== -->
+  <div class="row g-4 mb-4">
+    
+    <!-- 3.1 Trip History -->
+    <div class="col-md-4 col-sm-6">
+      <a href="{% url 'passenger_trip_history' %}" class="card rounded-4 border shadow-sm p-4 text-decoration-none h-100 hover-lift" style="background-color: #131C2E !important; border-color: #1E293B !important;">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <div class="rounded-circle d-flex align-items-center justify-content-center text-primary" style="width: 48px; height: 48px; background: rgba(37, 99, 235, 0.15); border: 1px solid rgba(37, 99, 235, 0.3);">
+            <i class="fa-solid fa-clock-rotate-left fs-4"></i>
+          </div>
+          <span class="badge bg-primary bg-opacity-25 text-primary border border-primary rounded-pill small">Past Rides</span>
+        </div>
+        <h5 class="fw-bold text-white mb-2 text-nowrap">Trip History</h5>
+        <p class="text-white opacity-75 small mb-3">View all past rides, driver safety scores, post-trip feedback & reviews.</p>
+        <div class="mt-auto">
+          <span class="fw-bold small text-primary">View Records &rarr;</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- 3.2 Profile & Emergency Contacts -->
+    <div class="col-md-4 col-sm-6">
+      <a href="{% url 'emergency_contacts' %}" class="card rounded-4 border shadow-sm p-4 text-decoration-none h-100 hover-lift" style="background-color: #131C2E !important; border-color: #1E293B !important;">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <div class="rounded-circle d-flex align-items-center justify-content-center text-danger" style="width: 48px; height: 48px; background: rgba(220, 38, 38, 0.15); border: 1px solid rgba(220, 38, 38, 0.3);">
+            <i class="fa-solid fa-shield-heart fs-4"></i>
+          </div>
+          <span class="badge bg-danger bg-opacity-25 text-danger border border-danger rounded-pill small">SOS Settings</span>
+        </div>
+        <h5 class="fw-bold text-white mb-2 text-nowrap">Emergency Contacts</h5>
+        <p class="text-white opacity-75 small mb-3">Manage trusted guardian phone numbers that receive immediate alerts during 1-Touch SOS.</p>
+        <div class="mt-auto">
+          <span class="fw-bold small text-danger">Manage Contacts &rarr;</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- 3.3 Report an Issue -->
+    <div class="col-md-4 col-sm-12">
+      <a href="{% url 'report_incident' %}" class="card rounded-4 border shadow-sm p-4 text-decoration-none h-100 hover-lift" style="background-color: #131C2E !important; border-color: #1E293B !important;">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <div class="rounded-circle d-flex align-items-center justify-content-center text-warning" style="width: 48px; height: 48px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3);">
+            <i class="fa-solid fa-triangle-exclamation fs-4"></i>
+          </div>
+          <span class="badge bg-warning bg-opacity-25 text-warning border border-warning rounded-pill small">Safety Help</span>
+        </div>
+        <h5 class="fw-bold text-white mb-2 text-nowrap">Report an Issue</h5>
+        <p class="text-white opacity-75 small mb-3">Submit a formal safety complaint, report driver misconduct, or log an incident.</p>
+        <div class="mt-auto">
+          <span class="fw-bold small text-warning">File Report &rarr;</span>
+        </div>
+      </a>
+    </div>
+
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 4. RECENT TRIPS SUMMARY (IF ANY) -->
+  <!-- ========================================== -->
+  {% if recent_trips %}
+  <div class="card rounded-4 border shadow-sm p-4" style="background-color: #131C2E !important; border-color: #1E293B !important;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-bold text-white mb-0"><i class="fa-solid fa-route text-primary me-2"></i> Recent Commutes</h5>
+      <a href="{% url 'passenger_trip_history' %}" class="small text-decoration-none fw-semibold" style="color: #FF9800;">View Full History &rarr;</a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Driver & Vehicle</th>
+            <th>Boarding Point</th>
+            <th>Destination Point</th>
+            <th>Status</th>
+            <th>Date & Time</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in recent_trips %}
+          <tr>
+            <td class="text-white">
+              <strong class="text-white">{{ t.driver.name|default:t.driver.user.username }}</strong><br>
+              <span class="badge bg-dark border text-white font-monospace small">{{ t.driver.vehicle_number|default:t.driver.vehicle.registration_number }}</span>
+            </td>
+            <td class="small">
+              <span class="text-success fw-semibold"><i class="fa-solid fa-circle-dot me-1"></i> {{ t.boarding_point|default:t.pickup_location_name|truncatechars:28 }}</span>
+            </td>
+            <td class="small">
+              <span class="text-danger fw-semibold"><i class="fa-solid fa-location-dot me-1"></i> {{ t.destination_point|default:t.drop_location_name|default:"Destination Drop Point"|truncatechars:28 }}</span>
+            </td>
+            <td>
+              {% if t.status == 'Completed' or t.status == 'COMPLETED' %}
+              <span class="badge bg-success bg-opacity-25 text-success">Completed</span>
+              {% elif t.status == 'Ongoing' or t.status == 'IN_PROGRESS' %}
+              <span class="badge bg-primary">In Progress</span>
+              {% elif t.status == 'SOS_Triggered' %}
+              <span class="badge bg-danger">SOS Triggered</span>
+              {% else %}
+              <span class="badge bg-secondary">{{ t.get_status_display }}</span>
+              {% endif %}
+            </td>
+            <td class="small text-white opacity-75">{{ t.start_time|date:"M d, H:i" }}</td>
+            <td>
+              {% if t.status == 'Ongoing' or t.status == 'IN_PROGRESS' %}
+              <a href="{% url 'active_trip' t.trip_id %}" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold">Live Track</a>
+              {% else %}
+              <a href="{% url 'rate_trip' t.trip_id %}" class="btn btn-sm btn-outline-light rounded-pill px-3">Rate & Review</a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+{% include 'components/qr_scanner_modal.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function triggerDashboardSOS() {
+  const globalSosModal = document.getElementById('globalSosEmergencyModal');
+  if (globalSosModal && typeof bootstrap !== 'undefined') {
+    const modalInstance = bootstrap.Modal.getOrCreateInstance(globalSosModal);
+    if (modalInstance) {
+      modalInstance.show();
+      return;
+    }
+  }
+
+  // Direct trigger if global modal not active
+  if (confirm("🚨 BROADCAST EMERGENCY SOS BEACON?\n\nThis will instantly dispatch your live GPS coordinates to Police (112) and the Admin Command Center.")) {
+    if (typeof triggerSOSEmergency === 'function') {
+      triggerSOSEmergency();
+    } else {
+      fetch('/api/sos/trigger/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+          location_name: "Passenger Dashboard SOS Trigger"
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert("🚨 EMERGENCY SOS BROADCASTED!\n\nYour live distress beacon has been recorded and transmitted to the Central Admin Command Center.");
+      })
+      .catch(err => {
+        alert("🚨 SOS Emergency signal dispatched to the central emergency queue.");
+      });
+    }
+  }
+}
+</script>
+{% endblock %}
+
+

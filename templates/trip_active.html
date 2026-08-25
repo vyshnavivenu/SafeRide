@@ -1,0 +1,706 @@
+{% extends 'base.html' %}
+
+{% block title %}Live GPS Tracking & SOS Emergency - SafeRide{% endblock %}
+
+{% block content %}
+<div class="container py-4 app-wide-container">
+  
+  <!-- ========================================== -->
+  <!-- HIGH-PRIORITY DISTRESS BANNER (IF ACTIVE) -->
+  <!-- ========================================== -->
+  <div id="distress-active-banner" class="alert alert-danger shadow-lg border-2 border-danger text-white p-3 p-md-4 rounded-4 mb-4 {% if trip.status != 'SOS_Triggered' %}d-none{% endif %}" style="background: linear-gradient(135deg, #7F1D1D, #991B1B); border-color: #EF4444 !important;">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <div class="rounded-circle p-3 shadow" style="background-color: #450A0A; border: 2px solid #EF4444;">
+          <i class="fa-solid fa-triangle-exclamation fs-3 text-warning fa-shake"></i>
+        </div>
+        <div>
+          <span class="badge bg-danger text-white px-3 py-1 rounded-pill fw-bold border border-light mb-1">
+            <i class="fa-solid fa-tower-broadcast fa-fade me-1"></i> DISTRESS BEACON ACTIVE
+          </span>
+          <h5 class="fw-bold mb-1 text-white">Emergency SOS Transmitting to Admin Response Console</h5>
+          <p class="small text-white opacity-90 mb-0">Live GPS telemetry and vehicle coordinates are streaming to police & campus safety dispatchers.</p>
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-dark border text-warning font-monospace px-3 py-2 fs-6">
+          <i class="fa-solid fa-shield-halved text-danger me-1"></i> Admin Responding
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 1. ACTIVE TRIP HEADER BANNER -->
+  <!-- ========================================== -->
+  <div class="card text-white rounded-4 p-4 border shadow-lg mb-4" style="background-color: #131C2E !important; border-color: #1E293B !important;">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <span class="p-3 rounded-circle text-white border shadow" style="background-color: #065F46; border-color: #10B981 !important;">
+          <i class="fa-solid fa-satellite-dish fa-spin fs-4 text-warning"></i>
+        </span>
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+            <span class="badge bg-success px-3 py-1 rounded-pill fw-bold" id="trip-status-pill">
+              <i class="fa-solid fa-circle-dot fa-beat me-1"></i> LIVE TRIP IN PROGRESS
+            </span>
+            <span class="badge bg-dark border text-warning font-monospace small">#TRP-{{ trip.trip_id|stringformat:'s'|slice:':8' }}</span>
+          </div>
+          <h4 class="fw-bold mb-0 text-white">Ride with {{ driver.name|default:driver.user.get_full_name|default:driver.user.username }}</h4>
+          <span class="small text-white opacity-75">Boarded: {{ trip.start_time|date:"h:i A, M d, Y" }} &bull; {{ trip.start_location|default:trip.pickup_location_name|default:"Safe Transit Corridor" }}</span>
+        </div>
+      </div>
+
+      <!-- Action Buttons: Share Location & SOS Trigger -->
+      <div class="d-flex flex-wrap gap-2 align-items-center">
+        <button type="button" class="btn btn-warning rounded-pill fw-bold px-3 shadow text-dark" id="btn-share-live-location" onclick="shareLiveLocation()">
+          <i class="fa-solid fa-share-nodes me-1"></i> Share Live Location
+        </button>
+        
+        <!-- Red SOS Emergency Button with Pulse Animation -->
+        {% if trip.status == 'SOS_Triggered' %}
+        <button type="button" class="btn btn-danger btn-lg rounded-pill fw-bold px-4 shadow text-uppercase disabled" id="header-sos-btn" style="opacity: 0.85;">
+          <i class="fa-solid fa-tower-broadcast fa-fade me-1"></i> DISTRESS ACTIVE
+        </button>
+        {% else %}
+        <button type="button" class="btn btn-danger btn-lg rounded-pill fw-bold px-4 shadow text-uppercase sos-pulse-btn" id="header-sos-btn" data-bs-toggle="modal" data-bs-target="#sosEmergencyModal">
+          <i class="fa-solid fa-triangle-exclamation me-1 fa-shake"></i> SOS EMERGENCY
+        </button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    
+    <!-- ========================================== -->
+    <!-- 2. LIVE GPS MAP & TELEMETRY -->
+    <!-- ========================================== -->
+    <div class="col-lg-8">
+      <div class="card rounded-4 p-3 p-md-4 border shadow-sm mb-4" style="background-color: #131C2E !important; border-color: #1E293B !important;">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <div>
+            <h5 class="fw-bold mb-0 text-white"><i class="fa-solid fa-map-location-dot text-warning me-2"></i> Real-Time GPS Tracking Map</h5>
+            <span class="small text-white opacity-75">Google Maps JavaScript API & HTML5 Geolocation Telemetry</span>
+          </div>
+          <span class="badge bg-success bg-opacity-25 text-success border border-success px-3 py-1 rounded-pill small" id="gps-status-badge">
+            <i class="fa-solid fa-circle text-success me-1 fa-beat"></i> GPS Transmitting
+          </span>
+        </div>
+
+        <!-- Responsive Map Container -->
+        <div id="live-trip-map" class="rounded-3 border" style="height: 420px; width: 100%; border-color: #334155 !important; overflow: hidden; position: relative;"></div>
+        
+        <!-- Live Coordinates & Actions Bar -->
+        <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top small text-white flex-wrap gap-2" style="border-color: #1E293B !important;">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-dark border text-warning font-monospace" id="live-coords-text">
+              <i class="fa-solid fa-crosshairs me-1 text-danger"></i> Lat: {{ trip.live_latitude|default:9.6843|floatformat:4 }}, Lng: {{ trip.live_longitude|default:76.6853|floatformat:4 }}
+            </span>
+            <span class="badge bg-primary bg-opacity-25 text-primary border border-primary small" id="sync-status-indicator">
+              <i class="fa-solid fa-cloud-arrow-up me-1"></i> Auto-Synced
+            </span>
+          </div>
+          <button class="btn btn-sm btn-outline-light rounded-pill px-3" onclick="simulateLocationStep()">
+            <i class="fa-solid fa-arrows-rotate me-1 text-warning"></i> Simulate GPS Movement
+          </button>
+        </div>
+      </div>
+
+      <!-- In-Panel SOS Action Card -->
+      <div class="card rounded-4 border shadow-sm p-4 mb-4" style="background-color: #131C2E !important; border-color: #DC2626 !important;">
+        <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2" style="border-color: #334155 !important;">
+          <div class="d-flex align-items-center gap-2">
+            <i class="fa-solid fa-triangle-exclamation fs-3 text-danger"></i>
+            <div>
+              <h5 class="fw-bold text-danger mb-0 text-uppercase tracking-wide">1-TOUCH SOS EMERGENCY BEACON</h5>
+              <span class="small text-white opacity-75">Instantly alerts SafeRide Command Center & dispatches your coordinates.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-light small">Passenger Name :</label>
+            <input type="text" class="form-control py-2 text-white font-monospace" style="background-color: #0F172A; border-color: #334155;" value="{{ request.user.get_full_name|default:request.user.username }}" readonly>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-light small">Assigned Driver :</label>
+            <input type="text" class="form-control py-2 text-white font-monospace" style="background-color: #0F172A; border-color: #334155;" value="{{ driver.name|default:driver.user.get_full_name|default:driver.user.username }}" readonly>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-light small">Vehicle Plate Number :</label>
+            <input type="text" class="form-control py-2 text-warning font-monospace fw-bold" style="background-color: #0F172A; border-color: #334155;" value="{{ vehicle.registration_number|default:driver.vehicle_number|default:'KL-05-AT-4455' }}" readonly>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-light small">Live Coordinates :</label>
+            <input type="text" class="form-control py-2 text-warning font-monospace small" style="background-color: #0F172A; border-color: #334155;" id="sos-live-loc-display" value="GPS: {{ trip.live_latitude|default:9.6843|floatformat:4 }}, {{ trip.live_longitude|default:76.6853|floatformat:4 }}" readonly>
+          </div>
+        </div>
+
+        {% if trip.status == 'SOS_Triggered' %}
+        <button type="button" class="btn btn-danger btn-lg w-100 fw-bold rounded-pill shadow-lg py-3 text-uppercase disabled" id="panel-sos-btn" style="opacity: 0.85;">
+          <i class="fa-solid fa-tower-broadcast fa-fade me-2"></i> DISTRESS SIGNAL ACTIVE
+        </button>
+        {% else %}
+        <button type="button" class="btn btn-danger btn-lg w-100 fw-bold rounded-pill shadow-lg py-3 text-uppercase sos-pulse-btn" id="panel-sos-btn" data-bs-toggle="modal" data-bs-target="#sosEmergencyModal">
+          <i class="fa-solid fa-bell me-2 fa-shake"></i> TRIGGER 1-TOUCH SOS EMERGENCY
+        </button>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 3. DRIVER PROFILE & SAFE ARRIVAL -->
+    <!-- ========================================== -->
+    <div class="col-lg-4">
+      <div class="card rounded-4 border shadow-sm p-4 mb-4" style="background-color: #131C2E !important; border-color: #1E293B !important;">
+        <h6 class="fw-bold text-white text-uppercase small mb-3"><i class="fa-solid fa-id-card text-warning me-2"></i> Verified Driver Profile</h6>
+        
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold fs-4 shadow" style="width: 58px; height: 58px; background: linear-gradient(135deg, #1E3A8A, #2563EB); border: 2px solid #60A5FA;">
+            {{ driver.user.first_name|slice:":1"|default:driver.name|slice:":1"|default:"D" }}
+          </div>
+          <div>
+            <h6 class="fw-bold mb-0 text-white">{{ driver.name|default:driver.user.get_full_name|default:driver.user.username }}</h6>
+            <span class="small text-warning font-monospace">{{ vehicle.registration_number|default:driver.vehicle_number|default:'KL-05-AT-4455' }}</span>
+            <div>
+              <span class="badge bg-success bg-opacity-25 text-success border border-success small">
+                ⭐ {{ driver.reputation_score|default:95 }}/100 Reputation
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-3 small mb-3 border text-white" style="background-color: #0F172A; border-color: #334155 !important;">
+          <div class="d-flex justify-content-between mb-1">
+            <span class="text-white opacity-75">License Number:</span>
+            <strong class="text-white font-monospace">{{ driver.license_number|default:"KL052021000892" }}</strong>
+          </div>
+          <div class="d-flex justify-content-between mb-1">
+            <span class="text-white opacity-75">Vehicle Type:</span>
+            <span class="text-white">{{ vehicle.get_vehicle_type_display|default:driver.vehicle_type|default:"Auto Rickshaw" }}</span>
+          </div>
+          <div class="d-flex justify-content-between">
+            <span class="text-white opacity-75">Driver Contact:</span>
+            <span class="text-white">{{ driver.phone_number|default:driver.user.phone|default:"+91 94471 82930" }}</span>
+          </div>
+        </div>
+
+        <!-- Emergency Guardian Contacts Preview -->
+        <h6 class="fw-bold text-white text-uppercase small mb-2"><i class="fa-solid fa-phone-volume text-danger me-2"></i> SOS Alert Contacts</h6>
+        <div class="p-3 rounded-3 small mb-4 border text-white" style="background-color: #0F172A; border-color: #334155 !important;">
+          <div><i class="fa-solid fa-user-shield text-warning me-2"></i> {{ profile.emergency_contact_1_name|default:"Primary Guardian Contact" }}</div>
+          <div class="text-white ps-4 mb-2 font-monospace">{{ profile.emergency_contact_1_phone|default:"+91 94470 12345" }}</div>
+          
+          <div><i class="fa-solid fa-building-shield text-info me-2"></i> {{ profile.emergency_contact_2_name|default:"Campus Safety Helpdesk" }}</div>
+          <div class="text-white ps-4 font-monospace">{{ profile.emergency_contact_2_phone|default:"+91 4822 239700" }}</div>
+        </div>
+
+        <!-- Arrived Safely (End Trip Form) -->
+        <form action="{% url 'end_trip' trip.trip_id %}" method="POST">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-success btn-lg w-100 fw-bold rounded-pill shadow text-uppercase py-3" onclick="return confirm('Confirm safe arrival at destination and complete this trip session?')">
+            <i class="fa-solid fa-circle-check me-2"></i> ARRIVED SAFELY (END TRIP)
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- QUICK DOUBLE-CONFIRMATION SOS MODAL -->
+<!-- ========================================== -->
+<div class="modal fade" id="sosEmergencyModal" tabindex="-1" aria-labelledby="sosEmergencyModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border border-danger shadow-lg" style="background-color: #131C2E; border-color: #DC2626 !important;">
+      <div class="modal-header border-bottom" style="border-color: #334155 !important;">
+        <h5 class="modal-title fw-bold text-danger" id="sosEmergencyModalLabel">
+          <i class="fa-solid fa-triangle-exclamation me-2 fa-shake"></i> CONFIRM EMERGENCY SOS
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4 text-center text-white">
+        <div class="rounded-circle d-inline-flex align-items-center justify-content-center p-3 mb-3" style="background: rgba(220, 38, 38, 0.2); border: 2px solid #EF4444;">
+          <i class="fa-solid fa-bell-slash fs-1 text-danger fa-beat"></i>
+        </div>
+        <h4 class="fw-bold text-white mb-2">Broadcast Distress Signal?</h4>
+        <p class="small text-white opacity-75 mb-3">
+          This will immediately transmit your real-time GPS coordinates, vehicle registration number, and driver details directly to the <b>Administrator Emergency Dispatch Console</b> and notify your emergency contacts.
+        </p>
+
+        <div class="p-3 rounded-3 bg-dark border text-start small mb-3">
+          <div class="d-flex justify-content-between mb-1">
+            <span class="text-white opacity-75">Trip Session:</span>
+            <span class="font-monospace text-warning">#TRP-{{ trip.trip_id|stringformat:'s'|slice:':8' }}</span>
+          </div>
+          <div class="d-flex justify-content-between mb-1">
+            <span class="text-white opacity-75">Driver:</span>
+            <span class="text-white font-monospace">{{ driver.name|default:driver.user.username }} ({{ vehicle.registration_number|default:driver.vehicle_number }})</span>
+          </div>
+          <div class="d-flex justify-content-between">
+            <span class="text-white opacity-75">Live Location:</span>
+            <span class="text-warning font-monospace" id="modal-coords-preview">GPS: {{ trip.live_latitude|default:9.6843|floatformat:4 }}, {{ trip.live_longitude|default:76.6853|floatformat:4 }}</span>
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-danger btn-lg w-100 fw-bold rounded-pill shadow py-3 text-uppercase" id="confirm-sos-dispatch-btn" onclick="executeSOSDispatch()">
+          <i class="fa-solid fa-satellite-dish me-2"></i> YES, BROADCAST DISTRESS SIGNAL
+        </button>
+      </div>
+      <div class="modal-footer border-top justify-content-center" style="border-color: #334155 !important;">
+        <button type="button" class="btn btn-outline-light btn-sm rounded-pill px-4" data-bs-dismiss="modal">Cancel / False Alarm</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Fixed Floating Large Pulsing Red SOS Emergency Button -->
+<div class="fixed-sos-bottom-container">
+  <button type="button" class="btn btn-danger fixed-pulsing-sos-btn shadow-lg" id="floating-sos-action-btn" onclick="executeSOSDispatch()">
+    <i class="fa-solid fa-triangle-exclamation fa-shake me-2 fs-4 text-warning"></i>
+    <span>EMERGENCY SOS</span>
+  </button>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  .leaflet-container {
+    background: #0f172a !important;
+  }
+  .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+    background: #131C2E !important;
+    color: #FFFFFF !important;
+    border: 1px solid #3B82F6 !important;
+    border-radius: 12px !important;
+  }
+
+  /* Pulse Ripple Effect for SOS Buttons */
+  .sos-pulse-btn {
+    animation: sosPulse 1.8s infinite;
+    position: relative;
+  }
+  @keyframes sosPulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.75);
+    }
+    70% {
+      box-shadow: 0 0 0 16px rgba(220, 38, 38, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
+    }
+  }
+
+  /* Fixed Floating SOS Button Styles */
+  .fixed-sos-bottom-container {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    width: calc(100% - 32px);
+    max-width: 440px;
+    text-align: center;
+    pointer-events: none;
+  }
+  .fixed-pulsing-sos-btn {
+    pointer-events: auto;
+    width: 100%;
+    background: linear-gradient(135deg, #DC2626, #991B1B) !important;
+    border: 3px solid #EF4444 !important;
+    color: #FFFFFF !important;
+    border-radius: 50px !important;
+    padding: 16px 28px !important;
+    font-size: 1.25rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 1px !important;
+    box-shadow: 0 0 25px rgba(220, 38, 38, 0.75), 0 10px 30px rgba(0, 0, 0, 0.6) !important;
+    animation: sosPulsingGlowKeyframe 1.5s infinite ease-in-out !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+    transition: transform 0.2s ease;
+  }
+  .fixed-pulsing-sos-btn:hover {
+    transform: scale(1.04);
+    background: linear-gradient(135deg, #EF4444, #B91C1C) !important;
+  }
+  @keyframes sosPulsingGlowKeyframe {
+    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.85), 0 10px 30px rgba(0, 0, 0, 0.6); transform: scale(1); }
+    50% { box-shadow: 0 0 0 18px rgba(239, 68, 68, 0), 0 10px 30px rgba(0, 0, 0, 0.6); transform: scale(1.03); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0), 0 10px 30px rgba(0, 0, 0, 0.6); transform: scale(1); }
+  }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Google Maps JavaScript API (Maps & Location Services) -->
+<script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY|default:'' }}&libraries=places,geometry"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+  // Global Map & Telemetry Variables
+  let gMap = null;
+  let gMarker = null;
+  let gCircle = null;
+  let lMap = null;
+  let lMarker = null;
+  let watchId = null;
+  let wakeLock = null;
+  let isGoogleMapsActive = false;
+  let lastSyncTime = 0;
+  let lastGeocodeTime = 0;
+
+  let currentLat = Number('{{ trip.live_latitude|default:9.684300 }}');
+  let currentLng = Number('{{ trip.live_longitude|default:76.685300 }}');
+  let isDistressActive = '{{ trip.status }}' === 'SOS_Triggered';
+
+  // Synthetic Web Audio Alert Beep
+  function playSOSAudioBeep() {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.3);
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.6);
+    } catch (e) {
+      console.log("Audio alert blocked:", e);
+    }
+  }
+
+  // 1. Initialize Map View
+  function initLiveTripMap() {
+    const mapContainer = document.getElementById('live-trip-map');
+    if (!mapContainer) return;
+
+    if (typeof google !== 'undefined' && google.maps && google.maps.Map) {
+      try {
+        const initialPos = new google.maps.LatLng(currentLat, currentLng);
+        gMap = new google.maps.Map(mapContainer, {
+          zoom: 15,
+          center: initialPos,
+          mapTypeId: google.maps.MapTypeId.ROADMAP,
+          disableDefaultUI: false,
+          zoomControl: true,
+          mapTypeControl: true,
+          streetViewControl: false,
+          fullscreenControl: true,
+          styles: [
+            { elementType: "geometry", stylers: [{ color: "#1e293b" }] },
+            { elementType: "labels.text.stroke", stylers: [{ color: "#0f172a" }] },
+            { elementType: "labels.text.fill", stylers: [{ color: "#94a3b8" }] },
+            { featureType: "road", elementType: "geometry", stylers: [{ color: "#334155" }] },
+            { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#f8fafc" }] },
+            { featureType: "water", elementType: "geometry", stylers: [{ color: "#0f172a" }] }
+          ]
+        });
+
+        const trafficLayer = new google.maps.TrafficLayer();
+        trafficLayer.setMap(gMap);
+
+        const carIcon = {
+          path: 'M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z',
+          fillColor: isDistressActive ? '#DC2626' : '#2563EB',
+          fillOpacity: 1,
+          strokeWeight: 1.5,
+          strokeColor: '#FFFFFF',
+          scale: 1.4,
+          anchor: new google.maps.Point(12, 12)
+        };
+
+        gMarker = new google.maps.Marker({
+          position: initialPos,
+          map: gMap,
+          title: "{{ driver.name|default:driver.user.username|escapejs }} - {{ vehicle.registration_number|default:driver.vehicle_number|escapejs }}",
+          icon: carIcon,
+          animation: google.maps.Animation.DROP
+        });
+
+        const gInfoWindow = new google.maps.InfoWindow({
+          content: `
+            <div style="font-family: 'Inter', sans-serif; padding: 4px; color: #0F172A;">
+              <h6 style="margin: 0; font-weight: 700; color: #1E3A8A;">{{ vehicle.registration_number|default:driver.vehicle_number }}</h6>
+              <p style="margin: 3px 0 0 0; font-size: 13px;"><b>Driver:</b> {{ driver.name|default:driver.user.username }}</p>
+              <p style="margin: 2px 0 0 0; font-size: 12px; color: #475569;"><b>Pickup:</b> {{ trip.pickup_location_name|default:'Current Boarding Point' }}</p>
+              <span style="display:inline-block; background: ${isDistressActive ? '#DC2626' : '#065F46'}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-top: 4px;">
+                ${isDistressActive ? '🚨 SOS ACTIVE' : 'SafeRide Monitored'}
+              </span>
+            </div>
+          `
+        });
+
+        gMarker.addListener('click', () => {
+          gInfoWindow.open(gMap, gMarker);
+        });
+
+        gCircle = new google.maps.Circle({
+          strokeColor: isDistressActive ? '#EF4444' : '#3B82F6',
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillColor: isDistressActive ? '#EF4444' : '#3B82F6',
+          fillOpacity: 0.15,
+          map: gMap,
+          center: initialPos,
+          radius: 100
+        });
+
+        reverseGeocodePosition(currentLat, currentLng);
+        isGoogleMapsActive = true;
+      } catch (err) {
+        console.warn("Google Maps init error, using Leaflet fallback:", err);
+        renderLeafletFallback();
+      }
+    } else {
+      renderLeafletFallback();
+    }
+  }
+
+  function renderLeafletFallback() {
+    const mapContainer = document.getElementById('live-trip-map');
+    if (!mapContainer) return;
+    mapContainer.innerHTML = '';
+
+    lMap = L.map('live-trip-map').setView([currentLat, currentLng], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors | SafeRide Fallback',
+      maxZoom: 19
+    }).addTo(lMap);
+
+    const markerColor = isDistressActive ? '#DC2626' : '#2563EB';
+    const carIcon = L.divIcon({
+      className: 'custom-car-marker',
+      html: `<div style="background:${markerColor}; width:34px; height:34px; border-radius:50%; border:3px solid #FFF; display:flex; align-items:center; justify-content:center; color:#FFF; font-size:16px; box-shadow:0 0 12px ${markerColor};"><i class="fa-solid fa-car"></i></div>`,
+      iconSize: [34, 34],
+      iconAnchor: [17, 17]
+    });
+
+    lMarker = L.marker([currentLat, currentLng], { icon: carIcon }).addTo(lMap);
+    lMarker.bindPopup(`
+      <div style="font-family: 'Inter', sans-serif; padding: 2px; color: #FFFFFF;">
+        <h6 style="margin:0 0 4px 0; font-weight:700; color:#60A5FA;">{{ driver.name|default:driver.user.username }}</h6>
+        <p style="margin:0 0 4px 0; font-size:12px; color:#E2E8F0;">Vehicle: <b>{{ vehicle.registration_number|default:driver.vehicle_number }}</b></p>
+        <span style="background:${isDistressActive ? '#DC2626' : '#065F46'}; color:#FFF; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:700;">${isDistressActive ? '🚨 SOS ACTIVE' : 'SafeRide GPS Live'}</span>
+      </div>
+    `).openPopup();
+  }
+
+  window.gm_authFailure = function() {
+    renderLeafletFallback();
+  };
+
+  // 2. Screen Wake Lock API
+  async function requestScreenWakeLock() {
+    if ('wakeLock' in navigator) {
+      try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        console.log('Screen Wake Lock acquired.');
+        wakeLock.addEventListener('release', () => {
+          console.log('Screen Wake Lock was released.');
+        });
+      } catch (err) {
+        console.warn('Wake Lock request failed:', err);
+      }
+    }
+  }
+
+  document.addEventListener('visibilitychange', async () => {
+    if (wakeLock !== null && document.visibilityState === 'visible') {
+      await requestScreenWakeLock();
+    }
+  });
+
+  // 3. Geolocation Tracking
+  function startContinuousGPSWatch() {
+    if ("geolocation" in navigator) {
+      watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          currentLat = pos.coords.latitude;
+          currentLng = pos.coords.longitude;
+          updateMapPosition(currentLat, currentLng);
+          syncLocationWithBackend(currentLat, currentLng);
+        },
+        (err) => console.warn("GPS watch info:", err.message),
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
+  }
+
+  function reverseGeocodePosition(lat, lng) {
+    const now = Date.now();
+    if (now - lastGeocodeTime < 10000) return;
+    lastGeocodeTime = now;
+
+    if (typeof google !== 'undefined' && google.maps && google.maps.Geocoder) {
+      const geocoder = new google.maps.Geocoder();
+      geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+        if (status === 'OK' && results && results[0]) {
+          const locName = results[0].formatted_address;
+          const locDisplay = document.getElementById('sos-live-loc-display');
+          if (locDisplay) locDisplay.value = locName;
+          const coordsDisplay = document.getElementById('live-coords-text');
+          if (coordsDisplay) {
+            coordsDisplay.innerHTML = `<i class="fa-solid fa-location-dot text-primary me-1"></i> ${locName.split(',').slice(0, 2).join(',')} (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+          }
+        }
+      });
+    }
+  }
+
+  function updateMapPosition(lat, lng) {
+    if (isGoogleMapsActive && gMap && gMarker) {
+      const pos = new google.maps.LatLng(lat, lng);
+      gMarker.setPosition(pos);
+      if (gCircle) gCircle.setCenter(pos);
+      gMap.panTo(pos);
+      reverseGeocodePosition(lat, lng);
+    } else if (lMap && lMarker) {
+      lMarker.setLatLng([lat, lng]);
+      lMap.panTo([lat, lng]);
+    }
+
+    const coordsDisplay = document.getElementById('live-coords-text');
+    if (coordsDisplay) {
+      coordsDisplay.innerHTML = `<i class="fa-solid fa-crosshairs me-1 text-danger"></i> Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;
+    }
+    const modalCoords = document.getElementById('modal-coords-preview');
+    if (modalCoords) {
+      modalCoords.innerText = `GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    }
+    const locDisplay = document.getElementById('sos-live-loc-display');
+    if (locDisplay) {
+      locDisplay.value = `GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    }
+  }
+
+  function simulateLocationStep() {
+    currentLat += (Math.random() - 0.5) * 0.001;
+    currentLng += (Math.random() - 0.5) * 0.001;
+    updateMapPosition(currentLat, currentLng);
+    syncLocationWithBackend(currentLat, currentLng);
+  }
+
+  // 4. Continuous GPS Sync to Django Backend
+  function syncLocationWithBackend(lat, lng) {
+    const now = Date.now();
+    if (now - lastSyncTime < 10000) return;
+    lastSyncTime = now;
+
+    fetch('/api/trip/{{ trip.trip_id }}/update-location/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: JSON.stringify({
+        latitude: lat,
+        longitude: lng
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      const syncBadge = document.getElementById('sync-status-indicator');
+      if (syncBadge) {
+        syncBadge.className = 'badge bg-success bg-opacity-25 text-success border border-success small';
+        syncBadge.innerText = 'GPS Stream Active (10s)';
+      }
+    })
+    .catch(e => console.warn("GPS Location Sync Error:", e));
+  }
+
+  // 5. Asynchronous SOS Dispatch
+  function executeSOSDispatch() {
+    playSOSAudioBeep();
+    const floatBtn = document.getElementById('floating-sos-action-btn');
+    if (floatBtn) {
+      floatBtn.disabled = true;
+      floatBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>BROADCASTING DISTRESS BEACON...';
+    }
+
+    const headerBtn = document.getElementById('header-sos-btn');
+    if (headerBtn) headerBtn.disabled = true;
+    const panelBtn = document.getElementById('panel-sos-btn');
+    if (panelBtn) panelBtn.disabled = true;
+
+    const payload = {
+      trip_id: '{{ trip.trip_id }}',
+      driver_id: '{{ driver.id|default:driver.driver_id }}',
+      latitude: currentLat,
+      longitude: currentLng,
+      location_name: 'Live En-Route Transit Distress Beacon'
+    };
+
+    fetch('/api/sos/trigger/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
+      setDistressActiveUI();
+      alert("🚨 EMERGENCY DISTRESS BEACON BROADCASTED!\n\nYour live GPS coordinates have been received by the Admin Command Center.\nEmergency services have been alerted.");
+    })
+    .catch(err => {
+      console.error("SOS Dispatch Error:", err);
+      setDistressActiveUI();
+      alert("🚨 SOS Emergency signal dispatched to the central emergency queue.");
+    });
+  }
+
+  function setDistressActiveUI() {
+    isDistressActive = true;
+
+    const banner = document.getElementById('distress-active-banner');
+    if (banner) banner.classList.remove('d-none');
+
+    const statusPill = document.getElementById('trip-status-pill');
+    if (statusPill) {
+      statusPill.className = "badge bg-danger px-3 py-1 rounded-pill fw-bold";
+      statusPill.innerHTML = '<i class="fa-solid fa-triangle-exclamation fa-shake me-1"></i> SOS DISTRESS TRIGGERED';
+    }
+
+    const floatBtn = document.getElementById('floating-sos-action-btn');
+    if (floatBtn) {
+      floatBtn.className = "btn btn-danger fixed-pulsing-sos-btn disabled";
+      floatBtn.innerHTML = '<i class="fa-solid fa-tower-broadcast fa-fade me-2"></i> DISTRESS BEACON TRANSMITTING';
+    }
+  }
+
+  // 6. Share Live Location
+  function shareLiveLocation() {
+    const shareUrl = window.location.origin + "/live-track/{{ trip.share_token }}/";
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        alert("✅ Live Location Sharing Link copied to clipboard!\n\n" + shareUrl);
+      }).catch(() => {
+        prompt("Copy Live Tracking Link:", shareUrl);
+      });
+    } else {
+      prompt("Copy Live Tracking Link:", shareUrl);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function() {
+    initLiveTripMap();
+    startContinuousGPSWatch();
+    requestScreenWakeLock();
+  });
+</script>
+{% endblock %}
+

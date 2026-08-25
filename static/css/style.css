@@ -1,0 +1,1243 @@
+/* SafeRide Custom Design System & Aesthetics - Exact Specified Color Theme (100% Solid, Zero Transparency) */
+:root {
+  /* 🔵 Dark Blue – Main theme, header, navigation bar, primary buttons */
+  --color-dark-blue: #0F172A;
+  --color-dark-blue-light: #1E293B;
+  --color-dark-blue-btn: #1E3A8A;
+  --color-dark-blue-btn-hover: #172554;
+
+  /* 🟠 Amber #FF9800 – Normal buttons, links, active icons, user actions */
+  --color-amber: #FF9800;
+  --color-amber-hover: #F57C00;
+  --color-amber-dark: #E65100;
+  --color-amber-light: #FFB74D;
+  --color-amber-bg: #92400E;
+
+  /* 🔴 Dark Red – Emergency/SOS button, danger alerts, cancel/report actions */
+  --color-dark-red: #991B1B;
+  --color-dark-red-hover: #7F1D1D;
+  --color-dark-red-bg: #450A0A;
+  --color-danger-bright: #DC2626;
+
+  /* 🟢 Dark Green – Safe status, ride confirmed, success messages, completed rides */
+  --color-dark-green: #065F46;
+  --color-dark-green-hover: #047857;
+  --color-dark-green-bg: #022C22;
+  --color-success-bright: #10B981;
+
+  /* ⚫ Dark Background – Main screen background, cards/sections */
+  --color-dark-bg: #090D16;
+  --color-dark-surface: #111827;
+  --color-dark-card: #131C2E;
+  --color-dark-input: #0F172A;
+  --color-dark-border: #1E293B;
+  --color-dark-border-light: #334155;
+
+  /* ⚪ White – Text, icons, button labels on dark colours (100% Solid High-Contrast) */
+  --color-white: #FFFFFF;
+  --color-text-white: #FFFFFF;
+  --color-text-light: #F8FAFC;
+  --color-text-muted: #E2E8F0;
+
+  --border-radius: 14px;
+
+  /* Universal Safe Area Insets (iPhone Notches, Dynamic Island & Home Bars) */
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+}
+
+/* Eliminate 300ms Tap Delay & Enhance Mobile Touch Responsiveness */
+html, body, button, a, input, select, textarea, .btn, .floating-sos-btn, [role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Base Document Styles - 100% Solid & Sharp Typography */
+html {
+  height: 100%;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--color-dark-bg);
+  color: var(--color-text-white);
+  min-height: 100vh;
+  min-height: 100dvh; /* Modern Dynamic Viewport Height Fallback */
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+  padding-left: var(--sal);
+  padding-right: var(--sar);
+}
+
+h1, h2, h3, h4, h5, h6, .brand-font {
+  font-family: 'Outfit', 'Inter', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #FFFFFF !important;
+}
+
+p, span, label, td, th, div, li, strong {
+  color: var(--color-text-light);
+}
+
+/* Clear High-Contrast Text Classes */
+.text-muted, .text-secondary {
+  color: #E2E8F0 !important;
+}
+
+.text-dark {
+  color: #FFFFFF !important;
+}
+
+.text-white {
+  color: #FFFFFF !important;
+}
+
+.small {
+  color: #E2E8F0 !important;
+  font-weight: 500;
+}
+
+code {
+  background-color: #1E293B !important;
+  color: #38BDF8 !important;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 700;
+  border: 1px solid #334155;
+}
+
+/* 🟠 Amber Links */
+a {
+  color: var(--color-amber);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--color-amber-light);
+  text-decoration: underline;
+}
+
+/* 🔵 Navigation Bar (Dark Blue) */
+.navbar-saferide {
+  background-color: var(--color-dark-blue) !important;
+  border-bottom: 2px solid var(--color-dark-border-light);
+}
+
+.navbar-brand .brand-font {
+  color: var(--color-white) !important;
+}
+
+.brand-badge {
+  background-color: var(--color-amber);
+  color: var(--color-dark-blue);
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+.nav-link {
+  color: #F8FAFC !important;
+  font-weight: 600;
+  white-space: nowrap !important;
+  transition: color 0.2s ease;
+}
+
+.nav-link:hover, .nav-link.active {
+  color: var(--color-amber) !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+  hyphens: none !important;
+}
+
+/* ⚫ Cards & Sections (Dark Background - 100% Solid) */
+.card, .saferide-card, .bg-white {
+  background-color: var(--color-dark-card) !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+  hyphens: none !important;
+  color: #FFFFFF !important;
+  border: 1px solid var(--color-dark-border-light) !important;
+  border-radius: var(--border-radius);
+}
+
+.card-header {
+  background-color: var(--color-dark-blue) !important;
+  border-bottom: 1px solid var(--color-dark-border-light) !important;
+  color: #FFFFFF !important;
+}
+
+.card-body {
+  background-color: var(--color-dark-card) !important;
+  color: #FFFFFF !important;
+}
+
+.bg-light {
+  background-color: var(--color-dark-surface) !important;
+  color: #FFFFFF !important;
+  border: 1px solid var(--color-dark-border-light) !important;
+}
+
+/* 🔵 Primary Buttons (Dark Blue) */
+.btn-primary {
+  background-color: var(--color-dark-blue-btn) !important;
+  color: #FFFFFF !important;
+  border: 1px solid #3B82F6 !important;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover, .btn-primary:focus {
+  background-color: #2563EB !important;
+  color: #FFFFFF !important;
+  border-color: #60A5FA !important;
+}
+
+/* 🟠 Amber #FF9800 – Normal buttons, links, active icons, user actions */
+.btn-info, .btn-secondary, .btn-warning, .btn-amber {
+  background-color: var(--color-amber) !important;
+  color: #FFFFFF !important;
+  border: 1px solid var(--color-amber-hover) !important;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+.btn-info:hover, .btn-secondary:hover, .btn-warning:hover, .btn-amber:hover {
+  background-color: var(--color-amber-hover) !important;
+  color: #FFFFFF !important;
+}
+
+.btn-dark {
+  background-color: var(--color-dark-blue-light) !important;
+  color: #FFFFFF !important;
+  border: 1px solid var(--color-dark-border-light) !important;
+  font-weight: 600;
+}
+
+.btn-dark:hover {
+  background-color: var(--color-amber) !important;
+  color: #FFFFFF !important;
+  border-color: var(--color-amber) !important;
+}
+
+.btn-outline-dark, .btn-outline-light {
+  background-color: #1E293B !important;
+  color: #FFFFFF !important;
+  border: 1.5px solid #475569 !important;
+  font-weight: 600;
+}
+
+.btn-outline-dark:hover, .btn-outline-light:hover {
+  background-color: var(--color-amber) !important;
+  color: #FFFFFF !important;
+  border-color: var(--color-amber) !important;
+}
+
+.btn-outline-primary, .btn-outline-info, .btn-outline-warning {
+  background-color: #92400E !important;
+  color: #FFFFFF !important;
+  border: 1.5px solid var(--color-amber) !important;
+  font-weight: 600;
+}
+
+.btn-outline-primary:hover, .btn-outline-info:hover, .btn-outline-warning:hover {
+  background-color: var(--color-amber) !important;
+  color: #FFFFFF !important;
+}
+
+.text-info, .text-amber, .text-warning {
+  color: var(--color-amber) !important;
+}
+
+/* 🔴 Dark Red – Emergency / SOS button, danger alerts, report/cancel actions */
+.btn-danger, .floating-sos-btn {
+  background-color: var(--color-dark-red) !important;
+  color: #FFFFFF !important;
+  border: 1px solid #B91C1C !important;
+  font-weight: 800;
+  transition: all 0.2s ease;
+}
+
+.btn-danger:hover, .floating-sos-btn:hover {
+  background-color: var(--color-danger-bright) !important;
+  color: #FFFFFF !important;
+}
+
+.btn-outline-danger {
+  background-color: #450A0A !important;
+  color: #FFFFFF !important;
+  border: 1.5px solid #EF4444 !important;
+  font-weight: 600;
+}
+
+.btn-outline-danger:hover {
+  background-color: var(--color-dark-red) !important;
+  color: #FFFFFF !important;
+}
+
+/* Touch Targets - Minimum 48px Touch Target Size for Mobile Ergonomics */
+button, 
+.btn, 
+.btn-lg,
+.btn-primary,
+.btn-danger,
+.btn-warning,
+.btn-success,
+.floating-sos-btn, 
+.form-control, 
+.form-select {
+  min-height: 48px;
+  touch-action: manipulation;
+}
+
+.floating-sos-btn {
+  position: fixed !important;
+  bottom: calc(20px + var(--sab)) !important;
+  right: calc(16px + var(--sar)) !important;
+  z-index: 999 !important;
+  min-height: 48px;
+  min-width: 48px;
+  padding: 14px 26px;
+  border-radius: 50px;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: 0 8px 24px rgba(220, 38, 38, 0.45), 0 2px 8px rgba(0, 0, 0, 0.4);
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.floating-sos-btn:active {
+  transform: scale(0.94);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.6);
+}
+
+.badge-danger, .bg-danger {
+  background-color: var(--color-dark-red) !important;
+  color: #FFFFFF !important;
+  border: 1px solid #B91C1C;
+}
+
+/* Pulsing Animation for SOS Notification Badges and Active Emergency Alerts */
+@keyframes sosBadgePulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.85);
+  }
+  50% {
+    transform: scale(1.18);
+    box-shadow: 0 0 0 8px rgba(220, 38, 38, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
+  }
+}
+
+.sos-badge-pulse {
+  display: inline-block;
+  animation: sosBadgePulse 1.4s infinite ease-in-out;
+  background-color: #DC2626 !important;
+  color: #FFFFFF !important;
+  font-weight: 800 !important;
+  vertical-align: middle;
+}
+
+.alert-danger {
+  background-color: var(--color-dark-red-bg) !important;
+  border: 1.5px solid var(--color-dark-red) !important;
+  color: #FFFFFF !important;
+  font-weight: 600;
+}
+
+.text-danger {
+  color: #F87171 !important;
+}
+
+/* 🟢 Dark Green – Safe status, ride confirmed, success messages, completed rides */
+.btn-success {
+  background-color: var(--color-dark-green) !important;
+  color: #FFFFFF !important;
+  border: 1px solid #059669 !important;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+.btn-success:hover {
+  background-color: var(--color-success-bright) !important;
+  color: #FFFFFF !important;
+}
+
+.btn-outline-success {
+  background-color: #022C22 !important;
+  color: #FFFFFF !important;
+  border: 1.5px solid #10B981 !important;
+  font-weight: 600;
+}
+
+.btn-outline-success:hover {
+  background-color: var(--color-dark-green) !important;
+  color: #FFFFFF !important;
+}
+
+.badge-success, .bg-success {
+  background-color: var(--color-dark-green) !important;
+  color: #FFFFFF !important;
+  border: 1px solid #059669;
+}
+
+.alert-success {
+  background-color: var(--color-dark-green-bg) !important;
+  border: 1.5px solid var(--color-dark-green) !important;
+  color: #FFFFFF !important;
+  font-weight: 600;
+}
+
+.text-success {
+  color: #34D399 !important;
+}
+
+/* Badges General */
+.badge {
+  font-weight: 700 !important;
+  letter-spacing: 0.02em;
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+.badge.bg-light, .badge.bg-dark, .badge.bg-secondary {
+  background-color: #1E293B !important;
+  color: #FFFFFF !important;
+  border: 1px solid #475569 !important;
+}
+
+.verification-badge-verified {
+  background-color: #065F46 !important;
+  color: #FFFFFF !important;
+  border: 1px solid #10B981;
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.verification-badge-pending {
+  background-color: #92400E !important;
+  color: #FFFFFF !important;
+  border: 1px solid var(--color-amber);
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.verification-badge-suspended {
+  background-color: var(--color-dark-red-bg) !important;
+  color: #FFFFFF !important;
+  border: 1px solid var(--color-dark-red);
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Form Inputs (Solid Dark with White Text) */
+.form-control, .form-select, .auth-input-control {
+  background-color: var(--color-dark-input) !important;
+  color: #FFFFFF !important;
+  border: 1.5px solid var(--color-dark-border-light) !important;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.form-control:focus, .form-select:focus, .auth-input-control:focus {
+  background-color: #162032 !important;
+  color: #FFFFFF !important;
+  border-color: var(--color-amber) !important;
+  outline: none;
+}
+
+.form-control::placeholder {
+  color: #94A3B8 !important;
+}
+
+.form-label, .auth-label {
+  color: #FFFFFF !important;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.input-group-text {
+  background-color: var(--color-dark-blue-light) !important;
+  color: #FFFFFF !important;
+  border-color: var(--color-dark-border-light) !important;
+}
+
+/* Tables (100% Solid Dark Theme) */
+.table {
+  color: #FFFFFF !important;
+  border-color: var(--color-dark-border) !important;
+}
+
+.table thead, .table thead th, .table-light, .table-light th {
+  background-color: #0F172A !important;
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  border-bottom: 2px solid #334155 !important;
+  font-size: 0.85rem;
+  letter-spacing: 0.03em;
+}
+
+.table > :not(caption) > * > * {
+  background-color: var(--color-dark-card) !important;
+  color: #F8FAFC !important;
+  border-bottom: 1px solid var(--color-dark-border) !important;
+}
+
+.table-hover > tbody > tr:hover > * {
+  background-color: #1A2438 !important;
+  color: #FFFFFF !important;
+}
+
+/* Modals & Dropdowns */
+.modal-content, .dropdown-menu {
+  background-color: var(--color-dark-card) !important;
+  color: #FFFFFF !important;
+  border: 1px solid var(--color-dark-border-light) !important;
+}
+
+.modal-header, .modal-footer {
+  border-color: var(--color-dark-border) !important;
+}
+
+.dropdown-item {
+  color: #F8FAFC !important;
+  font-weight: 600;
+}
+
+.dropdown-item:hover {
+  background-color: var(--color-dark-blue-light) !important;
+  color: var(--color-amber) !important;
+}
+
+.dropdown-divider {
+  border-color: var(--color-dark-border) !important;
+}
+
+/* Hero Section */
+.hero-gradient {
+  background-color: var(--color-dark-bg);
+  color: #FFFFFF;
+  padding: 80px 0 60px 0;
+  border-bottom: 2px solid var(--color-dark-border);
+}
+
+/* Stat KPI Cards */
+.stat-kpi-card {
+  padding: 20px;
+  border-radius: var(--border-radius);
+  background-color: var(--color-dark-card) !important;
+  border: 1px solid var(--color-dark-border-light);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.stat-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.stat-icon-blue { background-color: #1E3A8A; color: #FFFFFF; }
+.stat-icon-green { background-color: #065F46; color: #FFFFFF; }
+.stat-icon-amber { background-color: #92400E; color: #FFFFFF; }
+.stat-icon-red { background-color: #991B1B; color: #FFFFFF; }
+
+.safety-score-badge {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #34D399;
+  line-height: 1;
+}
+
+/* Driver ID Card Badge */
+.driver-id-card {
+  max-width: 420px;
+  margin: 0 auto;
+  border: 2px solid var(--color-dark-border-light);
+  border-radius: 16px;
+  overflow: hidden;
+  background-color: var(--color-dark-card);
+}
+
+.driver-id-header {
+  background-color: var(--color-dark-blue);
+  color: #FFFFFF;
+  padding: 16px;
+  text-align: center;
+}
+
+/* Map Containers */
+#map, #live-trip-map, #admin-sos-map {
+  height: 380px;
+  width: 100%;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-dark-border-light);
+  z-index: 1;
+}
+
+/* ==========================================================================
+   📱 COMPREHENSIVE RESPONSIVE DESIGN SUITE (Mobile, Tablet, Desktop)
+   ========================================================================== */
+
+/* 📱 Mobile Devices (Screen width <= 576px) */
+@media (max-width: 576px) {
+  /* Prevent iOS input auto-zoom */
+  input, select, textarea, .form-control, .form-select {
+    font-size: 16px !important;
+  }
+
+  body {
+    font-size: 0.92rem;
+  }
+
+  .container {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  /* Headings Scaling */
+  h1, .display-4, .display-5 { font-size: 1.75rem !important; }
+  h2, .display-6 { font-size: 1.45rem !important; }
+  h3 { font-size: 1.25rem !important; }
+  h4 { font-size: 1.1rem !important; }
+
+  /* Hero Section */
+  .hero-gradient {
+    padding: 35px 0 30px 0 !important;
+  }
+
+  /* Cards Padding */
+  .card, .saferide-card, .p-4, .p-md-5 {
+    padding: 16px !important;
+    border-radius: 12px !important;
+  }
+
+  /* Forms & Buttons */
+  .btn-lg {
+    padding: 12px 18px !important;
+    font-size: 0.95rem !important;
+  }
+
+  .d-flex.align-items-center.justify-content-between {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  /* Floating SOS Button on Mobile with Safe Area & Thumb Reach */
+  .floating-sos-btn {
+    bottom: calc(16px + var(--sab)) !important;
+    right: calc(14px + var(--sar)) !important;
+    padding: 12px 20px !important;
+    font-size: 0.85rem !important;
+    border-radius: 40px !important;
+  }
+
+  /* Responsive Map on Mobile (< 768px): min-height 50vh */
+  #map, #live-trip-map, #admin-sos-map, .leaflet-container {
+    width: 100% !important;
+    min-height: 50vh !important;
+    min-height: 50dvh !important;
+    height: 50vh !important;
+  }
+
+  /* Stat KPI Cards */
+  .stat-kpi-card {
+    padding: 14px !important;
+    gap: 12px !important;
+  }
+
+  .stat-icon {
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 1.25rem !important;
+  }
+
+  .safety-score-badge {
+    font-size: 1.75rem !important;
+  }
+
+  /* Tables Touch Momentum & Wrap */
+  .table-responsive {
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 1rem;
+    border-radius: 10px;
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .table th, .table td {
+    padding: 10px 8px !important;
+    font-size: 0.82rem !important;
+    white-space: nowrap;
+  }
+
+  /* Driver Card ID */
+  .driver-id-card {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Text & Badge Auto-wrapping on Narrow Screens (iPhone SE / 320px) */
+  .badge, .alert, p, span, h1, h2, h3, h4, h5, h6 {
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+}
+
+/* 📲 Tablet Devices (577px <= Screen width <= 991px) */
+@media (min-width: 577px) and (max-width: 991px) {
+  .hero-gradient {
+    padding: 50px 0 40px 0 !important;
+  }
+
+  .card, .p-md-5 {
+    padding: 24px !important;
+  }
+
+  #map, #live-trip-map, #admin-sos-map, .leaflet-container {
+    width: 100% !important;
+    min-height: 55vh !important;
+    min-height: 55dvh !important;
+    height: 55vh !important;
+  }
+
+  .floating-sos-btn {
+    bottom: 20px !important;
+    right: 20px !important;
+    padding: 12px 22px !important;
+    font-size: 0.9rem !important;
+  }
+}
+
+/* 📲 Mobile & Tablet Collapsed Navbar Dropdown Menu */
+@media (max-width: 991px) {
+  .navbar-collapse {
+    background-color: var(--color-dark-blue-light) !important;
+    padding: 16px !important;
+    border-radius: 12px !important;
+    margin-top: 10px !important;
+    border: 1px solid var(--color-dark-border-light) !important;
+  }
+  .navbar-nav .nav-link {
+    padding: 10px 14px !important;
+    border-radius: 8px !important;
+    font-size: 0.95rem !important;
+  }
+  .navbar-nav .nav-link:hover {
+    background-color: var(--color-dark-blue) !important;
+  }
+}
+
+/* 💻 Large Screens (Desktop >= 992px): Responsive Map min-height 70vh */
+@media (min-width: 992px) {
+  #map, #live-trip-map, #admin-sos-map, .leaflet-container {
+    width: 100% !important;
+    min-height: 70vh !important;
+    min-height: 70dvh !important;
+    height: 70vh !important;
+  }
+
+  .navbar-expand-lg .navbar-nav .nav-link {
+    padding-right: 0.9rem;
+    padding-left: 0.9rem;
+  }
+}
+
+/* 📱 Mobile-First Views Centered on Large Desktop Monitors (27"+) */
+.app-max-container {
+  max-width: 640px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  width: 100% !important;
+}
+
+.app-wide-container {
+  max-width: 880px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  width: 100% !important;
+}
+
+/* ========================================================= */
+/* 🚨 COMPONENT 1: GLOBAL ADMIN SOS ALARM FLOATING NOTIFICATION */
+/* ========================================================= */
+.admin-sos-floating-pill {
+  position: fixed;
+  top: 72px;
+  right: 24px;
+  z-index: 1060;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #7F1D1D 0%, #DC2626 50%, #B91C1C 100%);
+  color: #FFFFFF !important;
+  padding: 10px 18px;
+  border-radius: 50px;
+  border: 2px solid #FCA5A5;
+  box-shadow: 0 10px 30px rgba(220, 38, 38, 0.5), 0 0 0 0 rgba(220, 38, 38, 0.7);
+  animation: adminSosPillGlow 1.8s infinite;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.admin-sos-floating-pill:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 14px 36px rgba(220, 38, 38, 0.75), 0 0 20px rgba(252, 165, 165, 0.8);
+  border-color: #FFFFFF;
+}
+
+.admin-sos-bell-icon {
+  width: 38px;
+  height: 38px;
+  background: #450A0A;
+  border: 2px solid #FEF08A;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  color: #FEF08A !important;
+  animation: adminBellShake 1.2s infinite;
+}
+
+.admin-sos-text-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-sos-label {
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #FEF08A !important;
+  line-height: 1.1;
+}
+
+.admin-sos-subtext {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #FFFFFF !important;
+  line-height: 1.2;
+}
+
+.admin-sos-chevron {
+  font-size: 0.9rem;
+  color: #FFFFFF;
+  opacity: 0.8;
+  margin-left: 4px;
+}
+
+@keyframes adminSosPillGlow {
+  0% {
+    box-shadow: 0 8px 24px rgba(220, 38, 38, 0.5), 0 0 0 0 rgba(220, 38, 38, 0.8);
+  }
+  70% {
+    box-shadow: 0 12px 32px rgba(220, 38, 38, 0.7), 0 0 0 16px rgba(220, 38, 38, 0);
+  }
+  100% {
+    box-shadow: 0 8px 24px rgba(220, 38, 38, 0.5), 0 0 0 0 rgba(220, 38, 38, 0);
+  }
+}
+
+@keyframes adminBellShake {
+  0%, 100% { transform: rotate(0deg); }
+  20%, 60% { transform: rotate(-15deg); }
+  40%, 80% { transform: rotate(15deg); }
+}
+
+/* Flashing SOS Navbar Badge */
+.sos-navbar-badge {
+  background-color: #DC2626 !important;
+  color: #FFFFFF !important;
+  border: 1px solid #FCA5A5;
+  font-weight: 800;
+  animation: navbarBadgeFlash 1.5s infinite;
+}
+
+@keyframes navbarBadgeFlash {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.85; }
+}
+
+/* ========================================================= */
+/* 🗺️ COMPONENT 2: RADAR PULSE MAP MARKER & SIDE PANEL STYLES */
+/* ========================================================= */
+.sos-radar-marker {
+  position: relative;
+  width: 32px;
+  height: 32px;
+}
+
+.sos-radar-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 18px;
+  height: 18px;
+  background-color: #DC2626;
+  border: 3px solid #FFFFFF;
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(220, 38, 38, 0.9);
+  z-index: 2;
+}
+
+.sos-radar-wave {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(220, 38, 38, 0.4);
+  border: 2px solid rgba(239, 68, 68, 0.8);
+  animation: radarWaveExpand 2s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
+  z-index: 1;
+}
+
+.sos-radar-wave-delayed {
+  animation-delay: 0.7s;
+}
+
+@keyframes radarWaveExpand {
+  0% {
+    width: 18px;
+    height: 18px;
+    opacity: 1;
+  }
+  100% {
+    width: 72px;
+    height: 72px;
+    opacity: 0;
+  }
+}
+
+.sos-incident-card {
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.sos-incident-card:hover {
+  transform: translateY(-2px);
+  border-color: #EF4444 !important;
+}
+
+/* Snapshot-Only QR Viewfinder & Card Styles */
+.snapshot-interactive-card {
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+
+.snapshot-interactive-card:hover {
+  border-color: #FF9800 !important;
+  background-color: #111A2E !important;
+  box-shadow: 0 0 20px rgba(255, 152, 0, 0.15);
+}
+
+.snapshot-interactive-card:active {
+  transform: scale(0.99);
+}
+
+@media (max-width: 480px) {
+  .qr-target-box {
+    width: 175px !important;
+    height: 175px !important;
+  }
+  #snapshot-preview-img {
+    max-height: 220px !important;
+  }
+}
+
+/* ========================================================== */
+/* 🚨 EMERGENCY SOS BUTTONS & FLOATING NOTIFICATIONS */
+/* ========================================================== */
+
+.floating-sos-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  background: linear-gradient(135deg, #DC2626, #991B1B) !important;
+  color: #FFFFFF !important;
+  border: 3px solid #EF4444 !important;
+  border-radius: 50px !important;
+  padding: 14px 28px !important;
+  font-size: 1.15rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.8px !important;
+  box-shadow: 0 0 25px rgba(220, 38, 38, 0.7), 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+  animation: sosFloatPulse 1.6s infinite ease-in-out !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+  text-decoration: none !important;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.floating-sos-btn:hover {
+  transform: scale(1.06);
+  background: linear-gradient(135deg, #EF4444, #B91C1C) !important;
+  box-shadow: 0 0 35px rgba(239, 68, 68, 0.9), 0 12px 35px rgba(0, 0, 0, 0.6) !important;
+  color: #FFFFFF !important;
+}
+
+.floating-sos-btn:active {
+  transform: scale(0.96);
+}
+
+@keyframes sosFloatPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.85), 0 10px 30px rgba(0, 0, 0, 0.5);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 18px rgba(239, 68, 68, 0), 0 10px 30px rgba(0, 0, 0, 0.5);
+    transform: scale(1.04);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0), 0 10px 30px rgba(0, 0, 0, 0.5);
+    transform: scale(1);
+  }
+}
+
+/* Admin Global Floating Distress Siren Notification Pill */
+.admin-sos-floating-pill {
+  position: fixed;
+  top: 76px;
+  right: 24px;
+  z-index: 10000;
+  background: linear-gradient(135deg, #7F1D1D, #DC2626);
+  border: 2px solid #FEF08A;
+  border-radius: 50px;
+  padding: 10px 20px;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 0 25px rgba(220, 38, 38, 0.8), 0 10px 30px rgba(0,0,0,0.6);
+  animation: adminSirenFlash 1.2s infinite alternate ease-in-out;
+  transition: transform 0.2s ease;
+}
+
+.admin-sos-floating-pill:hover {
+  transform: scale(1.04);
+  color: #FFFFFF;
+  border-color: #FFFFFF;
+}
+
+.admin-sos-bell-icon {
+  background: rgba(0, 0, 0, 0.4);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  border: 1px solid #FEF08A;
+}
+
+.admin-sos-text-group {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.admin-sos-label {
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: #FEF08A;
+  letter-spacing: 0.5px;
+}
+
+.admin-sos-subtext {
+  font-size: 0.78rem;
+  opacity: 0.95;
+}
+
+@keyframes adminSirenFlash {
+  0% {
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+    border-color: #FEF08A;
+  }
+  100% {
+    box-shadow: 0 0 30px rgba(239, 68, 68, 0.95);
+    border-color: #EF4444;
+  }
+}
+
+/* Header Top-Right SOS Button */
+.header-sos-btn {
+  background: linear-gradient(135deg, #DC2626, #991B1B) !important;
+  border: 1.5px solid #FEF08A !important;
+  color: #FFFFFF !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.5px !important;
+  box-shadow: 0 0 12px rgba(220, 38, 38, 0.7) !important;
+  animation: sosHeaderPulse 1.8s infinite ease-in-out !important;
+  transition: transform 0.15s ease;
+}
+
+.header-sos-btn:hover {
+  transform: scale(1.08);
+  background: linear-gradient(135deg, #EF4444, #B91C1C) !important;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.9) !important;
+  color: #FFFFFF !important;
+}
+
+@keyframes sosHeaderPulse {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8); }
+  70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+/* ========================================================== */
+/* 📱 RESPONSIVE NAVIGATION STYLES (DESKTOP & MOBILE) */
+/* ========================================================== */
+
+@media (max-width: 991.98px) {
+  .navbar-collapse {
+    background: #0F172A;
+    border: 1px solid #1E293B;
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-top: 12px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.65);
+  }
+  
+  .navbar-nav .nav-item {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 2px 0;
+  }
+  
+  .navbar-nav .nav-item:last-child {
+    border-bottom: none;
+  }
+  
+  .navbar-nav .nav-link {
+    padding: 10px 12px !important;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+  }
+  
+  .navbar-nav .nav-link:hover,
+  .navbar-nav .nav-link:focus {
+    background: #1E293B;
+    color: #FF9800 !important;
+  }
+  
+  .navbar-user-section {
+    border-top: 1px solid #334155;
+    margin-top: 12px;
+    padding-top: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+}
+
+/* 📱 Mobile Bottom Quick-Action App Bar (< 768px) */
+.mobile-bottom-appbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: rgba(15, 23, 42, 0.96);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-top: 1px solid #1E293B;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 1030;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.mobile-bottom-appbar .nav-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #94A3B8;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: color 0.2s ease, transform 0.15s ease;
+  flex: 1;
+  text-align: center;
+}
+
+.mobile-bottom-appbar .nav-tab i {
+  font-size: 1.25rem;
+  margin-bottom: 2px;
+}
+
+.mobile-bottom-appbar .nav-tab:hover,
+.mobile-bottom-appbar .nav-tab:active,
+.mobile-bottom-appbar .nav-tab.active {
+  color: #FF9800 !important;
+  text-decoration: none;
+}
+
+@media (max-width: 768px) {
+  body {
+    padding-bottom: 74px !important;
+  }
+  .floating-sos-btn {
+    bottom: 78px !important;
+  }
+}
+
+
+
+
+
+

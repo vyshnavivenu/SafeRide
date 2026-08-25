@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}PROFILE MANAGEMENT - SafeRide{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+      <div class="card rounded-4 border shadow-lg p-4 p-md-5" style="background-color: #131C2E !important;">
+        
+        <!-- Form Header -->
+        <div class="text-center mb-4 border-bottom pb-3">
+          <h2 class="fw-bold text-white mb-0 text-uppercase tracking-wider">PROFILE MANAGEMENT</h2>
+        </div>
+
+        <!-- Driver Current Photo Preview -->
+        <div class="text-center mb-4">
+          {% if driver.driver_photo %}
+            <img src="{{ driver.driver_photo.url }}" class="rounded-circle border border-3 border-success shadow" style="width: 100px; height: 100px; object-fit: cover;" alt="Driver Photo">
+          {% else %}
+            <div class="rounded-circle shadow d-inline-flex align-items-center justify-content-center text-white fw-bold fs-2" style="width: 100px; height: 100px; background: #065F46;">
+              {{ driver.user.first_name|slice:":1" }}{{ driver.user.last_name|slice:":1"|default:"D" }}
+            </div>
+          {% endif %}
+        </div>
+
+        <form method="POST" enctype="multipart/form-data">
+          {% csrf_token %}
+
+          <!-- Section: Personal Information -->
+          <div class="mb-4">
+            <h6 class="text-uppercase fw-bold pb-2 border-bottom" style="color: #FF9800;">
+              <i class="fa-solid fa-user me-2"></i> Personal Details
+            </h6>
+            
+            <!-- Full Name -->
+            <div class="mb-3">
+              <label class="form-label fw-bold text-light">Full Name :</label>
+              <input type="text" name="name" class="form-control py-2 text-white" style="background-color: #0F172A;" placeholder="Full Name" value="{{ form.name.value|default:driver.name }}" pattern="[a-zA-Z\s\.\'\-]+" minlength="2" maxlength="100" title="Letters and spaces only" required>
+            </div>
+
+            <!-- Email & Phone -->
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-bold text-light">Email (Registered) :</label>
+                <input type="email" name="email" class="form-control py-2 text-white" style="background-color: #0F172A;" placeholder="Email" value="{{ form.email.value|default:driver.user.email }}" readonly>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold text-light">Phone Number :</label>
+                <input type="tel" name="phone_number" class="form-control py-2 text-white" style="background-color: #0F172A;" placeholder="10-digit Mobile (e.g. 9876543210)" pattern="(\+91[\-\s]?)?[6-9]\d{9}" minlength="10" maxlength="15" title="Valid 10-digit mobile number" value="{{ form.phone_number.value|default:driver.user.phone }}" required>
+              </div>
+            </div>
+
+            <!-- Profile Photo -->
+            <div class="mb-3">
+              <label class="form-label fw-bold text-light">Update Driver Photo :</label>
+              <input type="file" name="profile_photo" class="form-control py-2 text-white" style="background-color: #0F172A;" accept="image/*">
+            </div>
+          </div>
+
+          <!-- Section: Vehicle & License Information -->
+          <div class="mb-4">
+            <h6 class="text-uppercase fw-bold pb-2 border-bottom" style="color: #06B6D4;">
+              <i class="fa-solid fa-car me-2"></i> Vehicle & License Information
+            </h6>
+
+            <!-- License Number & Plate -->
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-bold text-light">License Number :</label>
+                <input type="text" name="license_number" class="form-control py-2 text-white font-monospace" style="background-color: #0F172A;" placeholder="License Number (e.g. KL-05-2021000892)" pattern="[A-Za-z]{2}[-\s]?[0-9A-Za-z\s\/\-]{6,20}" title="Valid Driving License Format" value="{{ form.license_number.value|default:driver.license_number }}">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold text-light">Vehicle Plate Number :</label>
+                <input type="text" name="vehicle_number" class="form-control py-2 text-white font-monospace text-uppercase" style="background-color: #0F172A;" placeholder="e.g. KL-05-AT-4455" pattern="[A-Za-z]{2}[-\s]?[0-9]{1,2}[-\s]?[A-Za-z]{1,3}[-\s]?[0-9]{4}" title="Format: KL-05-AT-4455" value="{{ form.vehicle_number.value|default:driver.vehicle_number }}">
+              </div>
+            </div>
+
+            <!-- Vehicle Type & Model -->
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-bold text-light">Vehicle Category :</label>
+                <select name="vehicle_type" class="form-select py-2 text-white" style="background-color: #0F172A;">
+                  <option value="auto" {% if form.vehicle_type.value == 'auto' or driver.vehicle_type == 'auto' %}selected{% endif %}>Auto-Rickshaw</option>
+                  <option value="taxi" {% if form.vehicle_type.value == 'taxi' or driver.vehicle_type == 'taxi' %}selected{% endif %}>Local Taxi (Hatchback/Sedan)</option>
+                  <option value="cab" {% if form.vehicle_type.value == 'cab' or driver.vehicle_type == 'cab' %}selected{% endif %}>Cab / Car</option>
+                  <option value="van" {% if form.vehicle_type.value == 'van' or driver.vehicle_type == 'van' %}selected{% endif %}>Passenger Van / Minibus</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold text-light">Vehicle Make / Model :</label>
+                <input type="text" name="vehicle_make_model" class="form-control py-2 text-white" style="background-color: #0F172A;" placeholder="e.g. Bajaj RE Compact 4S" value="{{ form.vehicle_make_model.value|default:'' }}">
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="d-flex gap-2 pt-2">
+            <button type="submit" class="btn btn-success btn-lg fw-bold flex-grow-1 rounded-pill shadow-sm text-uppercase">
+              SAVE CHANGES
+            </button>
+            <a href="{% url 'driver_dashboard' %}" class="btn btn-outline-light btn-lg rounded-pill fw-semibold px-4">
+              Cancel
+            </a>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block floating_sos %}{% endblock %}
+{% block footer %}{% endblock %}

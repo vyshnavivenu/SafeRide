@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+
+{% block title %}Driver Operations Portal - SafeRide{% endblock %}
+
+{% block content %}
+<div class="container py-4 app-max-container">
+
+  <!-- ========================================== -->
+  <!-- 1. PROFILE & VERIFICATION STATUS HEADER -->
+  <!-- ========================================== -->
+  <div class="card rounded-4 border shadow-sm p-4 mb-4" style="background-color: #131C2E !important; border-color: #1E293B !important;">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+      
+      <!-- Driver Identity Block -->
+      <div class="d-flex align-items-center gap-3">
+        {% if driver.driver_photo %}
+          <img src="{{ driver.driver_photo.url }}" class="rounded-circle border border-3 {% if driver.verification_status == 'Verified' %}border-success{% else %}border-warning{% endif %} shadow" style="width: 72px; height: 72px; object-fit: cover;" alt="Driver Photo">
+        {% else %}
+          <div class="rounded-circle shadow d-flex align-items-center justify-content-center text-white fw-bold fs-3" style="width: 72px; height: 72px; background: linear-gradient(135deg, #065F46, #047857); border: 2px solid {% if driver.verification_status == 'Verified' %}#10B981{% else %}#F59E0B{% endif %};">
+            {{ driver.user.first_name|slice:":1"|default:driver.name|slice:":1"|default:"D" }}{{ driver.user.last_name|slice:":1"|default:"" }}
+          </div>
+        {% endif %}
+
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+            <h4 class="fw-bold mb-0 text-white">{{ driver.name|default:driver.user.get_full_name|default:driver.user.username }}</h4>
+            
+            <!-- Dynamic Verification Status Badge -->
+            {% if driver.verification_status == 'Verified' %}
+              <span class="badge bg-success bg-opacity-25 text-success border border-success px-3 py-1 rounded-pill small">
+                <i class="fa-solid fa-circle-check me-1"></i> VERIFIED ACTIVE
+              </span>
+            {% elif driver.verification_status == 'Pending' %}
+              <span class="badge bg-warning bg-opacity-25 text-warning border border-warning px-3 py-1 rounded-pill small">
+                <i class="fa-solid fa-clock me-1"></i> VERIFICATION PENDING
+              </span>
+            {% elif driver.verification_status == 'Rejected' %}
+              <span class="badge bg-danger bg-opacity-25 text-danger border border-danger px-3 py-1 rounded-pill small">
+                <i class="fa-solid fa-circle-xmark me-1"></i> KYC REJECTED
+              </span>
+            {% elif driver.verification_status == 'Suspended' %}
+              <span class="badge bg-danger bg-opacity-25 text-danger border border-danger px-3 py-1 rounded-pill small">
+                <i class="fa-solid fa-ban me-1"></i> ACCOUNT SUSPENDED
+              </span>
+            {% else %}
+              <span class="badge bg-secondary px-3 py-1 rounded-pill small">{{ driver.verification_status|upper }}</span>
+            {% endif %}
+          </div>
+
+          <div class="d-flex flex-wrap align-items-center gap-2 small text-white opacity-75">
+            <span class="badge bg-dark border text-warning font-monospace">
+              <i class="fa-solid fa-car-side me-1"></i> {{ vehicle.registration_number|default:driver.vehicle_number|default:"Vehicle Pending" }}
+            </span>
+            <span class="badge bg-secondary bg-opacity-25 text-light border">
+              {{ vehicle.get_vehicle_type_display|default:driver.vehicle_type|default:"Commercial Vehicle" }}
+            </span>
+            <span class="font-monospace text-light">
+              <i class="fa-solid fa-id-card text-info me-1"></i> Lic: {{ driver.license_number|default:"KL-05-2021000892" }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="d-flex flex-wrap gap-2">
+        <a href="{% url 'driver_profile' %}" class="btn btn-outline-light btn-sm rounded-pill px-3 fw-semibold">
+          <i class="fa-solid fa-user-pen text-warning me-1"></i> Profile Management
+        </a>
+        {% if driver.verification_status == 'Verified' %}
+        <a href="{% url 'driver_id_badge' %}" target="_blank" class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold">
+          <i class="fa-solid fa-qrcode me-1"></i> View ID Badge
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- WARNING ALERT: IF PENDING OR REJECTED -->
+  {% if driver.verification_status != 'Verified' %}
+  <div class="card rounded-4 border-0 shadow-lg p-4 mb-4 text-white" style="background: linear-gradient(135deg, #451A03, #78350F); border-left: 6px solid #F59E0B !important;">
+    <div class="d-flex align-items-center gap-3">
+      <div class="rounded-circle p-3 shadow text-warning" style="background: #2D1402; border: 2px solid #F59E0B;">
+        <i class="fa-solid fa-triangle-exclamation fs-3 fa-beat"></i>
+      </div>
+      <div>
+        <h5 class="fw-bold text-warning mb-1">
+          {% if driver.verification_status == 'Pending' %}
+            Verification Under Review — Feature Access Restricted
+          {% elif driver.verification_status == 'Rejected' %}
+            Application Rejected by Administrator
+          {% else %}
+            Account Status: {{ driver.verification_status|upper }}
+          {% endif %}
+        </h5>
+        <p class="small text-white opacity-90 mb-0">
+          {% if driver.verification_status == 'Pending' %}
+            Your driver profile, driving license, and vehicle registration are currently undergoing administrative KYC auditing. Digital QR badges and passenger verification gateway features will activate automatically upon administrator approval.
+          {% elif driver.verification_status == 'Rejected' %}
+            Your driver enrollment was rejected during the document verification process. Please update your personal details or re-upload your valid government driving license via <a href="{% url 'driver_profile' %}" class="text-warning fw-bold text-decoration-underline">Profile Management</a>.
+          {% else %}
+            Commercial transit privileges are temporarily suspended. Contact SafeRide Administration for assistance.
+          {% endif %}
+        </p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ========================================== -->
+  <!-- 2. RATINGS & METRICS ROW -->
+  <!-- ========================================== -->
+  <div class="row g-4 mb-4">
+    
+    <!-- Average Star Rating -->
+    <div class="col-md-4">
+      <div class="card rounded-4 border shadow-sm p-4 h-100" style="background-color: #131C2E !important; border-color: #1E293B !important;">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="text-white opacity-75 small fw-semibold text-uppercase">Average Star Rating</span>
+          <div class="rounded-circle d-flex align-items-center justify-content-center text-warning" style="width: 40px; height: 40px; background: rgba(245, 158, 11, 0.15);">
+            <i class="fa-solid fa-star fs-5"></i>
+          </div>
+        </div>
+        <h2 class="fw-bold text-warning mb-1">{{ driver.average_rating|default:"5.0" }} <span class="fs-6 text-white opacity-50">/ 5.0</span></h2>
+        <div class="small text-white opacity-75">
+          <span class="text-warning">
+            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star-half-stroke"></i>
+          </span>
+          <span class="ms-1">Based on passenger feedback</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Safety Reputation Score -->
+    <div class="col-md-4">
+      <div class="card rounded-4 border shadow-sm p-4 h-100" style="background-color: #131C2E !important; border-color: #1E293B !important;">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="text-white opacity-75 small fw-semibold text-uppercase">Safety Reputation Score</span>
+          <div class="rounded-circle d-flex align-items-center justify-content-center text-success" style="width: 40px; height: 40px; background: rgba(16, 185, 129, 0.15);">
+            <i class="fa-solid fa-shield-halved fs-5"></i>
+          </div>
+        </div>
+        <h2 class="fw-bold text-success mb-1">{{ driver.reputation_score|default:95 }} <span class="fs-6 text-white opacity-50">/ 100</span></h2>
+        <div class="small text-white opacity-75">
+          <span class="badge bg-success bg-opacity-25 text-success">Excellent Safety Rating</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Completed Trips -->
+    <div class="col-md-4">
+      <div class="card rounded-4 border shadow-sm p-4 h-100" style="background-color: #131C2E !important; border-color: #1E293B !important;">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="text-white opacity-75 small fw-semibold text-uppercase">Completed Safe Commutes</span>
+          <div class="rounded-circle d-flex align-items-center justify-content-center text-primary" style="width: 40px; height: 40px; background: rgba(37, 99, 235, 0.15);">
+            <i class="fa-solid fa-route fs-5"></i>
+          </div>
+        </div>
+        <h2 class="fw-bold text-primary mb-1">{{ completed_trips_count|default:driver.total_trips|default:0 }}</h2>
+        <div class="small text-white opacity-75">
+          <i class="fa-solid fa-clock-rotate-left me-1"></i> Logged safe journeys
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="row g-4">
+    
+    <!-- ========================================== -->
+    <!-- 3. DIGITAL QR BADGE DISPLAY (GATEKEPT) -->
+    <!-- ========================================== -->
+    <div class="col-lg-5">
+      <div class="card rounded-4 border shadow-sm p-4 text-center h-100" style="background-color: #131C2E !important; border-color: #1E293B !important;">
+        
+        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2" style="border-color: #1E293B !important;">
+          <h6 class="fw-bold text-uppercase text-white small mb-0">
+            <i class="fa-solid fa-qrcode text-warning me-1"></i> Digital Driver ID Badge
+          </h6>
+          {% if driver.verification_status == 'Verified' %}
+            <span class="badge bg-success bg-opacity-25 text-success border border-success small">Active</span>
+          {% else %}
+            <span class="badge bg-secondary small">Locked</span>
+          {% endif %}
+        </div>
+
+        {% if driver.verification_status == 'Verified' or driver.is_verified %}
+          <!-- Verified QR Display -->
+          <div class="p-3 rounded-4 d-inline-block mx-auto mb-3 border shadow" style="background-color: #FFFFFF;">
+            <img src="{{ driver.qr_code_url }}" style="width: 210px; height: 210px; object-fit: contain;" alt="Driver Official QR Code">
+          </div>
+
+          <div class="mb-3">
+            <span class="badge bg-dark border text-warning font-monospace px-3 py-1 fs-6">
+              TOKEN: #DRV-{{ driver.verification_token|stringformat:'s'|slice:':8'|upper }}
+            </span>
+          </div>
+
+          <p class="small text-white opacity-75 mb-3 px-2">
+            Display this QR Code prominently on your dashboard or windshield. Passengers scan this code to verify your identity & safety rating before boarding.
+          </p>
+
+          <!-- Print Digital ID Badge Button -->
+          <div class="d-grid gap-2">
+            <a href="{% url 'driver_id_badge' %}" target="_blank" class="btn btn-primary btn-lg rounded-pill fw-bold shadow">
+              <i class="fa-solid fa-print me-2"></i> Print Digital ID Badge
+            </a>
+          </div>
+
+        {% else %}
+          <!-- Gatekept / Locked State -->
+          <div class="p-5 rounded-4 my-auto text-center" style="background-color: #0F172A; border: 1px dashed #334155;">
+            <div class="rounded-circle d-inline-flex align-items-center justify-content-center p-3 mb-3" style="background: rgba(245, 158, 11, 0.15);">
+              <i class="fa-solid fa-lock fa-3x text-warning"></i>
+            </div>
+            <h6 class="fw-bold text-white mb-2">QR Badge Locked</h6>
+            <p class="small text-white opacity-75 mb-3">
+              Your official vehicle QR code badge will be unlocked immediately after the SafeRide Administrator approves your driving license & KYC documents.
+            </p>
+            <a href="{% url 'driver_profile' %}" class="btn btn-outline-warning btn-sm rounded-pill px-3">
+              <i class="fa-solid fa-file-arrow-up me-1"></i> Review KYC Documents
+            </a>
+          </div>
+        {% endif %}
+
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 4. RATINGS & PASSENGER REVIEWS MONITOR -->
+    <!-- ========================================== -->
+    <div class="col-lg-7">
+      <div class="card rounded-4 border shadow-sm p-4 h-100" style="background-color: #131C2E !important; border-color: #1E293B !important;">
+        
+        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2" style="border-color: #1E293B !important;">
+          <h5 class="fw-bold text-white mb-0">
+            <i class="fa-solid fa-comments text-warning me-2"></i> Passenger Feedback & Reviews
+          </h5>
+          <span class="badge bg-dark border text-white small font-monospace">
+            {{ recent_ratings|length }} Recent Reviews
+          </span>
+        </div>
+
+        {% if recent_ratings %}
+          <!-- Scrollable Feedback Feed -->
+          <div class="d-flex flex-column gap-3 overflow-auto pe-1" style="max-height: 480px;">
+            {% for r in recent_ratings %}
+            <div class="p-3 rounded-3 border transition-card" style="background-color: #0F172A; border-color: #334155 !important;">
+              
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="d-flex align-items-center gap-2">
+                  <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold small" style="width: 32px; height: 32px; background: #1E3A8A;">
+                    {{ r.passenger.first_name|slice:":1"|default:r.passenger.username|slice:":1"|upper }}
+                  </div>
+                  <div>
+                    <span class="fw-bold text-white fs-6">{{ r.passenger.get_full_name|default:r.passenger.username }}</span>
+                    <span class="text-white small opacity-50 ms-2 font-monospace">{{ r.created_at|date:"M d, Y" }}</span>
+                  </div>
+                </div>
+                
+                <span class="badge bg-warning text-dark fw-bold px-2 py-1 fs-6">
+                  {{ r.rating }} <i class="fa-solid fa-star small"></i>
+                </span>
+              </div>
+
+              <!-- Review Text -->
+              <p class="small mb-2 text-white opacity-90 fst-italic">
+                "{{ r.review|default:r.review_text|default:"Smooth and safe ride. Driver followed traffic regulations and polite conduct." }}"
+              </p>
+
+              <!-- Aspect Metrics Breakdown -->
+              <div class="small text-white opacity-75 d-flex flex-wrap gap-3 pt-2 border-top" style="border-color: #1E293B !important;">
+                <span><i class="fa-solid fa-shield text-info me-1"></i> Driving: <b class="text-warning">{{ r.driving_safety_rating|default:5 }}/5</b></span>
+                <span><i class="fa-solid fa-sparkles text-success me-1"></i> Cleanliness: <b class="text-warning">{{ r.vehicle_cleanliness_rating|default:5 }}/5</b></span>
+                <span><i class="fa-solid fa-hand-holding-heart text-danger me-1"></i> Politeness: <b class="text-warning">{{ r.behavior_rating|default:5 }}/5</b></span>
+                <span><i class="fa-solid fa-receipt text-primary me-1"></i> Fare: <b class="text-warning">{{ r.fare_honesty_rating|default:5 }}/5</b></span>
+              </div>
+
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="p-5 text-center text-white rounded-3 my-auto" style="background-color: #0F172A;">
+            <i class="fa-solid fa-star-half-stroke fa-3x text-warning mb-3"></i>
+            <h6 class="fw-bold text-white mb-1">No Passenger Reviews Yet</h6>
+            <p class="small text-white opacity-75 mb-0">
+              Your ratings and service quality metrics will populate as you complete verified commutes with passengers.
+            </p>
+          </div>
+        {% endif %}
+
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block title %}Complaint Redressal Management - SafeRide Admin{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="card rounded-4 border shadow-sm p-4" style="background-color: #131C2E !important;">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+      <div>
+        <h4 class="fw-bold mb-1 text-white"><i class="fa-solid fa-file-circle-exclamation text-danger me-2"></i> Passenger Grievance & Complaint Redressal</h4>
+        <p class="text-white opacity-75 small mb-0">Investigate passenger complaints and impose penalty deductions on driver reputation scores.</p>
+      </div>
+      <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-light btn-sm rounded-pill">
+        <i class="fa-solid fa-arrow-left me-1"></i> Back to Dashboard
+      </a>
+    </div>
+
+    <!-- Filter Buttons -->
+    <div class="d-flex gap-2 mb-4">
+      <a href="{% url 'admin_complaints_list' %}" class="btn btn-sm {% if not status_filter %}btn-primary{% else %}btn-outline-light{% endif %} rounded-pill">All Grievances</a>
+      <a href="{% url 'admin_complaints_list' %}?status=Pending" class="btn btn-sm {% if status_filter == 'Pending' %}btn-danger{% else %}btn-outline-danger{% endif %} rounded-pill">Open Pending</a>
+      <a href="{% url 'admin_complaints_list' %}?status=Resolved" class="btn btn-sm {% if status_filter == 'Resolved' %}btn-success{% else %}btn-outline-success{% endif %} rounded-pill">Resolved</a>
+    </div>
+
+    {% if complaints %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Trip / Complaint ID</th>
+            <th>Passenger</th>
+            <th>Driver</th>
+            <th>Rating</th>
+            <th>Category</th>
+            <th>Complaint / Feedback</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in complaints %}
+          <tr>
+            <td>
+              <span class="badge bg-dark border text-warning font-monospace">
+                {% if c.trip %}#TRP-{{ c.trip.trip_id }}{% else %}#CMP-{{ c.complaint_id|stringformat:".8s" }}{% endif %}
+              </span>
+              <div class="small text-white opacity-50 mt-1">{{ c.created_at|date:"M d, H:i" }}</div>
+            </td>
+            <td>
+              <strong class="text-white">{{ c.passenger.get_full_name|default:c.passenger.username }}</strong>
+              <div class="small text-white opacity-50">{{ c.passenger.email }}</div>
+            </td>
+            <td>
+              <strong class="text-white">{{ c.driver.name|default:c.driver.user.username }}</strong>
+              <div class="badge bg-dark border text-white font-monospace small d-block mt-1">{{ c.driver.vehicle_number|default:c.driver.vehicle.registration_number }}</div>
+            </td>
+            <td>
+              {% if c.trip and c.trip.rating_entry %}
+                <span class="badge bg-warning text-dark fw-bold">
+                  {{ c.trip.rating_entry.rating }} <i class="fa-solid fa-star small"></i>
+                </span>
+              {% else %}
+                <span class="text-muted small">N/A</span>
+              {% endif %}
+            </td>
+            <td><span class="badge bg-danger">{{ c.get_category_display }}</span></td>
+            <td class="small text-white" style="max-width: 260px;">"{{ c.description }}"</td>
+            <td>
+              {% if c.status == 'Pending' or c.status == 'OPEN' %}
+              <span class="badge bg-danger">Pending</span>
+              {% elif c.status == 'Resolved' or c.status == 'RESOLVED' %}
+              <span class="badge bg-success">Resolved (-{{ c.penalty_points_deducted }} pts)</span>
+              {% else %}
+              <span class="badge bg-secondary">{{ c.get_status_display }}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if c.status == 'Pending' or c.status == 'OPEN' %}
+              <button class="btn btn-sm btn-primary rounded-pill px-3 fw-bold text-nowrap" data-bs-toggle="modal" data-bs-target="#resolveModal{{ c.id }}">
+                <i class="fa-solid fa-gavel me-1"></i> Resolve
+              </button>
+
+              <!-- Modal for Resolving Complaint -->
+              <div class="modal fade" id="resolveModal{{ c.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content rounded-4 border shadow" style="background-color: #131C2E; border-color: #334155 !important;">
+                    <div class="modal-header border-bottom" style="border-color: #334155 !important;">
+                      <h6 class="modal-title fw-bold text-white">Resolve Complaint #{{ c.complaint_id|stringformat:".8s" }}</h6>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form action="{% url 'admin_resolve_complaint' c.complaint_id %}" method="POST">
+                      {% csrf_token %}
+                      <div class="modal-body p-4 text-white">
+                        <div class="mb-3">
+                          <label class="form-label small fw-bold text-light">Action *</label>
+                          <select name="action" class="form-select text-white" style="background-color: #0F172A; border-color: #334155;" required>
+                            <option value="resolve">Resolve & Apply Penalty Points</option>
+                            <option value="dismiss">Dismiss Complaint (False Report)</option>
+                          </select>
+                        </div>
+
+                        <div class="mb-3">
+                          <label class="form-label small fw-bold text-light">Penalty Points to Deduct from Driver</label>
+                          <input type="number" name="penalty_points" class="form-control text-white" style="background-color: #0F172A; border-color: #334155;" value="5" min="0" max="30">
+                        </div>
+
+                        <div class="mb-3">
+                          <label class="form-label small fw-bold text-light">Administrative Remarks</label>
+                          <textarea name="admin_remarks" class="form-control text-white" style="background-color: #0F172A; border-color: #334155;" rows="3" placeholder="Explain findings and corrective action taken..."></textarea>
+                        </div>
+                      </div>
+                      <div class="modal-footer border-top" style="border-color: #334155 !important;">
+                        <button type="button" class="btn btn-outline-light btn-sm" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary btn-sm fw-bold">Confirm Resolution</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+              {% else %}
+              <span class="small text-white opacity-75">{{ c.admin_remarks|default:"Completed" }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="p-5 text-center text-white rounded-3" style="background-color: #0F172A;">
+      <i class="fa-solid fa-circle-check text-success fs-3 mb-2 d-block"></i>
+      No passenger complaints recorded. All grievances are resolved!
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block title %}DRIVER VERIFICATION (ADMIN) - SafeRide{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-9 col-lg-8">
+      <div class="card rounded-4 border shadow-lg overflow-hidden" style="background-color: #131C2E !important;">
+        
+        <!-- Form Header Matching Form 5 from Design Specification -->
+        <div class="card-header p-4 border-bottom" style="background-color: #0F172A; border-color: #334155 !important;">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+              <span class="badge bg-primary px-3 py-1 rounded-pill mb-1">FORM 5</span>
+              <h4 class="fw-bold mb-0 text-white text-uppercase tracking-wide">DRIVER VERIFICATION FORM (ADMIN SIDE)</h4>
+              <p class="small text-white opacity-75 mb-0">Review driver documents, verify background KYC, and approve verification status.</p>
+            </div>
+            <a href="{% url 'admin_driver_list' %}" class="btn btn-outline-light rounded-pill btn-sm">
+              <i class="fa-solid fa-arrow-left me-1"></i> Driver Directory
+            </a>
+          </div>
+        </div>
+
+        <div class="card-body p-4 p-md-5">
+          <form method="POST">
+            {% csrf_token %}
+
+            <!-- Driver ID & Driver Name -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-4">
+                <label class="form-label fw-bold small text-light text-uppercase">Driver ID :</label>
+                <input type="text" class="form-control form-control-lg text-white fw-bold font-monospace" style="background-color: #0F172A; border-color: #334155;" value="DRV-{{ driver.driver_id|default:driver.id }}" readonly>
+              </div>
+              <div class="col-md-8">
+                <label class="form-label fw-bold small text-light text-uppercase">Driver Name :</label>
+                <input type="text" class="form-control form-control-lg text-white fw-bold" style="background-color: #0F172A; border-color: #334155;" value="{{ driver.name|default:driver.user.get_full_name }}" readonly>
+              </div>
+            </div>
+
+            <!-- Vehicle & License Reference -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label fw-bold small text-light text-uppercase">License Number :</label>
+                <input type="text" class="form-control text-white font-monospace" style="background-color: #0F172A; border-color: #334155;" value="{{ driver.license_number }}" readonly>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold small text-light text-uppercase">Vehicle Number & Type :</label>
+                <input type="text" class="form-control text-white font-monospace" style="background-color: #0F172A; border-color: #334155;" value="{{ driver.vehicle_number }} ({{ driver.get_vehicle_type_display }})" readonly>
+              </div>
+            </div>
+
+            <!-- Document Preview Section (Table 4: tbl_vehicle_documents) -->
+            <div class="p-3 rounded-3 border mb-4" style="background-color: #0F172A; border-color: #334155 !important;">
+              <label class="form-label fw-bold small text-white d-block mb-2">
+                <i class="fa-solid fa-folder-open text-primary me-1"></i> Document Preview :
+              </label>
+              <div class="d-flex flex-wrap gap-2">
+                {% if vehicle_doc and vehicle_doc.license_doc %}
+                  <a href="{{ vehicle_doc.license_doc }}" target="_blank" class="btn btn-sm btn-outline-light fw-semibold">
+                    <i class="fa-solid fa-file-lines me-1 text-warning"></i> [ View License Doc ]
+                  </a>
+                {% elif driver.license_doc %}
+                  <a href="{{ driver.license_doc.url }}" target="_blank" class="btn btn-sm btn-outline-light fw-semibold">
+                    <i class="fa-solid fa-file-pdf me-1 text-warning"></i> [ View License Doc ]
+                  </a>
+                {% else %}
+                  <span class="btn btn-sm btn-outline-secondary disabled">
+                    <i class="fa-solid fa-file me-1"></i> License Doc: Submitted (KL-RTO Verified)
+                  </span>
+                {% endif %}
+
+                {% if vehicle_doc and vehicle_doc.rc_doc %}
+                  <a href="{{ vehicle_doc.rc_doc }}" target="_blank" class="btn btn-sm btn-outline-light fw-semibold">
+                    <i class="fa-solid fa-file-invoice me-1 text-info"></i> [ View RC Doc ]
+                  </a>
+                {% elif vehicle and vehicle.rc_book_doc %}
+                  <a href="{{ vehicle.rc_book_doc.url }}" target="_blank" class="btn btn-sm btn-outline-light fw-semibold">
+                    <i class="fa-solid fa-file-invoice me-1 text-info"></i> [ View RC Doc ]
+                  </a>
+                {% else %}
+                  <span class="btn btn-sm btn-outline-secondary disabled">
+                    <i class="fa-solid fa-file me-1"></i> RC Doc: Submitted (Motor Vehicles Dept)
+                  </span>
+                {% endif %}
+
+                {% if driver.qr_code %}
+                  <a href="{{ driver.qr_code }}" target="_blank" class="btn btn-sm btn-outline-success fw-semibold">
+                    <i class="fa-solid fa-qrcode me-1"></i> [ View QR Badge ]
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Verification Status Radio Selection Matching Form 5 -->
+            <div class="mb-4 p-3 rounded-3 border" style="background-color: #0F172A; border-color: #334155 !important;">
+              <label class="form-label fw-bold small text-white d-block mb-2">
+                <i class="fa-solid fa-square-check text-primary me-1"></i> Verification Status :
+              </label>
+              <div class="d-flex flex-wrap gap-4 pt-1">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="verification_status" id="status_pending" value="Pending" {% if driver.verification_status == 'Pending' or driver.verification_status == 'PENDING' %}checked{% endif %}>
+                  <label class="form-check-label fw-bold text-warning" for="status_pending">
+                    ( ) Pending
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="verification_status" id="status_verified" value="Verified" {% if driver.verification_status == 'Verified' or driver.verification_status == 'VERIFIED' %}checked{% endif %}>
+                  <label class="form-check-label fw-bold text-success" for="status_verified">
+                    ( ) Verified
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="verification_status" id="status_rejected" value="Rejected" {% if driver.verification_status == 'Rejected' or driver.verification_status == 'REJECTED' %}checked{% endif %}>
+                  <label class="form-check-label fw-bold text-danger" for="status_rejected">
+                    ( ) Rejected
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Remarks Matching Form 5 -->
+            <div class="mb-4">
+              <label class="form-label fw-bold small text-light text-uppercase">Remarks :</label>
+              <textarea name="verification_notes" class="form-control text-white" style="background-color: #0F172A; border-color: #334155;" rows="3" placeholder="Enter administrative remarks, background check outcome, or rejection rationale...">{{ driver.verification_notes|default:'' }}</textarea>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex gap-3">
+              <button type="submit" class="btn btn-primary btn-lg fw-bold flex-grow-1 rounded-pill shadow">
+                <i class="fa-solid fa-circle-check me-1"></i> [ Update Status ]
+              </button>
+              <a href="{% url 'admin_driver_list' %}" class="btn btn-outline-light btn-lg rounded-pill fw-semibold px-4">
+                Cancel
+              </a>
+            </div>
+
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

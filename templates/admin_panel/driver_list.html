@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}Driver Management Directory - SafeRide Admin{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="card rounded-4 border shadow-sm p-4" style="background-color: #131C2E !important;">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+      <div>
+        <h4 class="fw-bold mb-1 text-white"><i class="fa-solid fa-user-check text-success me-2"></i> Driver Verification & KYC Directory</h4>
+        <p class="text-white opacity-75 small mb-0">Review driver credentials, inspect licence & RC documents, and issue QR verification status.</p>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-light rounded-pill btn-sm fw-semibold">
+          <i class="fa-solid fa-arrow-left me-1"></i> Dashboard
+        </a>
+        <a href="{% url 'admin_driver_register' %}" class="btn btn-primary rounded-pill btn-sm fw-semibold">
+          <i class="fa-solid fa-plus me-1"></i> Register New Driver
+        </a>
+      </div>
+    </div>
+
+    <!-- Filter & Search Bar -->
+    <form method="GET" class="row g-2 mb-4">
+      <div class="col-md-5">
+        <input type="text" name="q" class="form-control text-white" style="background-color: #0F172A; border-color: #334155;" placeholder="Search by name, license no, or vehicle number..." value="{{ query }}">
+      </div>
+      <div class="col-md-4">
+        <select name="status" class="form-select text-white" style="background-color: #0F172A; border-color: #334155;">
+          <option value="">-- All Verification Statuses --</option>
+          {% for val, label in status_choices %}
+          <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3 d-flex gap-2">
+        <button type="submit" class="btn btn-primary w-100 fw-semibold">Filter</button>
+        {% if query or status_filter %}
+        <a href="{% url 'admin_driver_list' %}" class="btn btn-outline-light">Reset</a>
+        {% endif %}
+      </div>
+    </form>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Driver</th>
+            <th>License Number</th>
+            <th>Vehicle & Plate</th>
+            <th>Reputation</th>
+            <th>Status</th>
+            <th>QR Code</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in drivers %}
+          <tr>
+            <td>
+              <strong class="text-white">{{ d.name|default:d.user.get_full_name|default:d.user.username }}</strong><br>
+              <span class="small text-white opacity-75">{{ d.phone_number|default:d.user.phone|default:"No phone" }}</span>
+            </td>
+            <td><code class="text-warning">{{ d.license_number }}</code></td>
+            <td>
+              <strong class="text-white">{{ d.vehicle_number|default:d.vehicle.registration_number|default:"Pending" }}</strong><br>
+              <span class="small text-white opacity-75">{{ d.get_vehicle_type_display }}</span>
+            </td>
+            <td>
+              <span class="fw-bold text-success">{{ d.reputation_score }}/100</span><br>
+              <span class="small text-white opacity-75">{{ d.average_rating }} ★ ({{ d.total_trips }} trips)</span>
+            </td>
+            <td>
+              {% if d.verification_status == 'VERIFIED' or d.verification_status == 'Verified' %}
+              <span class="badge bg-success bg-opacity-25 text-success border border-success">Verified</span>
+              {% elif d.verification_status == 'PENDING' or d.verification_status == 'Pending' %}
+              <span class="badge bg-warning text-dark">Pending KYC</span>
+              {% else %}
+              <span class="badge bg-danger">{{ d.get_verification_status_display }}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if d.qr_code %}
+              <img src="{{ d.qr_code }}" style="width: 40px; height: 40px; object-fit: contain;" class="border rounded bg-white p-1" alt="QR">
+              {% else %}
+              <span class="small text-white opacity-50">No QR</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{% url 'admin_driver_kyc' d.id %}" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold">
+                <i class="fa-solid fa-user-check me-1"></i> Verify KYC
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="text-center py-4 text-white opacity-75">No drivers match the selected filter.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

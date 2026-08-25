@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block title %}PASSENGER REGISTRATION - SafeRide{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-7 col-lg-6">
+      <div class="card rounded-4 border shadow-lg p-4 p-md-5">
+        
+        <!-- Header: PASSENGER REGISTRATION -->
+        <div class="text-center mb-4 border-bottom pb-3">
+          <h2 class="fw-bold text-white mb-0 text-uppercase tracking-wider">PASSENGER REGISTRATION</h2>
+        </div>
+
+        {% if form.errors %}
+        <div class="alert alert-danger rounded-3 py-2 px-3 small mb-3">
+          <ul class="mb-0 ps-3">
+            {% for field, errors in form.errors.items %}
+              {% for error in errors %}
+                <li><strong>{{ field|capfirst }}:</strong> {{ error }}</li>
+              {% endfor %}
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+
+        <form method="POST" action="{% url 'passenger_register' %}">
+          {% csrf_token %}
+
+          <!-- Full Name -->
+          <div class="mb-3">
+            <label class="form-label fw-bold text-light">Full Name :</label>
+            <div class="row g-2">
+              <div class="col-6">
+                <input type="text" name="first_name" class="form-control py-2 text-white" style="background-color: #0F172A;" placeholder="First Name" value="{{ form.first_name.value|default:'' }}" pattern="[a-zA-Z\s\.\'\-]+" minlength="2" maxlength="50" title="Letters and spaces only" required>
+              </div>
+              <div class="col-6">
+                <input type="text" name="last_name" class="form-control py-2 text-white" style="background-color: #0F172A;" placeholder="Last Name" value="{{ form.last_name.value|default:'' }}" pattern="[a-zA-Z\s\.\'\-]+" minlength="1" maxlength="50" title="Letters and spaces only" required>
+              </div>
+            </div>
+          </div>
+
+          <!-- Username & Email -->
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold text-light">Username :</label>
+              <input type="text" name="username" class="form-control py-2 text-white" style="background-color: #0F172A;" placeholder="Choose a username" minlength="3" maxlength="50" value="{{ form.username.value|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold text-light">Email Address :</label>
+              <input type="email" name="email" class="form-control py-2 text-white" style="background-color: #0F172A;" placeholder="Email Address" value="{{ form.email.value|default:'' }}" required>
+            </div>
+          </div>
+
+          <!-- Phone Number -->
+          <div class="mb-3">
+            <label class="form-label fw-bold text-light">Phone Number :</label>
+            <input type="tel" name="phone" class="form-control py-2 text-white" style="background-color: #0F172A;" placeholder="10-digit Mobile Number (e.g. 9876543210)" pattern="(\+91[\-\s]?)?[6-9]\d{9}" minlength="10" maxlength="15" title="Valid 10-digit mobile number" value="{{ form.phone.value|default:'' }}" required>
+          </div>
+
+          <!-- Emergency Contact Preview -->
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold text-light">Emergency Contact Name :</label>
+              <input type="text" name="emergency_contact_1_name" class="form-control py-2 text-white" style="background-color: #0F172A;" placeholder="Parent / Spouse Name" pattern="[a-zA-Z\s\.\'\-]+" title="Letters and spaces only" value="{{ form.emergency_contact_1_name.value|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold text-light">Emergency Contact Phone :</label>
+              <input type="tel" name="emergency_contact_1_phone" class="form-control py-2 text-white" style="background-color: #0F172A;" placeholder="Emergency Phone No" pattern="(\+91[\-\s]?)?[6-9]\d{9}" minlength="10" maxlength="15" value="{{ form.emergency_contact_1_phone.value|default:'' }}">
+            </div>
+          </div>
+
+          <!-- Password -->
+          <div class="mb-3">
+            <label class="form-label fw-bold text-light">Password :</label>
+            <div class="position-relative">
+              <input type="password" name="password1" id="id_password1" class="form-control py-2 pe-5 text-white" style="background-color: #0F172A;" placeholder="Password (min 4 chars)" minlength="4" required>
+              <button type="button" class="btn p-0 border-0 bg-transparent position-absolute end-0 top-50 translate-middle-y me-3" onclick="togglePasswordVisibility('id_password1', 'togglePasswordIcon1')" title="Show / Hide Password" style="cursor: pointer; z-index: 10; line-height: 1; outline: none; box-shadow: none;">
+                <i class="fa-solid fa-eye fs-5 text-light opacity-75" id="togglePasswordIcon1"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Confirm Password -->
+          <div class="mb-4">
+            <label class="form-label fw-bold text-light">Confirm Password :</label>
+            <div class="position-relative">
+              <input type="password" name="password2" id="id_password2" class="form-control py-2 pe-5 text-white" style="background-color: #0F172A;" placeholder="Confirm Password" minlength="4" required>
+              <button type="button" class="btn p-0 border-0 bg-transparent position-absolute end-0 top-50 translate-middle-y me-3" onclick="togglePasswordVisibility('id_password2', 'togglePasswordIcon2')" title="Show / Hide Password" style="cursor: pointer; z-index: 10; line-height: 1; outline: none; box-shadow: none;">
+                <i class="fa-solid fa-eye fs-5 text-light opacity-75" id="togglePasswordIcon2"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Register Button -->
+          <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold rounded-pill mb-3 shadow-sm text-uppercase">
+            REGISTER
+          </button>
+        </form>
+
+        <div class="text-center pt-3 border-top small">
+          <span class="text-white">Already registered?</span> <a href="{% url 'passenger_login' %}" class="fw-bold text-decoration-none ms-1" style="color: #FF9800;">Sign In</a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function togglePasswordVisibility(inputId, iconId) {
+  const input = document.getElementById(inputId);
+  const icon = document.getElementById(iconId);
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    if (icon) {
+      icon.classList.remove('fa-eye');
+      icon.classList.add('fa-eye-slash');
+    }
+  } else {
+    input.type = 'password';
+    if (icon) {
+      icon.classList.remove('fa-eye-slash');
+      icon.classList.add('fa-eye');
+    }
+  }
+}
+</script>
+{% endblock %}
+
+{% block floating_sos %}{% endblock %}
+{% block footer %}{% endblock %}

@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+
+{% block title %}Passenger Trip History - SafeRide{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="card rounded-4 border shadow-lg p-4 p-md-5" style="background-color: #0F172A; border: 1px solid #1E293B;">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 border-bottom border-secondary border-opacity-25 pb-3">
+      <div>
+        <h4 class="fw-bold text-white mb-1">
+          <i class="fa-solid fa-route text-warning me-2"></i> Monitored Journey History
+        </h4>
+        <p class="text-muted small mb-0">Complete record of your past journeys, destination drop points, and driver safety ratings.</p>
+      </div>
+      <a href="{% url 'passenger_dashboard' %}" class="btn btn-outline-light btn-sm rounded-pill px-3">
+        <i class="fa-solid fa-arrow-left me-1"></i> Back to Dashboard
+      </a>
+    </div>
+
+    {% if trips %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0" style="color: #E2E8F0;">
+        <thead class="small text-uppercase" style="background-color: #131C2E; color: #94A3B8; border-bottom: 1px solid #1E293B;">
+          <tr>
+            <th class="py-3 ps-3">Trip ID</th>
+            <th class="py-3">Driver & Vehicle</th>
+            <th class="py-3">Boarding Point</th>
+            <th class="py-3">Destination Point</th>
+            <th class="py-3">Date & Time</th>
+            <th class="py-3">Status</th>
+            <th class="py-3 pe-3 text-end">Your Rating</th>
+          </tr>
+        </thead>
+        <tbody style="border-top: none;">
+          {% for t in trips %}
+          <tr style="border-bottom: 1px solid #1E293B;">
+            <td class="ps-3">
+              <span class="badge font-monospace" style="background-color: #1E293B; color: #60A5FA;">#{{ t.trip_id|stringformat:".8s" }}</span>
+            </td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <span class="rounded-circle bg-primary bg-opacity-10 text-primary p-2 small">
+                  <i class="fa-solid fa-user-tie"></i>
+                </span>
+                <div>
+                  <strong class="d-block text-white">{{ t.driver.user.get_full_name|default:t.driver.name|default:t.driver.user.username }}</strong>
+                  <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 font-monospace small">
+                    {{ t.driver.vehicle.registration_number|default:t.driver.vehicle_number }}
+                  </span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="small">
+                <span class="text-success fw-semibold">
+                  <i class="fa-solid fa-circle-dot me-1"></i> {{ t.boarding_point|default:t.pickup_location_name }}
+                </span>
+                {% if t.boarding_latitude and t.boarding_longitude %}
+                <div class="text-muted" style="font-size: 0.75rem;">
+                  GPS: {{ t.boarding_latitude|floatformat:4 }}, {{ t.boarding_longitude|floatformat:4 }}
+                </div>
+                {% endif %}
+              </div>
+            </td>
+            <td>
+              <div class="small">
+                <span class="text-danger fw-semibold">
+                  <i class="fa-solid fa-location-dot me-1"></i> {{ t.destination_point|default:t.drop_location_name|default:"Destination Drop Point" }}
+                </span>
+                {% if t.destination_latitude and t.destination_longitude %}
+                <div class="text-muted" style="font-size: 0.75rem;">
+                  GPS: {{ t.destination_latitude|floatformat:4 }}, {{ t.destination_longitude|floatformat:4 }}
+                </div>
+                {% endif %}
+              </div>
+            </td>
+            <td class="small text-muted">
+              <span class="text-white fw-semibold">{{ t.start_time|date:"M d, Y" }}</span><br>
+              <span>{{ t.start_time|date:"h:i A" }}</span>
+            </td>
+            <td>
+              {% if t.status == 'Completed' or t.status == 'COMPLETED' %}
+                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3 py-1">
+                  <i class="fa-solid fa-shield-check me-1"></i> Completed Safely
+                </span>
+              {% elif t.status == 'Active' or t.status == 'IN_PROGRESS' or t.status == 'Ongoing' %}
+                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-3 py-1">
+                  <i class="fa-solid fa-spinner fa-spin me-1"></i> Active
+                </span>
+              {% elif t.status == 'SOS_Triggered' %}
+                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-3 py-1">
+                  <i class="fa-solid fa-triangle-exclamation me-1"></i> SOS Triggered
+                </span>
+              {% else %}
+                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 rounded-pill px-3 py-1">
+                  {{ t.status }}
+                </span>
+              {% endif %}
+            </td>
+            <td class="pe-3 text-end">
+              {% if t.rating_entry %}
+                <span class="badge bg-warning text-dark px-3 py-1 rounded-pill fw-bold">
+                  <i class="fa-solid fa-star me-1"></i> {{ t.rating_entry.rating }}.0
+                </span>
+              {% elif t.status == 'Completed' or t.status == 'COMPLETED' %}
+                <a href="{% url 'rate_trip' t.trip_id %}" class="btn btn-sm btn-outline-warning rounded-pill px-3 py-1 fw-semibold">
+                  <i class="fa-solid fa-star-half-stroke me-1"></i> Rate Ride
+                </a>
+              {% else %}
+                <span class="text-muted small">-</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Navigation Controls -->
+    {% if trips.has_other_pages %}
+    <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top border-secondary border-opacity-25">
+      <span class="text-muted small">
+        Showing page <b>{{ trips.number }}</b> of <b>{{ trips.paginator.num_pages }}</b> ({{ trips.paginator.count }} total journeys)
+      </span>
+      <nav aria-label="Trip history pagination">
+        <ul class="pagination pagination-sm mb-0">
+          {% if trips.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ trips.previous_page_number }}" style="background-color: #131C2E; border-color: #1E293B; color: #E2E8F0;">
+              &laquo; Previous
+            </a>
+          </li>
+          {% else %}
+          <li class="page-item disabled">
+            <span class="page-link" style="background-color: #0F172A; border-color: #1E293B; color: #64748B;">&laquo; Previous</span>
+          </li>
+          {% endif %}
+
+          {% for p in trips.paginator.page_range %}
+            {% if trips.number == p %}
+            <li class="page-item active">
+              <span class="page-link" style="background-color: #FF9800; border-color: #FF9800; color: #000; font-weight: 700;">{{ p }}</span>
+            </li>
+            {% else %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ p }}" style="background-color: #131C2E; border-color: #1E293B; color: #E2E8F0;">{{ p }}</a>
+            </li>
+            {% endif %}
+          {% endfor %}
+
+          {% if trips.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ trips.next_page_number }}" style="background-color: #131C2E; border-color: #1E293B; color: #E2E8F0;">
+              Next &raquo;
+            </a>
+          </li>
+          {% else %}
+          <li class="page-item disabled">
+            <span class="page-link" style="background-color: #0F172A; border-color: #1E293B; color: #64748B;">Next &raquo;</span>
+          </li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="p-5 text-center text-muted rounded-3" style="background-color: #131C2E; border: 1px solid #1E293B;">
+      <i class="fa-solid fa-car-tunnel fa-3x mb-3 text-secondary"></i>
+      <h5 class="text-white">No Monitored Journeys Found</h5>
+      <p class="small text-muted mb-3">You have not completed any rides with SafeRide verified drivers yet.</p>
+      <a href="{% url 'passenger_dashboard' %}" class="btn btn-primary rounded-pill px-4">
+        <i class="fa-solid fa-qrcode me-1"></i> Scan Driver QR to Begin
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

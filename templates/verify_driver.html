@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}DRIVER VERIFICATION - SafeRide{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card rounded-4 border shadow-lg p-4 p-md-5" style="background-color: #131C2E !important;">
+        
+        <!-- Form Header -->
+        <div class="text-center mb-4 border-bottom pb-3">
+          <h2 class="fw-bold text-white mb-0 text-uppercase tracking-wider">DRIVER VERIFICATION</h2>
+        </div>
+
+        <!-- Scan QR Code Button Option -->
+        <div class="text-center mb-3">
+          <button type="button" class="btn btn-outline-light btn-lg w-100 fw-bold rounded-pill shadow-sm" onclick="triggerSnapshotCapture()">
+            <i class="fa-solid fa-camera-retro me-2 text-warning"></i> Snap QR Badge / Upload Photo
+          </button>
+          <div class="my-3 text-white fw-bold small text-uppercase">— OR —</div>
+        </div>
+
+        <!-- Vehicle Number Form -->
+        <form action="{% url 'verify_driver_search' %}" method="GET">
+          <div class="mb-4">
+            <label class="form-label fw-bold text-light">Vehicle Number :</label>
+            <input type="text" name="query" class="form-control py-3 text-uppercase fw-bold text-center fs-5 text-white" style="background-color: #0F172A; border-color: #334155;" placeholder="e.g. KL 05 AT 4455" value="{{ search_query|default:'' }}" required autofocus>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold rounded-pill mb-4 shadow-sm text-uppercase">
+            VERIFY
+          </button>
+        </form>
+
+        <!-- Unverified / Not Found Alert Box -->
+        {% if not_found or search_query %}
+        <div class="alert alert-danger rounded-4 p-4 text-center border-2 border-danger mb-0 shadow-sm" style="background-color: #450A0A; border-color: #DC2626 !important;">
+          <div class="display-6 mb-2 text-danger">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <h5 class="fw-bold text-danger mb-2">Driver Not Found / Not Yet Verified</h5>
+          <p class="text-white fw-semibold mb-0">Please choose another vehicle.</p>
+          {% if search_query %}
+            <small class="text-white d-block mt-2">Searched Plate: <code>{{ search_query }}</code></small>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="text-center mt-4 pt-3 border-top small">
+          <a href="{% url 'home' %}" class="text-decoration-none fw-semibold" style="color: #FF9800;">
+            <i class="fa-solid fa-arrow-left me-1"></i> Back to Home
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+{% include 'components/qr_scanner_modal.html' %}
+{% endblock %}
+
+{% block floating_sos %}{% endblock %}
+{% block footer %}{% endblock %}

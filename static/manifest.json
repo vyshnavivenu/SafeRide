@@ -1,0 +1,26 @@
+{
+  "name": "SafeRide - Driver Verification & Passenger Safety",
+  "short_name": "SafeRide",
+  "description": "Instant driver KYC verification, live trip GPS telemetry, and 1-touch emergency SOS dispatch system.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#090D16",
+  "theme_color": "#0F172A",
+  "categories": ["travel", "utilities", "safety"],
+  "icons": [
+    {
+      "src": "/static/img/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/img/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

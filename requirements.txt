@@ -1,0 +1,22 @@
+# =====================================================================
+# SAFERIDE: DRIVER VERIFICATION & PASSENGER SAFETY SYSTEM
+# Project Dependencies & Technical Specifications
+# Course: 24SJMCA245 – Mini Project
+# =====================================================================
+
+# Core Backend Framework
+Django>=5.0,<6.0
+
+# API Framework
+djangorestframework>=3.14.0
+
+# MySQL Database Driver (XAMPP / phpMyAdmin compatibility)
+pymysql>=1.1.0
+cryptography>=41.0.0
+
+# QR Code Generation Engine & Image Processing
+qrcode[pil]>=7.4.2
+Pillow>=10.0.0
+
+# Environment Configuration
+python-dotenv>=1.0.0

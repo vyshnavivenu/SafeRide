@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}INCIDENT REPORT - SafeRide{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+      <div class="card rounded-4 border shadow-lg p-4 p-md-5" style="background-color: #131C2E !important;">
+        
+        <!-- Form Header -->
+        <div class="text-center mb-4 border-bottom pb-3">
+          <h2 class="fw-bold text-white mb-0 text-uppercase tracking-wider">INCIDENT REPORT</h2>
+        </div>
+
+        <form method="POST">
+          {% csrf_token %}
+
+          <!-- Passenger Name -->
+          <div class="mb-3">
+            <label class="form-label fw-bold text-light">Passenger Name :</label>
+            <input type="text" name="passenger_name" class="form-control py-2 text-white" style="background-color: #0F172A;" placeholder="Passenger Name" value="{{ user.get_full_name|default:user.username }}" pattern="[a-zA-Z\s\.\'\-]+" minlength="2" maxlength="100" title="Letters and spaces only" required>
+          </div>
+
+          <!-- Trip ID -->
+          <div class="mb-3">
+            <label class="form-label fw-bold text-light">Trip ID (Optional) :</label>
+            <input type="text" name="trip_id" class="form-control py-2 text-white font-monospace" style="background-color: #0F172A;" placeholder="e.g. TRP-12345678">
+          </div>
+
+          <!-- Select Incident Type ▼ -->
+          <div class="mb-3">
+            <label class="form-label fw-bold text-light">Incident Type :</label>
+            <select name="incident_type" class="form-select py-2 text-white" style="background-color: #0F172A;" required>
+              <option value="" selected disabled>Select Incident Type ▼</option>
+              <option value="ACCIDENT">🚗 Accident / Vehicle Collision</option>
+              <option value="HARASSMENT">🚨 Harassment / Threat / Verbal Abuse</option>
+              <option value="RECKLESS_DRIVING">⚠️ Unsafe Driving / Overspeeding</option>
+              <option value="MISCONDUCT">🛑 Driver Misconduct / Inappropriate Behavior</option>
+              <option value="OVERCHARGING">💵 Overcharging / Meter Tampering</option>
+              <option value="ROUTE_DEVIATION">🗺️ Unauthorized Route Deviation</option>
+              <option value="OTHER">📋 Other Emergency Safety Incident</option>
+            </select>
+          </div>
+
+          <!-- Describe the incident... -->
+          <div class="mb-3">
+            <label class="form-label fw-bold text-light">Description :</label>
+            <textarea name="description" class="form-control text-white" style="background-color: #0F172A;" rows="3" minlength="10" placeholder="Describe what happened in detail (min 10 characters)..." required></textarea>
+          </div>
+
+          <!-- Date & Time -->
+          <div class="mb-4">
+            <label class="form-label fw-bold text-light">Date & Time :</label>
+            <input type="datetime-local" name="incident_date_time" class="form-control py-2 text-white" style="background-color: #0F172A;" required>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-danger btn-lg fw-bold flex-grow-1 rounded-pill shadow-sm text-uppercase">
+              SUBMIT
+            </button>
+            <a href="{% url 'passenger_dashboard' %}" class="btn btn-outline-light btn-lg rounded-pill fw-semibold">
+              Cancel
+            </a>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block floating_sos %}{% endblock %}
+{% block footer %}{% endblock %}

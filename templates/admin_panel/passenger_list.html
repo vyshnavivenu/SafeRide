@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}Passenger Management - SafeRide Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="card rounded-4 border shadow-sm p-4" style="background-color: #131C2E !important; border-color: #1E293B !important;">
+    
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2 border-bottom pb-3" style="border-color: #1E293B !important;">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <h4 class="fw-bold mb-0 text-white"><i class="fa-solid fa-users me-2 text-warning"></i> Passenger Management Directory</h4>
+          <span class="badge bg-primary bg-opacity-25 text-primary border border-primary px-3 py-1 rounded-pill small font-monospace">
+            {{ passengers|length }} Registered
+          </span>
+        </div>
+        <p class="text-white opacity-75 small mb-0">Oversee passenger accounts, emergency contacts, safety alerts, and account statuses.</p>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-light btn-sm rounded-pill fw-bold px-3">
+          <i class="fa-solid fa-arrow-left me-1"></i> Admin Dashboard
+        </a>
+      </div>
+    </div>
+
+    {% if passengers %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Passenger Name</th>
+            <th>Account Username</th>
+            <th>Email Address</th>
+            <th>Phone Number</th>
+            <th>Trusted Emergency Contacts</th>
+            <th>Account Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in passengers %}
+          <tr>
+            <td class="fw-bold text-white">
+              <div class="d-flex align-items-center gap-2">
+                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold small shadow-sm" style="width: 36px; height: 36px; background: #1E3A8A; border: 1px solid #60A5FA;">
+                  {{ p.user.first_name|slice:":1"|default:p.user.username|slice:":1"|upper }}
+                </div>
+                <div>
+                  <span class="text-white">{{ p.user.get_full_name|default:p.user.username }}</span>
+                  <div class="small opacity-50 font-monospace">ID: #PSG-{{ p.passenger_id }}</div>
+                </div>
+              </div>
+            </td>
+            <td><code class="text-warning bg-dark px-2 py-1 rounded border">{{ p.user.username }}</code></td>
+            <td class="text-white opacity-90">{{ p.user.email|default:"Not provided" }}</td>
+            <td class="text-white fw-semibold font-monospace">{{ p.user.phone|default:"Not listed" }}</td>
+            <td>
+              {% if p.emergency_contact_1_phone %}
+                <span class="badge bg-danger bg-opacity-25 text-danger border border-danger px-2 py-1 mb-1 d-block text-truncate" style="max-width: 220px;">
+                  <i class="fa-solid fa-phone me-1"></i> {{ p.emergency_contact_1_name|default:"Guardian" }}: {{ p.emergency_contact_1_phone }}
+                </span>
+                {% if p.emergency_contact_2_phone %}
+                <span class="badge bg-dark border text-light px-2 py-1 d-block text-truncate" style="max-width: 220px;">
+                  <i class="fa-solid fa-phone me-1 text-warning"></i> {{ p.emergency_contact_2_name|default:"Secondary" }}: {{ p.emergency_contact_2_phone }}
+                </span>
+                {% endif %}
+              {% else %}
+                <span class="badge bg-secondary bg-opacity-25 text-light border small">None Configured</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if p.user.is_active %}
+                <span class="badge bg-success bg-opacity-25 text-success border border-success px-2 py-1">
+                  <i class="fa-solid fa-circle-check me-1"></i> Active
+                </span>
+              {% else %}
+                <span class="badge bg-danger bg-opacity-25 text-danger border border-danger px-2 py-1">
+                  <i class="fa-solid fa-ban me-1"></i> Suspended
+                </span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="d-flex gap-1">
+                <button type="button" class="btn btn-sm btn-outline-info rounded-pill px-2" title="View Safety Details" data-bs-toggle="modal" data-bs-target="#passengerModal{{ p.passenger_id }}">
+                  <i class="fa-solid fa-eye"></i> Details
+                </button>
+                <form action="{% url 'admin_toggle_passenger_status' p.passenger_id %}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to {% if p.user.is_active %}suspend{% else %}activate{% endif %} this passenger account?');">
+                  {% csrf_token %}
+                  {% if p.user.is_active %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2" title="Suspend Account">
+                      <i class="fa-solid fa-user-slash"></i> Suspend
+                    </button>
+                  {% else %}
+                    <button type="submit" class="btn btn-sm btn-outline-success rounded-pill px-2" title="Activate Account">
+                      <i class="fa-solid fa-user-check"></i> Activate
+                    </button>
+                  {% endif %}
+                </form>
+              </div>
+
+              <!-- Passenger Detail Modal -->
+              <div class="modal fade" id="passengerModal{{ p.passenger_id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content rounded-4 border shadow text-white" style="background-color: #131C2E; border-color: #334155;">
+                    <div class="modal-header border-bottom" style="border-color: #334155;">
+                      <h5 class="modal-title fw-bold text-white"><i class="fa-solid fa-user text-primary me-2"></i> Passenger Profile</h5>
+                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                      <div class="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom" style="border-color: #334155;">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold fs-4" style="width: 54px; height: 54px; background: #1E3A8A;">
+                          {{ p.user.first_name|slice:":1"|default:p.user.username|slice:":1"|upper }}
+                        </div>
+                        <div>
+                          <h6 class="fw-bold mb-0 text-white">{{ p.user.get_full_name|default:p.user.username }}</h6>
+                          <span class="text-white opacity-75 small">Username: <code>{{ p.user.username }}</code> &bull; ID #PSG-{{ p.passenger_id }}</span>
+                        </div>
+                      </div>
+                      <div class="small mb-2"><strong class="text-white opacity-75">Email:</strong> <span class="text-white">{{ p.user.email|default:"Not listed" }}</span></div>
+                      <div class="small mb-2"><strong class="text-white opacity-75">Phone:</strong> <span class="text-white">{{ p.user.phone|default:"Not listed" }}</span></div>
+                      <div class="small mb-2"><strong class="text-white opacity-75">Account Status:</strong> {% if p.user.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-danger">Suspended</span>{% endif %}</div>
+                      <div class="small mb-2"><strong class="text-white opacity-75">Date Registered:</strong> <span class="text-white">{{ p.user.date_joined|date:"M d, Y, h:i A" }}</span></div>
+                      <hr style="border-color: #334155;">
+                      <h6 class="fw-bold text-warning small mb-2"><i class="fa-solid fa-phone-volume me-1"></i> Trusted Emergency Contacts</h6>
+                      <div class="p-2 rounded bg-dark border small" style="border-color: #334155;">
+                        <div><strong>Primary:</strong> {{ p.emergency_contact_1_name|default:"Guardian" }} - {{ p.emergency_contact_1_phone|default:"None" }} ({{ p.emergency_contact_1_relation|default:"Family" }})</div>
+                        {% if p.emergency_contact_2_phone %}
+                        <div class="mt-1"><strong>Secondary:</strong> {{ p.emergency_contact_2_name|default:"Secondary" }} - {{ p.emergency_contact_2_phone }}</div>
+                        {% endif %}
+                      </div>
+                    </div>
+                    <div class="modal-footer border-top" style="border-color: #334155;">
+                      <button type="button" class="btn btn-secondary btn-sm rounded-pill px-3" data-bs-dismiss="modal">Close</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5 rounded-3" style="background-color: #0F172A;">
+      <i class="fa-solid fa-users-slash fs-1 text-secondary mb-3"></i>
+      <h5 class="text-white fw-bold">No Registered Passengers Yet</h5>
+      <p class="small text-white opacity-75 mb-0">Registered passenger accounts will appear in this administrative roster.</p>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

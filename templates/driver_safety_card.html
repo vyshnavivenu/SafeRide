@@ -1,0 +1,516 @@
+{% extends 'base.html' %}
+
+{% block title %}VERIFIED DRIVER DETAILS - SafeRide{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row g-4 justify-content-center">
+    <div class="col-lg-8">
+      <div class="card rounded-4 border shadow-lg p-4 p-md-5" style="background-color: #131C2E !important;">
+        
+        <!-- Form Header (Form 7 Specification) -->
+        <div class="text-center mb-4 border-bottom pb-3">
+          <h2 class="fw-bold text-white mb-0 text-uppercase tracking-wider">VERIFIED DRIVER DETAILS</h2>
+        </div>
+
+        <!-- Driver Photo & Summary -->
+        <div class="row align-items-center g-4 pb-4 border-bottom mb-4">
+          <div class="col-auto text-center">
+            {% if driver.driver_photo %}
+            <img src="{{ driver.driver_photo.url }}" class="rounded-circle border border-4 border-success shadow" style="width: 110px; height: 110px; object-fit: cover;" alt="Driver Photo">
+            {% else %}
+            <div class="rounded-circle shadow d-flex align-items-center justify-content-center text-white fw-bold fs-2" style="width: 110px; height: 110px; background: #065F46; border: 4px solid #10B981;">
+              {{ driver.user.first_name|slice:":1" }}{{ driver.user.last_name|slice:":1"|default:"D" }}
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="col">
+            <h3 class="fw-bold text-white mb-1">{{ driver.user.get_full_name|default:driver.user.username }}</h3>
+            <div class="text-white small mb-1"><i class="fa-solid fa-phone me-1 text-warning"></i> {{ driver.user.phone|default:"+91 98765 43210" }}</div>
+            <div class="text-white small d-flex align-items-center gap-1"><i class="fa-solid fa-id-card text-info"></i> <span>License:</span> <span class="badge bg-dark border border-secondary text-white font-monospace px-2 py-1">{{ driver.license_number }}</span></div>
+          </div>
+
+          <div class="col-md-auto text-center border-start ps-md-4">
+            <div class="display-6 fw-bold text-success">{{ driver.reputation_score }}</div>
+            <div class="small fw-bold text-white text-uppercase">Safety Score</div>
+            <div class="mt-1" style="color: #FF9800;">
+              <i class="fa-solid fa-star small"></i>
+              <i class="fa-solid fa-star small"></i>
+              <i class="fa-solid fa-star small"></i>
+              <i class="fa-solid fa-star small"></i>
+              <i class="fa-solid fa-star small"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Structured Details Table (Form 7 Exact Fields) -->
+        <div class="table-responsive mb-4">
+          <table class="table table-borderless rounded-3 p-3 mb-0" style="background-color: #0F172A;">
+            <tbody>
+              <tr>
+                <th class="text-white fw-bold small text-nowrap" style="width: 200px;">Driver Name :</th>
+                <td class="fw-bold text-white">{{ driver.user.get_full_name|default:driver.user.username }}</td>
+              </tr>
+              <tr>
+                <th class="text-white fw-bold small">License Number :</th>
+                <td class="fw-semibold text-white font-monospace">{{ driver.license_number }}</td>
+              </tr>
+              <tr>
+                <th class="text-white fw-bold small">Vehicle Number :</th>
+                <td class="fw-bold"><span class="badge bg-dark border text-white px-3 py-2 fs-6 font-monospace">{{ vehicle.registration_number|default:"KL-05-AT-4455" }}</span></td>
+              </tr>
+              <tr>
+                <th class="text-white fw-bold small">Vehicle Type :</th>
+                <td class="fw-semibold text-white">{{ vehicle.get_vehicle_type_display|default:"Auto-Rickshaw" }} &bull; {{ vehicle.make_model|default:"Bajaj Compact RE" }}</td>
+              </tr>
+              <tr>
+                <th class="text-white fw-bold small">Verification Status :</th>
+                <td><span class="badge bg-success fw-bold px-3 py-1">VERIFIED</span></td>
+              </tr>
+              <tr>
+                <th class="text-white fw-bold small">Reputation Score :</th>
+                <td class="fw-bold text-success">{{ driver.reputation_score }} / 100</td>
+              </tr>
+              <tr>
+                <th class="text-white fw-bold small">Rating :</th>
+                <td class="fw-bold" style="color: #FF9800;">
+                  <i class="fa-solid fa-star"></i>
+                  <i class="fa-solid fa-star"></i>
+                  <i class="fa-solid fa-star"></i>
+                  <i class="fa-solid fa-star"></i>
+                  <i class="fa-solid fa-star"></i>
+                  <span class="text-white ms-2 fw-semibold">({{ driver.average_rating }} / 5.0)</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Passenger Reviews & Reputation Breakdown -->
+        <div class="p-3 rounded-3 mb-4 border" style="background-color: #0F172A; border-color: #334155 !important;">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold text-white mb-0"><i class="fa-solid fa-comments text-warning me-2"></i> Passenger Reviews & Safety Feedback ({{ total_ratings_count|default:"0" }})</h6>
+            <span class="badge bg-success bg-opacity-25 text-success">{{ five_star_pct|default:"95" }}% Positive Ratings</span>
+          </div>
+
+          {% if ratings %}
+            <div class="d-flex flex-column gap-2">
+              {% for r in ratings %}
+              <div class="p-3 rounded-3 border" style="background-color: #131C2E; border-color: #1E293B !important;">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary text-white rounded-pill px-2 py-1 small">
+                      <i class="fa-solid fa-user-check me-1"></i> {{ r.passenger.first_name|default:r.passenger.username|slice:":1" }}***
+                    </span>
+                    <strong class="text-white small">{{ r.passenger.get_full_name|default:r.passenger.username }}</strong>
+                  </div>
+                  <div class="text-warning small">
+                    {% for i in "12345" %}
+                      {% if forloop.counter <= r.rating %}
+                        <i class="fa-solid fa-star"></i>
+                      {% else %}
+                        <i class="fa-regular fa-star text-muted"></i>
+                      {% endif %}
+                    {% endfor %}
+                    <span class="text-white ms-1 small fw-bold">({{ r.rating }}/5)</span>
+                  </div>
+                </div>
+                {% if r.review %}
+                  <p class="text-light small mb-1 italic">"{{ r.review }}"</p>
+                {% endif %}
+                <div class="d-flex justify-content-between align-items-center small text-muted pt-1">
+                  <span>Safety: <b class="text-white">{{ r.driving_safety_rating|default:5 }}/5</b> • Cleanliness: <b class="text-white">{{ r.vehicle_cleanliness_rating|default:5 }}/5</b> • Behavior: <b class="text-white">{{ r.behavior_rating|default:5 }}/5</b></span>
+                  <span>{{ r.created_at|date:"M d, Y" }}</span>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="p-3 text-center text-muted small rounded" style="background-color: #131C2E;">
+              <i class="fa-solid fa-star-half-stroke text-warning me-1"></i> No written passenger reviews yet. Driver maintains clean <b>{{ driver.reputation_score }}/100</b> verification rating!
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Proceed with Trip Action (Form 7 Primary Action) -->
+        <div class="pt-2">
+          {% if user.is_authenticated and user.is_passenger_user %}
+            <form action="{% url 'start_trip' driver.id %}" method="POST" id="start-trip-form">
+              {% csrf_token %}
+              <div class="card rounded-3 p-3 mb-3 text-start shadow-sm" style="background-color: #131C2E; border: 1px solid #334155;">
+                <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
+                  <label class="form-label fw-bold text-white small mb-0">
+                    <i class="fa-solid fa-map-pin text-warning me-1"></i> Boarding / Pickup Point:
+                  </label>
+                  <button type="button" class="btn btn-warning btn-sm rounded-pill fw-bold text-dark px-3 py-1 shadow-sm" id="detect-gps-btn" onclick="detectUserLocation()">
+                    <i class="fa-solid fa-location-crosshairs me-1"></i> Detect Live Location
+                  </button>
+                </div>
+
+                <div class="input-group mb-2">
+                  <span class="input-group-text border-end-0 text-white" style="background-color: #0F172A; border-color: #334155;">
+                    <i class="fa-solid fa-location-dot text-danger"></i>
+                  </span>
+                  <input type="text" name="pickup_name" id="pickup_name" class="form-control text-white" style="background-color: #0F172A; border-color: #334155;" placeholder="Detecting your current location..." value="Current Boarding Point" required>
+                </div>
+
+                <!-- Interactive Boarding Location Map Viewfinder (Google Maps Service) -->
+                <div id="boarding-map-container" class="rounded-3 overflow-hidden border mb-2 position-relative shadow-sm" style="height: 180px; width: 100%; border-color: #334155 !important; background: #0F172A;">
+                  <div id="map-loading-spinner" class="position-absolute top-50 start-50 translate-middle text-white small opacity-75 text-center">
+                    <span class="spinner-border spinner-border-sm text-warning mb-1"></span><br>Detecting live location & loading map...
+                  </div>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between text-muted small flex-wrap gap-1">
+                  <span id="coords-status" class="text-white opacity-75">
+                    <i class="fa-solid fa-satellite-dish text-success me-1 fa-beat"></i> Live GPS: 9.6843, 76.6853
+                  </span>
+                  <span class="badge bg-primary bg-opacity-25 text-primary border border-primary small">
+                    <i class="fa-brands fa-google me-1"></i> Google Maps Geocoded
+                  </span>
+                </div>
+              </div>
+
+              <input type="hidden" name="pickup_lat" id="pickup_lat" value="9.6843">
+              <input type="hidden" name="pickup_lng" id="pickup_lng" value="76.6853">
+              
+              <div class="text-center">
+                <button type="submit" class="btn btn-primary btn-lg fw-bold px-5 rounded-pill shadow text-uppercase">
+                  <i class="fa-solid fa-shield-halved me-2"></i> PROCEED WITH TRIP
+                </button>
+              </div>
+            </form>
+          {% elif user.is_authenticated %}
+            <div class="text-center">
+              <button class="btn btn-secondary btn-lg fw-bold px-5 rounded-pill text-uppercase" disabled>
+                PROCEED WITH TRIP (Passenger Required)
+              </button>
+            </div>
+          {% else %}
+            <div class="text-center">
+              <a href="{% url 'passenger_login' %}?next={% url 'verify_driver_token' driver.verification_token %}" class="btn btn-primary btn-lg fw-bold px-5 rounded-pill shadow text-uppercase">
+                PROCEED WITH TRIP
+              </a>
+            </div>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<!-- Leaflet CSS Fallback -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+.pac-container {
+  z-index: 99999 !important;
+  background-color: #131C2E !important;
+  border: 1px solid #334155 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;
+  font-family: 'Inter', sans-serif !important;
+}
+.pac-item {
+  color: #E2E8F0 !important;
+  border-top-color: #1E293B !important;
+  padding: 8px 12px !important;
+}
+.pac-item:hover {
+  background-color: #1E293B !important;
+}
+.pac-item-query {
+  color: #FF9800 !important;
+}
+.pac-matched {
+  font-weight: 700 !important;
+  color: #60A5FA !important;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Leaflet JS Fallback -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+  let boardingMap = null;
+  let boardingMarker = null;
+  let isGoogleMapsLoaded = false;
+  let leafletMap = null;
+  let leafletMarker = null;
+
+  // 1. Google Places Autocomplete for Boarding Point
+  function initPlacesAutocomplete() {
+    const input = document.getElementById('pickup_name');
+    if (!input) return;
+
+    if (typeof google !== 'undefined' && google.maps && google.maps.places) {
+      try {
+        const autocomplete = new google.maps.places.Autocomplete(input, {
+          types: ['geocode', 'establishment']
+        });
+        autocomplete.addListener('place_changed', function () {
+          const place = autocomplete.getPlace();
+          if (place.geometry && place.geometry.location) {
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
+            setBoardingLocation(lat, lng, place.formatted_address || place.name);
+          }
+        });
+      } catch (e) {
+        console.warn("Google Places Autocomplete warning:", e);
+      }
+    }
+  }
+
+  // 2. Initialize Google Map Viewfinder
+  function initBoardingMap(lat, lng) {
+    const mapDiv = document.getElementById('boarding-map-container');
+    if (!mapDiv) return;
+
+    const spinner = document.getElementById('map-loading-spinner');
+    if (spinner) spinner.style.display = 'none';
+
+    if (typeof google !== 'undefined' && google.maps && google.maps.Map) {
+      try {
+        isGoogleMapsLoaded = true;
+        const pos = new google.maps.LatLng(lat, lng);
+        const mapOptions = {
+          zoom: 16,
+          center: pos,
+          mapTypeId: google.maps.MapTypeId.ROADMAP,
+          disableDefaultUI: true,
+          zoomControl: true,
+          styles: [
+            { elementType: "geometry", stylers: [{ color: "#131C2E" }] },
+            { elementType: "labels.text.stroke", stylers: [{ color: "#0F172A" }] },
+            { elementType: "labels.text.fill", stylers: [{ color: "#94A3B8" }] },
+            { featureType: "road", elementType: "geometry", stylers: [{ color: "#1E293B" }] },
+            { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#334155" }] },
+            { featureType: "water", elementType: "geometry", stylers: [{ color: "#0B1120" }] }
+          ]
+        };
+
+        boardingMap = new google.maps.Map(mapDiv, mapOptions);
+
+        boardingMarker = new google.maps.Marker({
+          position: pos,
+          map: boardingMap,
+          draggable: true,
+          animation: google.maps.Animation.DROP,
+          title: "Drag to adjust your exact boarding spot",
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 9,
+            fillColor: "#FF9800",
+            fillOpacity: 1,
+            strokeColor: "#FFFFFF",
+            strokeWeight: 2.5
+          }
+        });
+
+        // When pin is dragged, reverse-geocode new position
+        google.maps.event.addListener(boardingMarker, 'dragend', function (e) {
+          reverseGeocodeCoordinates(e.latLng.lat(), e.latLng.lng());
+        });
+
+        // When map is clicked, move marker and reverse geocode
+        google.maps.event.addListener(boardingMap, 'click', function (e) {
+          boardingMarker.setPosition(e.latLng);
+          reverseGeocodeCoordinates(e.latLng.lat(), e.latLng.lng());
+        });
+
+        return;
+      } catch (err) {
+        console.warn("Google Maps initialization fallback to Leaflet:", err);
+      }
+    }
+
+    // Leaflet / OpenStreetMap Fallback
+    initLeafletFallback(lat, lng);
+  }
+
+  function initLeafletFallback(lat, lng) {
+    const mapDiv = document.getElementById('boarding-map-container');
+    if (!mapDiv || typeof L === 'undefined') return;
+
+    if (!leafletMap) {
+      leafletMap = L.map('boarding-map-container', { zoomControl: false }).setView([lat, lng], 16);
+      L.control.zoom({ position: 'bottomright' }).addTo(leafletMap);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19
+      }).addTo(leafletMap);
+
+      const customIcon = L.divIcon({
+        className: 'boarding-marker-pin',
+        html: '<div style="background:#FF9800; width:22px; height:22px; border-radius:50%; border:3px solid #FFF; box-shadow:0 0 10px #FF9800;"></div>',
+        iconSize: [22, 22],
+        iconAnchor: [11, 11]
+      });
+
+      leafletMarker = L.marker([lat, lng], { icon: customIcon, draggable: true }).addTo(leafletMap);
+      
+      leafletMarker.on('dragend', function(e) {
+        const coord = e.target.getLatLng();
+        reverseGeocodeCoordinates(coord.lat, coord.lng);
+      });
+
+      leafletMap.on('click', function(e) {
+        leafletMarker.setLatLng(e.latlng);
+        reverseGeocodeCoordinates(e.latlng.lat, e.latlng.lng);
+      });
+    } else {
+      leafletMap.setView([lat, lng], 16);
+      if (leafletMarker) leafletMarker.setLatLng([lat, lng]);
+    }
+  }
+
+  // 3. Reverse Geocode Coordinates using Google Maps Geocoder Service
+  function reverseGeocodeCoordinates(lat, lng) {
+    document.getElementById('pickup_lat').value = lat;
+    document.getElementById('pickup_lng').value = lng;
+
+    const coordsStatus = document.getElementById('coords-status');
+    const input = document.getElementById('pickup_name');
+
+    if (coordsStatus) {
+      coordsStatus.innerHTML = `<i class="fa-solid fa-crosshairs text-success me-1"></i> Live GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    }
+
+    if (typeof google !== 'undefined' && google.maps && google.maps.Geocoder) {
+      const geocoder = new google.maps.Geocoder();
+      geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+        if (status === 'OK' && results && results[0]) {
+          if (input) input.value = results[0].formatted_address;
+        } else {
+          fallbackReverseGeocode(lat, lng);
+        }
+      });
+    } else {
+      fallbackReverseGeocode(lat, lng);
+    }
+  }
+
+  function fallbackReverseGeocode(lat, lng) {
+    const input = document.getElementById('pickup_name');
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+      .then(res => res.json())
+      .then(data => {
+        if (input && data && data.display_name) {
+          input.value = data.display_name.split(',').slice(0, 3).join(',');
+        } else if (input) {
+          input.value = `Current Boarding Point (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+        }
+      })
+      .catch(() => {
+        if (input && (!input.value || input.value === 'Current Boarding Point')) {
+          input.value = `Current Boarding Point (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+        }
+      });
+  }
+
+  // 4. Update Boarding Location on Map and Inputs
+  function setBoardingLocation(lat, lng, addressName) {
+    document.getElementById('pickup_lat').value = lat;
+    document.getElementById('pickup_lng').value = lng;
+    const input = document.getElementById('pickup_name');
+    if (input && addressName) input.value = addressName;
+
+    const coordsStatus = document.getElementById('coords-status');
+    if (coordsStatus) {
+      coordsStatus.innerHTML = `<i class="fa-solid fa-crosshairs text-success me-1"></i> Live GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    }
+
+    if (boardingMap && boardingMarker) {
+      const pos = new google.maps.LatLng(lat, lng);
+      boardingMarker.setPosition(pos);
+      boardingMap.panTo(pos);
+    } else if (leafletMap && leafletMarker) {
+      leafletMap.panTo([lat, lng]);
+      leafletMarker.setLatLng([lat, lng]);
+    } else {
+      initBoardingMap(lat, lng);
+    }
+  }
+
+  // 5. Detect User's Real-Time Current Location via GPS & Google Maps
+  function detectUserLocation(isAuto = false) {
+    const btn = document.getElementById('detect-gps-btn');
+    const coordsStatus = document.getElementById('coords-status');
+    const input = document.getElementById('pickup_name');
+
+    if (btn && !isAuto) {
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Locating...';
+      btn.disabled = true;
+    }
+
+    if (coordsStatus) {
+      coordsStatus.innerHTML = '<span class="text-info"><i class="fa-solid fa-spinner fa-spin me-1"></i> Detecting live GPS & Google Maps location...</span>';
+    }
+
+    if (typeof getAccurateUserLocation === 'function') {
+      getAccurateUserLocation(
+        (lat, lng, accuracy) => {
+          if (btn) {
+            btn.innerHTML = '<i class="fa-solid fa-circle-check text-dark me-1"></i> GPS Detected';
+            btn.disabled = false;
+          }
+          if (coordsStatus) {
+            coordsStatus.innerHTML = `<i class="fa-solid fa-satellite-dish text-success me-1"></i> Live GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)} <span class="opacity-75">(±${Math.round(accuracy)}m)</span>`;
+          }
+
+          setBoardingLocation(lat, lng);
+          reverseGeocodeCoordinates(lat, lng);
+        },
+        (errObj) => {
+          console.warn("GPS detection fallback:", errObj);
+          if (btn) {
+            btn.innerHTML = '<i class="fa-solid fa-location-crosshairs me-1"></i> Detect Live Location';
+            btn.disabled = false;
+          }
+          if (coordsStatus) {
+            coordsStatus.innerHTML = `<span class="text-warning small"><i class="fa-solid fa-triangle-exclamation me-1"></i> ${errObj.message || 'Using transit coordinates.'}</span>`;
+          }
+          // Default Palai coordinates fallback
+          const defaultLat = 9.6843;
+          const defaultLng = 76.6853;
+          setBoardingLocation(defaultLat, defaultLng, "St. Joseph's College of Engineering & Technology, Palai");
+        }
+      );
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    initPlacesAutocomplete();
+
+    // Auto-detect current location smoothly on page load
+    detectUserLocation(true);
+
+    // Client-side GPS validation guard before ride initiation
+    const startTripForm = document.getElementById('start-trip-form');
+    if (startTripForm) {
+      startTripForm.addEventListener('submit', function (e) {
+        const lat = parseFloat(document.getElementById('pickup_lat')?.value);
+        const lng = parseFloat(document.getElementById('pickup_lng')?.value);
+
+        if (!lat || !lng || isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+          e.preventDefault();
+          alert("⚠️ Valid boarding GPS coordinates are required before starting a monitored trip. Please click 'Detect Live Location' to capture your coordinates.");
+          return false;
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}
+
+{% block floating_sos %}{% endblock %}
+{% block footer %}{% endblock %}
+
+

@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}File Complaint / Grievance - SafeRide{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+        <div class="card-header bg-dark text-white p-4">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h4 class="fw-bold mb-1"><i class="fa-solid fa-flag text-danger me-2"></i> File Driver Grievance</h4>
+              <p class="small text-muted mb-0">Report fare anomalies, rude conduct, reckless driving or safety policy violations.</p>
+            </div>
+            <a href="{% url 'passenger_dashboard' %}" class="btn btn-outline-light rounded-pill btn-sm">
+              <i class="fa-solid fa-arrow-left me-1"></i> Dashboard
+            </a>
+          </div>
+        </div>
+
+        <div class="card-body p-4 bg-white">
+          <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="mb-3">
+              <label class="form-label fw-bold small text-muted text-uppercase">Select Driver</label>
+              {% if driver %}
+                <div class="p-3 bg-light rounded-3 border d-flex align-items-center justify-content-between">
+                  <div>
+                    <h6 class="fw-bold mb-0 text-dark">{{ driver.name }}</h6>
+                    <span class="small text-muted">Vehicle: {{ driver.vehicle_number }} | Lic: {{ driver.license_number }}</span>
+                  </div>
+                  <input type="hidden" name="driver_id" value="{{ driver.driver_id }}">
+                  <span class="badge bg-success bg-opacity-10 text-success">Selected</span>
+                </div>
+              {% else %}
+                <select name="driver_id" class="form-select form-select-lg" required>
+                  <option value="" disabled selected>-- Choose Driver from Verified Directory --</option>
+                  {% for d in verified_drivers %}
+                    <option value="{{ d.driver_id }}">{{ d.name }} - {{ d.vehicle_number }} ({{ d.license_number }})</option>
+                  {% endfor %}
+                </select>
+              {% endif %}
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold small text-muted text-uppercase">Violation Category</label>
+              {{ form.category }}
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold small text-muted text-uppercase">Detailed Description</label>
+              {{ form.description }}
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label fw-bold small text-muted text-uppercase">Upload Photo / Evidence (Optional)</label>
+              {{ form.evidence_photo }}
+              <div class="form-text">Attach photo of vehicle, overcharge meter, or any relevant proof.</div>
+            </div>
+
+            <button type="submit" class="btn btn-danger rounded-pill fw-bold px-5 py-2 w-100 shadow">
+              <i class="fa-solid fa-paper-plane me-1"></i> Submit Formal Grievance
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block title %}Trip Feedback & Rating - SafeRide{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-7">
+      
+      <!-- Main Feedback Card -->
+      <div class="card rounded-4 border shadow-lg overflow-hidden" style="background-color: #131C2E !important; border-color: #1E293B !important;">
+        
+        <!-- ========================================== -->
+        <!-- 1. TRIP SUMMARY & REASSURING HEADER -->
+        <!-- ========================================== -->
+        <div class="p-4 p-md-5 text-center text-white border-bottom" style="background: linear-gradient(135deg, #0F172A, #1E293B); border-color: #334155 !important;">
+          <div class="rounded-circle d-inline-flex align-items-center justify-content-center text-success mb-3 shadow" style="width: 72px; height: 72px; background: rgba(16, 185, 129, 0.15); border: 2px solid #10B981;">
+            <i class="fa-solid fa-circle-check fs-1"></i>
+          </div>
+          <span class="badge bg-success bg-opacity-25 text-success border border-success px-3 py-1 rounded-pill mb-2 fw-bold">JOURNEY COMPLETED SAFELY</span>
+          <h3 class="fw-bold text-white mb-2">Thank you for riding with SafeRide!</h3>
+          <p class="text-white opacity-75 small mb-0">Your honest ratings help maintain driver accountability and keep commutes safe for everyone.</p>
+
+          <!-- Trip Summary Pill -->
+          <div class="mt-4 p-3 rounded-3 border text-start" style="background-color: #0F172A; border-color: #334155 !important;">
+            <div class="row g-2 align-items-center">
+              <div class="col-sm-6">
+                <span class="text-white opacity-50 small d-block"><i class="fa-solid fa-user text-primary me-1"></i> Driver Name :</span>
+                <strong class="text-white fs-6">{{ trip.driver.name|default:trip.driver.user.get_full_name|default:trip.driver.user.username }}</strong>
+              </div>
+              <div class="col-sm-6">
+                <span class="text-white opacity-50 small d-block"><i class="fa-solid fa-car-side text-warning me-1"></i> Vehicle Number :</span>
+                <span class="badge bg-dark border text-warning font-monospace fs-6 px-2 py-1">{{ trip.driver.vehicle_number|default:trip.driver.vehicle.registration_number|default:"KL-05-AT-4455" }}</span>
+              </div>
+              <div class="col-12 pt-2 border-top mt-2" style="border-color: #1E293B !important;">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-1 small text-white opacity-75">
+                  <span><i class="fa-solid fa-calendar-day text-info me-1"></i> {{ trip.start_time|date:"F d, Y &bull; h:i A" }}</span>
+                  <span class="font-monospace text-muted">Trip #TRP-{{ trip.trip_id|stringformat:'s'|slice:':8' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- 2. STAR RATING & FEEDBACK FORM -->
+        <!-- ========================================== -->
+        <div class="p-4 p-md-5">
+          <!-- Post-Ride Emergency Protection Banner -->
+          <div class="alert alert-dark border-warning d-flex align-items-center gap-3 p-3 rounded-3 mb-4 shadow-sm" style="background-color: #0F172A; border-color: #FF9800 !important;">
+            <i class="fa-solid fa-shield-halved text-warning fs-3"></i>
+            <div>
+              <strong class="text-white small d-block"><i class="fa-solid fa-clock me-1 text-warning"></i> 20-Minute Post-Ride SOS Protection Active</strong>
+              <span class="text-white opacity-75 small">For your safety after deboarding, the 1-Touch Emergency SOS button remains available for the next 20 minutes across your SafeRide dashboard.</span>
+            </div>
+          </div>
+
+          <form method="POST" action="{% url 'rate_trip' trip.trip_id %}">
+            {% csrf_token %}
+
+            <!-- 2.1 Interactive Star Rating Component -->
+            <div class="text-center mb-4 pb-3 border-bottom" style="border-color: #1E293B !important;">
+              <label class="form-label fw-bold text-white mb-2 fs-5">Rate Your Overall Safety & Experience</label>
+              
+              <!-- Hidden Form Input for Django Backend -->
+              <input type="hidden" name="rating" id="selected-rating-val" value="5">
+
+              <div class="d-flex justify-content-center gap-3 fs-1 my-2" id="star-rating-container" style="color: #FF9800; cursor: pointer;">
+                <i class="fa-solid fa-star star-btn transition-scale" data-val="1" title="1 Star - Poor"></i>
+                <i class="fa-solid fa-star star-btn transition-scale" data-val="2" title="2 Stars - Below Average"></i>
+                <i class="fa-solid fa-star star-btn transition-scale" data-val="3" title="3 Stars - Average"></i>
+                <i class="fa-solid fa-star star-btn transition-scale" data-val="4" title="4 Stars - Good"></i>
+                <i class="fa-solid fa-star star-btn transition-scale" data-val="5" title="5 Stars - Excellent"></i>
+              </div>
+              <div class="badge bg-dark border text-warning px-3 py-2 rounded-pill fs-6 font-monospace mt-2" id="rating-text-label">
+                ⭐ 5.0 - Excellent & Safe Experience
+              </div>
+            </div>
+
+            <!-- 2.2 Category Dropdown -->
+            <div class="mb-3">
+              <label class="form-label fw-bold text-light small"><i class="fa-solid fa-layer-group text-primary me-1"></i> Feedback Category *</label>
+              <select name="category" id="feedback-category-select" class="form-select form-select-lg text-white" style="background-color: #0F172A; border: 1px solid #334155;" required>
+                <option value="GENERAL" selected>🌟 General Trip Feedback & Compliment</option>
+                <option value="SAFETY">⚠️ Safety Concern / Rash Driving</option>
+                <option value="HARASSMENT">🚨 Harassment / Disrespectful Conduct</option>
+                <option value="OVERCHARGING">💵 Overcharging / Fare Dispute</option>
+                <option value="VEHICLE">🚗 Vehicle Condition / Cleanliness</option>
+                <option value="ROUTE">🗺️ Unnecessary Route Deviation</option>
+                <option value="OTHER">📋 Other Concern</option>
+              </select>
+            </div>
+
+            <!-- 2.3 Detailed Feedback Textarea -->
+            <div class="mb-4">
+              <label class="form-label fw-bold text-light small"><i class="fa-solid fa-pen-to-square text-warning me-1"></i> Detailed Feedback / Incident Notes</label>
+              <textarea name="review_text" id="review-text-area" class="form-control text-white" style="background-color: #0F172A; border: 1px solid #334155;" rows="4" placeholder="Share your experience (e.g. driver driving speed, politeness, AC/condition, route followed)..."></textarea>
+              <small class="text-white opacity-50 d-block mt-1">
+                <i class="fa-solid fa-shield-check me-1"></i> Serious complaints are immediately forwarded to the SafeRide safety committee.
+              </small>
+            </div>
+
+            <!-- 2.4 Action Buttons -->
+            <div class="d-grid gap-3">
+              <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold py-3 shadow text-uppercase tracking-wider">
+                <i class="fa-solid fa-paper-plane me-2"></i> SUBMIT FEEDBACK
+              </button>
+              
+              <a href="{% url 'passenger_dashboard' %}" class="btn btn-outline-light rounded-pill py-2 fw-semibold text-center opacity-75 hover-opacity">
+                <i class="fa-solid fa-forward me-1"></i> Skip for Now
+              </a>
+            </div>
+
+          </form>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .transition-scale {
+    transition: transform 0.15s ease, color 0.15s ease;
+  }
+  .transition-scale:hover {
+    transform: scale(1.25);
+  }
+  .hover-opacity:hover {
+    opacity: 1 !important;
+  }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const starContainer = document.getElementById('star-rating-container');
+    const stars = starContainer.querySelectorAll('.star-btn');
+    const ratingInput = document.getElementById('selected-rating-val');
+    const label = document.getElementById('rating-text-label');
+    const categorySelect = document.getElementById('feedback-category-select');
+
+    const labels = {
+      1: "⚠️ 1.0 - Terrible / Unsafe Conduct",
+      2: "⚠️ 2.0 - Poor Experience",
+      3: "⭐ 3.0 - Average Commute",
+      4: "⭐ 4.0 - Good & Safe Ride",
+      5: "⭐ 5.0 - Excellent & Safe Experience"
+    };
+
+    function updateStars(val) {
+      ratingInput.value = val;
+      label.textContent = labels[val] || `${val}.0`;
+      
+      stars.forEach(s => {
+        const sVal = parseInt(s.getAttribute('data-val'));
+        if (sVal <= val) {
+          s.className = "fa-solid fa-star star-btn transition-scale";
+          s.style.color = val <= 2 ? "#EF4444" : (val === 3 ? "#F59E0B" : "#FF9800");
+        } else {
+          s.className = "fa-regular fa-star star-btn transition-scale";
+          s.style.color = "#475569";
+        }
+      });
+
+      // Auto-select safety category if rating is 1 or 2
+      if (val <= 2 && categorySelect.value === 'GENERAL') {
+        categorySelect.value = 'SAFETY';
+      }
+    }
+
+    stars.forEach(s => {
+      s.addEventListener('click', function() {
+        const val = parseInt(this.getAttribute('data-val'));
+        updateStars(val);
+      });
+
+      s.addEventListener('mouseenter', function() {
+        const hoverVal = parseInt(this.getAttribute('data-val'));
+        stars.forEach(st => {
+          const stVal = parseInt(st.getAttribute('data-val'));
+          if (stVal <= hoverVal) {
+            st.style.color = "#FCD34D";
+          } else {
+            st.style.color = "#475569";
+          }
+        });
+      });
+    });
+
+    starContainer.addEventListener('mouseleave', function() {
+      updateStars(parseInt(ratingInput.value));
+    });
+  });
+</script>
+{% endblock %}

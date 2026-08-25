@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+
+{% block title %}Live Journey Tracker - SafeRide{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="card rounded-4 border shadow-lg p-4 p-md-5 mb-4" style="background-color: #0F172A; border: 1px solid #1E293B;">
+    
+    <!-- Header with Live Satellite Animation -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4 border-bottom border-secondary border-opacity-25 pb-3">
+      <div class="d-flex align-items-center gap-3">
+        <span class="p-3 rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center" style="width: 54px; height: 54px;">
+          <i class="fa-solid fa-satellite-dish fs-3 fa-spin text-warning"></i>
+        </span>
+        <div>
+          <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-1 rounded-pill mb-1">
+            <i class="fa-solid fa-circle-dot fa-fade me-1 text-success"></i> LIVE SATELLITE GPS ACTIVE
+          </span>
+          <h4 class="fw-bold text-white mb-0">{{ trip.passenger.get_full_name|default:trip.passenger.username }}'s Monitored Transit</h4>
+          <span class="small text-muted">
+            Driver: <strong class="text-white">{{ driver.user.get_full_name|default:driver.name|default:driver.user.username }}</strong> • 
+            Vehicle: <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 font-monospace">{{ vehicle.registration_number|default:driver.vehicle_number }}</span>
+          </span>
+        </div>
+      </div>
+      
+      <!-- Action Buttons (Emergency Call & WhatsApp Share) -->
+      <div class="d-flex align-items-center gap-2">
+        <button type="button" class="btn btn-outline-warning btn-sm rounded-pill px-3" onclick="copyShareLink()" id="copy-link-btn">
+          <i class="fa-solid fa-link me-1"></i> Copy Link
+        </button>
+        <a href="https://api.whatsapp.com/send?text=Track%20my%20live%20SafeRide%20journey%20in%20real-time%3A%20{{ request.build_absolute_uri|urlencode }}" target="_blank" class="btn btn-success btn-sm rounded-pill px-3 fw-semibold">
+          <i class="fa-brands fa-whatsapp me-1"></i> WhatsApp
+        </a>
+        <a href="tel:112" class="btn btn-danger btn-sm rounded-pill px-3 fw-bold shadow-sm">
+          <i class="fa-solid fa-phone me-1"></i> Police 112
+        </a>
+      </div>
+    </div>
+
+    <!-- Emergency SOS Alert Banner if triggered -->
+    {% if trip.status == 'SOS_Triggered' %}
+    <div class="alert alert-danger bg-danger bg-opacity-25 border-danger text-white rounded-3 py-3 px-4 mb-4 d-flex align-items-center justify-content-between" role="alert">
+      <div class="d-flex align-items-center gap-3">
+        <i class="fa-solid fa-triangle-exclamation fs-2 text-danger"></i>
+        <div>
+          <h6 class="fw-bold mb-0 text-uppercase">EMERGENCY DISTRESS BEACON ACTIVE</h6>
+          <p class="small mb-0 text-white-50">An emergency SOS signal was dispatched for this ride. Police Patrol & SafeRide Safety Command have been alerted.</p>
+        </div>
+      </div>
+      <a href="tel:112" class="btn btn-danger btn-sm rounded-pill fw-bold px-4 text-uppercase">CALL 112</a>
+    </div>
+    {% endif %}
+
+    <!-- Live Map Container (Google Maps / Leaflet Hybrid) -->
+    <div id="public-live-map" class="rounded-4 border" style="height: 480px; border-color: #334155 !important; overflow: hidden; position: relative;"></div>
+
+    <!-- Journey Telemetry & Route Summary Cards -->
+    <div class="row g-3 mt-3 pt-2">
+      <div class="col-md-3">
+        <div class="p-3 rounded-3" style="background-color: #131C2E; border: 1px solid #1E293B;">
+          <span class="text-muted small d-block mb-1">Ride Status</span>
+          <strong class="text-success" id="telemetry-status">
+            {% if trip.status == 'Completed' %}<i class="fa-solid fa-check me-1"></i> Completed Safely
+            {% elif trip.status == 'SOS_Triggered' %}<span class="text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i> SOS Active</span>
+            {% else %}<i class="fa-solid fa-circle-dot text-success me-1"></i> Active Monitored Trip{% endif %}
+          </strong>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="p-3 rounded-3" style="background-color: #131C2E; border: 1px solid #1E293B;">
+          <span class="text-muted small d-block mb-1">🟢 Boarding Location</span>
+          <strong class="text-white small">{{ trip.boarding_point|default:trip.pickup_location_name }}</strong>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="p-3 rounded-3" style="background-color: #131C2E; border: 1px solid #1E293B;">
+          <span class="text-muted small d-block mb-1">🔴 Destination Point</span>
+          <strong class="text-white small">{{ trip.destination_point|default:"Destination Drop Point" }}</strong>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="p-3 rounded-3" style="background-color: #131C2E; border: 1px solid #1E293B;">
+          <span class="text-muted small d-block mb-1">Driver Safety Reputation</span>
+          <strong class="text-warning">
+            <i class="fa-solid fa-shield-halved me-1"></i> {{ driver.reputation_score }}/100
+          </strong>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  .leaflet-container {
+    background: #0f172a !important;
+    border-radius: 12px;
+  }
+  .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+    background: #131C2E !important;
+    color: #FFFFFF !important;
+    border: 1px solid #3B82F6 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;
+  }
+  .leaflet-popup-content {
+    margin: 12px 14px !important;
+    line-height: 1.5 !important;
+  }
+  .leaflet-container a.leaflet-popup-close-button {
+    color: #94A3B8 !important;
+  }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Google Maps JavaScript API with Leaflet OpenStreetMap Fallback -->
+<script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY|default:'' }}&libraries=places,geometry"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  let map = null;
+  let marker = null;
+  let leafletMap = null;
+  let leafletMarker = null;
+
+  let currentLat = parseFloat("{{ trip.live_latitude|default:trip.current_latitude|default:'9.684300' }}");
+  let currentLng = parseFloat("{{ trip.live_longitude|default:trip.current_longitude|default:'76.685300' }}");
+
+  function copyShareLink() {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+      const btn = document.getElementById('copy-link-btn');
+      if (btn) {
+        btn.innerHTML = '<i class="fa-solid fa-check text-success me-1"></i> Copied!';
+        setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-link me-1"></i> Copy Link'; }, 2500);
+      }
+    });
+  }
+
+  function renderLeafletFallbackMap() {
+    const mapElement = document.getElementById('public-live-map');
+    if (!mapElement) return;
+    mapElement.innerHTML = '';
+
+    leafletMap = L.map('public-live-map').setView([currentLat, currentLng], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors | Google Maps Fallback',
+      maxZoom: 19
+    }).addTo(leafletMap);
+
+    const carIcon = L.divIcon({
+      className: 'custom-car-icon',
+      html: '<div style="background:#2563EB; width:36px; height:36px; border-radius:50%; border:3px solid #FFF; display:flex; align-items:center; justify-content:center; color:#FFF; font-size:16px; box-shadow:0 0 14px rgba(37,99,235,0.9);"><i class="fa-solid fa-car-side"></i></div>',
+      iconSize: [36, 36],
+      iconAnchor: [18, 18]
+    });
+
+    leafletMarker = L.marker([currentLat, currentLng], { icon: carIcon }).addTo(leafletMap);
+    leafletMarker.bindPopup(`
+      <div style="font-family: 'Inter', sans-serif; padding: 2px; color: #FFFFFF;">
+        <h6 style="margin: 0 0 4px 0; font-weight: 700; color: #60A5FA;">{{ vehicle.registration_number|default:driver.vehicle_number }}</h6>
+        <p style="margin: 0 0 4px 0; font-size: 13px; color: #E2E8F0;"><b>Driver:</b> {{ driver.user.get_full_name|default:driver.name|default:driver.user.username }}</p>
+        <p style="margin: 0 0 4px 0; font-size: 11px; color: #94A3B8;">Reputation Score: {{ driver.reputation_score }}/100</p>
+        <span style="display: inline-block; background: #065F46; color: #34D399; border: 1px solid #10B981; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 700;">SafeRide Live Satellite GPS</span>
+      </div>
+    `).openPopup();
+  }
+
+  function initGoogleMap() {
+    const mapElement = document.getElementById('public-live-map');
+    if (!mapElement) return;
+
+    if (typeof google === 'undefined' || !google.maps || !google.maps.Map) {
+      renderLeafletFallbackMap();
+      return;
+    }
+
+    try {
+      const pos = new google.maps.LatLng(currentLat, currentLng);
+      map = new google.maps.Map(mapElement, {
+        zoom: 15,
+        center: pos,
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        disableDefaultUI: false,
+        zoomControl: true,
+        styles: [
+          { elementType: "geometry", stylers: [{ color: "#1e293b" }] },
+          { elementType: "labels.text.stroke", stylers: [{ color: "#0f172a" }] },
+          { elementType: "labels.text.fill", stylers: [{ color: "#94a3b8" }] },
+          { featureType: "road", elementType: "geometry", stylers: [{ color: "#334155" }] },
+          { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#f8fafc" }] },
+          { featureType: "water", elementType: "geometry", stylers: [{ color: "#0f172a" }] }
+        ]
+      });
+
+      marker = new google.maps.Marker({
+        position: pos,
+        map: map,
+        title: "{{ vehicle.registration_number|default:driver.vehicle_number }}",
+        icon: {
+          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+          scale: 6,
+          fillColor: "#2563EB",
+          fillOpacity: 1,
+          strokeWeight: 2,
+          strokeColor: "#FFFFFF"
+        }
+      });
+
+      const infoWindow = new google.maps.InfoWindow({
+        content: `
+          <div style="color: #0F172A; font-family: 'Inter', sans-serif; padding: 4px;">
+            <h6 style="margin: 0; font-weight: bold; color: #1E3A8A;">{{ vehicle.registration_number|default:driver.vehicle_number }}</h6>
+            <p style="margin: 4px 0 0 0; font-size: 13px;">Driver: {{ driver.user.get_full_name|default:driver.name|default:driver.user.username }}</p>
+            <span style="display:inline-block; background: #065F46; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-top: 4px;">SafeRide Live Satellite GPS</span>
+          </div>
+        `
+      });
+
+      infoWindow.open(map, marker);
+      marker.addListener("click", () => infoWindow.open(map, marker));
+    } catch (e) {
+      console.warn("Google Maps init error, using fallback:", e);
+      renderLeafletFallbackMap();
+    }
+  }
+
+  // Live GPS Telemetry Polling (Every 4 seconds)
+  function pollLiveTripCoordinates() {
+    {% if trip.status == 'Active' or trip.status == 'Ongoing' or trip.status == 'IN_PROGRESS' or trip.status == 'SOS_Triggered' %}
+    fetch("{% url 'api_trip_location' trip.trip_id %}")
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.latitude && data.longitude) {
+          currentLat = parseFloat(data.latitude);
+          currentLng = parseFloat(data.longitude);
+
+          if (map && marker && typeof google !== 'undefined' && google.maps) {
+            const updatedPos = new google.maps.LatLng(currentLat, currentLng);
+            marker.setPosition(updatedPos);
+            map.panTo(updatedPos);
+          } else if (leafletMarker && leafletMap) {
+            leafletMarker.setLatLng([currentLat, currentLng]);
+            leafletMap.panTo([currentLat, currentLng]);
+          }
+        }
+      })
+      .catch(err => console.log("Live telemetry ping:", err));
+    {% endif %}
+  }
+
+  window.gm_authFailure = function() {
+    console.warn("Google Maps auth failed. Activating Leaflet live tracking fallback.");
+    renderLeafletFallbackMap();
+  };
+
+  document.addEventListener('DOMContentLoaded', function() {
+    initGoogleMap();
+    setInterval(pollLiveTripCoordinates, 4000);
+  });
+</script>
+{% endblock %}
+
