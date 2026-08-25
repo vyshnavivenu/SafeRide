@@ -80,7 +80,7 @@ class EmergencyAndTrackingAPITests(APITestCase):
             'longitude': new_lng
         }
 
-        url = reverse('update_live_location_api', kwargs={'trip_id': self.trip.trip_id})
+        url = reverse('api_trip_location', kwargs={'trip_id': self.trip.trip_id})
         response = self.client.post(url, data=payload, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -115,7 +115,7 @@ class EmergencyAndTrackingAPITests(APITestCase):
             'location_name': 'Emergency Transit Corridor SH-32'
         }
 
-        url = reverse('trigger_sos_api')
+        url = reverse('api_sos_trigger')
         response = self.client.post(url, data=payload, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)

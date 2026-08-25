@@ -16,9 +16,13 @@
     <div class="driver-id-header">
       <div class="d-flex align-items-center justify-content-center gap-2 mb-1">
         <i class="fa-solid fa-shield-halved text-cyan fs-4" style="color: #06B6D4;"></i>
-        <h5 class="fw-bold mb-0 text-white">Safe<span style="color: #06B6D4;">Ride</span> VERIFIED DRIVER</h5>
+        <h5 class="fw-bold mb-0 text-white">Safe<span style="color: #06B6D4;">Ride</span> {% if driver.is_verified %}VERIFIED DRIVER{% else %}DRIVER PROFILE (Pending){% endif %}</h5>
       </div>
+      {% if driver.is_verified %}
       <span class="badge bg-success bg-opacity-25 text-success border border-success small">OFFICIAL SAFETY BADGE</span>
+      {% else %}
+      <span class="badge bg-warning bg-opacity-25 text-warning border border-warning small">Pending Admin KYC Verification</span>
+      {% endif %}
     </div>
 
     <div class="p-4 text-center">
