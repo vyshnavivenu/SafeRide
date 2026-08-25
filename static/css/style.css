@@ -302,6 +302,100 @@ button,
   touch-action: manipulation;
 }
 
+/* ==========================================================================
+   SAFERIDE RESPONSIVE ARCHITECTURE: DESKTOP VS MOBILE WEB APP
+   ========================================================================== */
+
+/* DESKTOP (≥ 992px): Cleanly Embedded in Top Navigation Bar */
+@media (min-width: 992px) {
+  .floating-sos-btn {
+    display: none !important; /* Never float over desktop workspace */
+  }
+
+  .header-sos-btn {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 16px;
+    font-weight: 700;
+    font-size: 0.875rem;
+    border-radius: 50rem;
+    background: linear-gradient(135deg, #DC2626, #991B1B) !important;
+    border: 1px solid #EF4444 !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.35);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .header-sos-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(220, 38, 38, 0.5);
+    background: #DC2626 !important;
+  }
+}
+
+/* MOBILE (< 992px): Fixed Floating Thumb-Zone FAB */
+@media (max-width: 991.98px) {
+  .header-sos-btn {
+    display: none !important; /* Hide inside mobile navbar to eliminate header clutter */
+  }
+
+  .floating-sos-btn {
+    position: fixed !important;
+    bottom: calc(72px + var(--sab)) !important;
+    right: calc(16px + var(--sar)) !important;
+    z-index: 1060 !important;
+    min-height: 48px;
+    min-width: 48px;
+    padding: 12px 20px;
+    border-radius: 50px;
+    font-size: 0.88rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    box-shadow: 0 8px 24px rgba(220, 38, 38, 0.6), 0 0 16px rgba(239, 68, 68, 0.4);
+    animation: mobileSosPulse 2s infinite ease-in-out;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+}
+
+@keyframes mobileSosPulse {
+  0% { transform: scale(1); box-shadow: 0 8px 24px rgba(220, 38, 38, 0.6); }
+  50% { transform: scale(1.05); box-shadow: 0 12px 32px rgba(220, 38, 38, 0.85), 0 0 20px #EF4444; }
+  100% { transform: scale(1); box-shadow: 0 8px 24px rgba(220, 38, 38, 0.6); }
+}
+
+/* -------------------------------------------------------------
+   MOBILE DATA CARDS (REPLACES OVERFLOWING TABLES ON SMARTPHONES)
+   ------------------------------------------------------------- */
+.mobile-data-card {
+  background: #0F172A;
+  border: 1px solid #334155;
+  border-radius: 1rem;
+  padding: 1rem;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.mobile-data-card:active {
+  transform: scale(0.98);
+  border-color: #F59E0B;
+}
+
+.mobile-data-card .data-label {
+  font-size: 0.72rem;
+  color: #94A3B8;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.mobile-data-card .data-value {
+  color: #FFFFFF;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
 .floating-sos-btn {
   position: fixed !important;
   bottom: calc(20px + var(--sab)) !important;
