@@ -52,14 +52,14 @@
         <input type="file" id="qr-file-input" accept="image/*" capture="environment" style="display: none;" onchange="handleQRImageFile(this)">
         
         <!-- Status & Diagnostic Feedback Message Box -->
-        <div id="qr-reader-results" class="mt-3 small fw-bold font-monospace p-3 rounded-3" style="background: rgba(15, 23, 42, 0.7); min-height: 42px;">
+        <div id="qr-reader-results" class="mt-3 small fw-bold font-monospace p-2 rounded-3" style="background: rgba(15, 23, 42, 0.7); min-height: 38px;">
           <span class="text-white opacity-75"><i class="fa-solid fa-circle-info me-1 text-warning"></i> Ready. Tap the box above to snap the driver's QR badge.</span>
         </div>
 
         <!-- Retake Snapshot Action Button (Shown when retrying) -->
-        <div id="snapshot-retake-wrapper" class="mt-3 d-none">
+        <div id="snapshot-retake-wrapper" class="mt-2 d-none">
           <button type="button" class="btn btn-warning btn-lg fw-bold rounded-pill px-4 text-dark shadow w-100 hover-lift" onclick="triggerSnapshotCapture()">
-            <i class="fa-solid fa-rotate me-2"></i> Retake QR Snapshot
+            <i class="fa-solid fa-rotate me-2"></i> Retake Snapshot
           </button>
         </div>
 
@@ -68,25 +68,38 @@
           <div class="accordion-item rounded-3 border-0" style="background: transparent;">
             <h2 class="accordion-header" id="flush-headingOne">
               <button class="accordion-button collapsed py-2 px-3 small rounded-3 text-white opacity-75 fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" style="background: #0B1120; font-size: 0.8rem;">
-                <i class="fa-solid fa-circle-question me-2 text-warning"></i> Tips for instant QR recognition
+                <i class="fa-solid fa-circle-question me-2 text-warning"></i> Tips for best QR snapshot recognition
               </button>
             </h2>
             <div id="flush-collapseOne" class="accordion-collapse collapse" data-bs-parent="#qrHelpAccordion">
               <div class="accordion-body text-start small text-white opacity-75 pt-2 pb-1" style="font-size: 0.78rem; line-height: 1.4;">
                 <ul class="mb-2 ps-3">
                   <li class="mb-1"><strong>Hold Steady:</strong> Point your camera directly at the QR badge on the driver's phone or vehicle dashboard sticker.</li>
-                  <li class="mb-1"><strong>Good Lighting:</strong> Avoid heavy glare or direct flash across the QR code matrix.</li>
-                  <li class="mb-1"><strong>Automatic Detection:</strong> High-speed optical scanner automatically detects and opens the verified driver profile.</li>
+                  <li class="mb-1"><strong>Good Lighting:</strong> Avoid heavy glare or shadows across the QR code matrix.</li>
+                  <li class="mb-1"><strong>Instant Verification:</strong> Snapping a photo uses your phone's native camera resolution for instantaneous verification without stream lag.</li>
                 </ul>
               </div>
             </div>
           </div>
         </div>
 
+        <!-- Quick Manual Vehicle Number Lookup Form Inside Modal -->
+        <div class="mt-3 p-2 rounded-3 text-start" style="background: #0B1120; border: 1px solid #1E293B;">
+          <form action="{% url 'verify_driver_search' %}" method="GET" class="d-flex gap-2">
+            <input type="text" name="query" class="form-control form-control-sm text-white" placeholder="Or enter vehicle plate (e.g. KL-05-AT-4455)" style="background: #0F172A; border-color: #334155; font-size: 0.85rem;" required>
+            <button type="submit" class="btn btn-primary btn-sm px-3 fw-bold rounded-pill text-nowrap">
+              <i class="fa-solid fa-magnifying-glass me-1"></i> Verify
+            </button>
+          </form>
+        </div>
+
       </div>
 
       <!-- Modal Footer -->
-      <div class="modal-footer border-top d-flex justify-content-end px-4 py-2" style="border-color: #334155 !important; background: #0B1120;">
+      <div class="modal-footer border-top d-flex justify-content-between px-4 py-2" style="border-color: #334155 !important; background: #0B1120;">
+        <a href="{% url 'verify_driver_search' %}" class="text-decoration-none small text-warning fw-semibold">
+          <i class="fa-solid fa-keyboard me-1"></i> Manual Plate Search
+        </a>
         <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-4 text-white" data-bs-dismiss="modal" onclick="resetSnapshotScanner()">
           <i class="fa-solid fa-xmark me-1"></i> Close
         </button>
