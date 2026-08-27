@@ -120,6 +120,13 @@ class RoleBasedAccessControlTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Verified Driver')
 
+    def test_driver_qr_code_view_renders_successfully(self):
+        """Verify that a Verified driver can view their Official Vehicle QR Code."""
+        self.client.force_login(self.verified_driver_user)
+        response = self.client.get(reverse('driver_qr_code'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'OFFICIAL VEHICLE QR CODE')
+
     # -------------------------------------------------------------
     # 3. PASSENGER RIDE INITIATION & BOOKING FLOW
     # -------------------------------------------------------------

@@ -68,7 +68,7 @@
         </a>
         {% if driver.verification_status == 'Verified' %}
         <a href="{% url 'driver_id_badge' %}" target="_blank" class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold">
-          <i class="fa-solid fa-qrcode me-1"></i> View ID Badge
+          <i class="fa-solid fa-qrcode me-1"></i> View QR Code
         </a>
         {% endif %}
       </div>
@@ -94,7 +94,7 @@
         </h5>
         <p class="small text-white opacity-90 mb-0">
           {% if driver.verification_status == 'Pending' %}
-            Your driver profile, driving license, and vehicle registration are currently undergoing administrative KYC auditing. Digital QR badges and passenger verification gateway features will activate automatically upon administrator approval.
+            Your driver profile, driving license, and vehicle registration are currently undergoing administrative KYC auditing. Digital QR codes and passenger verification gateway features will activate automatically upon administrator approval.
           {% elif driver.verification_status == 'Rejected' %}
             Your driver enrollment was rejected during the document verification process. Please update your personal details or re-upload your valid government driving license via <a href="{% url 'driver_profile' %}" class="text-warning fw-bold text-decoration-underline">Profile Management</a>.
           {% else %}
@@ -167,14 +167,14 @@
   <div class="row g-4">
     
     <!-- ========================================== -->
-    <!-- 3. DIGITAL QR BADGE DISPLAY (GATEKEPT) -->
+    <!-- 3. DIGITAL QR CODE DISPLAY (GATEKEPT) -->
     <!-- ========================================== -->
     <div class="col-lg-5">
       <div class="card rounded-4 border shadow-sm p-4 text-center h-100" style="background-color: #131C2E !important; border-color: #1E293B !important;">
         
         <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2" style="border-color: #1E293B !important;">
           <h6 class="fw-bold text-uppercase text-white small mb-0">
-            <i class="fa-solid fa-qrcode text-warning me-1"></i> Digital Driver ID Badge
+            <i class="fa-solid fa-qrcode text-warning me-1"></i> Official Vehicle QR Code
           </h6>
           {% if driver.verification_status == 'Verified' %}
             <span class="badge bg-success bg-opacity-25 text-success border border-success small">Active</span>
@@ -199,10 +199,10 @@
             Display this QR Code prominently on your dashboard or windshield. Passengers scan this code to verify your identity & safety rating before boarding.
           </p>
 
-          <!-- Print Digital ID Badge Button -->
+          <!-- View & Print Vehicle QR Code Button -->
           <div class="d-grid gap-2">
             <a href="{% url 'driver_id_badge' %}" target="_blank" class="btn btn-primary btn-lg rounded-pill fw-bold shadow">
-              <i class="fa-solid fa-print me-2"></i> Print Digital ID Badge
+              <i class="fa-solid fa-qrcode me-2"></i> View & Print Vehicle QR Code
             </a>
           </div>
 
@@ -212,9 +212,9 @@
             <div class="rounded-circle d-inline-flex align-items-center justify-content-center p-3 mb-3" style="background: rgba(245, 158, 11, 0.15);">
               <i class="fa-solid fa-lock fa-3x text-warning"></i>
             </div>
-            <h6 class="fw-bold text-white mb-2">QR Badge Locked</h6>
+            <h6 class="fw-bold text-white mb-2">QR Code Locked</h6>
             <p class="small text-white opacity-75 mb-3">
-              Your official vehicle QR code badge will be unlocked immediately after the SafeRide Administrator approves your driving license & KYC documents.
+              Your official vehicle QR code will be unlocked immediately after the SafeRide Administrator approves your driving license & KYC documents.
             </p>
             <a href="{% url 'driver_profile' %}" class="btn btn-outline-warning btn-sm rounded-pill px-3">
               <i class="fa-solid fa-file-arrow-up me-1"></i> Review KYC Documents

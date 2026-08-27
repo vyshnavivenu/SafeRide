@@ -40,6 +40,7 @@ urlpatterns = [
     path('driver/dashboard/', views.driver_dashboard, name='driver_dashboard'),
     path('driver/profile/', views.driver_profile_view, name='driver_profile'),
     path('driver/id-badge/', views.driver_id_badge, name='driver_id_badge'),
+    path('driver/qr-code/', views.driver_id_badge, name='driver_qr_code'),
     path('driver/trip-logs/', views.driver_trip_logs, name='driver_trip_logs'),
 
     # Admin Command Center

@@ -1,69 +1,322 @@
 {% extends 'base.html' %}
 
-{% block title %}Official Driver ID Badge - SafeRide{% endblock %}
+{% block title %}Official Vehicle QR Code - SafeRide{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Official Vehicle QR Code Display Card Styles */
+  .driver-qr-container {
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  
+  .driver-qr-card {
+    background: #111827;
+    border: 2px solid #1E293B;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .qr-card-header {
+    background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+    border-bottom: 2px solid #06B6D4;
+    padding: 20px;
+    text-align: center;
+  }
+
+  /* Vehicle License Plate Styling */
+  .vehicle-plate-badge {
+    display: inline-flex;
+    align-items: center;
+    background: #FACC15;
+    color: #0F172A;
+    font-family: 'SF Mono', Monaco, Consolas, 'Courier New', monospace;
+    font-weight: 900;
+    font-size: 1.15rem;
+    letter-spacing: 2px;
+    padding: 6px 16px;
+    border-radius: 8px;
+    border: 2px solid #000;
+    box-shadow: inset 0 1px 2px rgba(255,255,255,0.4), 0 3px 6px rgba(0,0,0,0.3);
+  }
+  
+  .vehicle-plate-badge .plate-country {
+    background: #0284C7;
+    color: #FFF;
+    font-size: 0.65rem;
+    font-weight: bold;
+    padding: 2px 4px;
+    border-radius: 3px;
+    margin-right: 8px;
+    letter-spacing: 0;
+  }
+
+  /* QR Frame with Target Corners */
+  .qr-scanner-box {
+    position: relative;
+    display: inline-block;
+    padding: 16px;
+    background: #FFFFFF;
+    border-radius: 18px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+  }
+
+  .qr-scanner-box::before, .qr-scanner-box::after {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border-color: #06B6D4;
+    pointer-events: none;
+  }
+
+  .qr-scanner-box::before {
+    top: 6px;
+    left: 6px;
+    border-top: 4px solid #06B6D4;
+    border-left: 4px solid #06B6D4;
+    border-top-left-radius: 10px;
+  }
+
+  .qr-scanner-box::after {
+    bottom: 6px;
+    right: 6px;
+    border-bottom: 4px solid #06B6D4;
+    border-right: 4px solid #06B6D4;
+    border-bottom-right-radius: 10px;
+  }
+
+  .qr-img-display {
+    width: 220px;
+    height: 220px;
+    object-fit: contain;
+    display: block;
+  }
+
+  /* Print Specific Optimization */
+  @media print {
+    body {
+      background: #FFFFFF !important;
+      color: #000000 !important;
+      font-size: 12pt;
+    }
+    
+    .navbar, footer, .d-print-none, .nav-tab-bar {
+      display: none !important;
+    }
+
+    .container {
+      max-width: 100% !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    .driver-qr-container {
+      max-width: 100% !important;
+      width: 100% !important;
+    }
+
+    .driver-qr-card {
+      background: #FFFFFF !important;
+      border: 3px solid #000000 !important;
+      box-shadow: none !important;
+      border-radius: 12px !important;
+      color: #000000 !important;
+      page-break-inside: avoid;
+    }
+
+    .qr-card-header {
+      background: #F1F5F9 !important;
+      border-bottom: 2px solid #000000 !important;
+      color: #000000 !important;
+    }
+
+    .qr-card-header h5, .qr-card-header span {
+      color: #000000 !important;
+    }
+
+    .text-white, .text-light {
+      color: #000000 !important;
+    }
+
+    .qr-scanner-box {
+      border: 2px solid #000000 !important;
+      box-shadow: none !important;
+    }
+
+    .vehicle-plate-badge {
+      border: 2px solid #000 !important;
+      background: #FEE024 !important;
+      color: #000 !important;
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+
+    .info-grid-box {
+      background: #F8FAFC !important;
+      border: 1px solid #CBD5E1 !important;
+      color: #000000 !important;
+    }
+
+    .info-grid-box strong {
+      color: #000000 !important;
+    }
+  }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="container py-5">
+  
+  <!-- Action Controls (Hidden when printing) -->
   <div class="text-center mb-4 d-print-none">
-    <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" onclick="window.print()">
-      <i class="fa-solid fa-print me-2"></i> Print / Save as PDF ID Badge
-    </button>
-    <a href="{% url 'driver_dashboard' %}" class="btn btn-outline-secondary rounded-pill px-4 ms-2">Back to Dashboard</a>
-  </div>
+    <div class="d-inline-flex flex-wrap justify-content-center gap-2">
+      <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" onclick="window.print()" id="btn-print-qr">
+        <i class="fa-solid fa-print me-2"></i> Print / Save Vehicle QR Code
+      </button>
 
-  <!-- Driver ID Card (Designed for printing & dashboard sticker) -->
-  <div class="driver-id-card">
-    <div class="driver-id-header">
-      <div class="d-flex align-items-center justify-content-center gap-2 mb-1">
-        <i class="fa-solid fa-shield-halved text-cyan fs-4" style="color: #06B6D4;"></i>
-        <h5 class="fw-bold mb-0 text-white">Safe<span style="color: #06B6D4;">Ride</span> {% if driver.is_verified %}VERIFIED DRIVER{% else %}DRIVER PROFILE (Pending){% endif %}</h5>
-      </div>
-      {% if driver.is_verified %}
-      <span class="badge bg-success bg-opacity-25 text-success border border-success small">OFFICIAL SAFETY BADGE</span>
-      {% else %}
-      <span class="badge bg-warning bg-opacity-25 text-warning border border-warning small">Pending Admin KYC Verification</span>
-      {% endif %}
-    </div>
-
-    <div class="p-4 text-center">
-      {% if driver.driver_photo %}
-      <img src="{{ driver.driver_photo.url }}" class="rounded-circle border border-3 border-dark mb-3" style="width: 100px; height: 100px; object-fit: cover;">
-      {% else %}
-      <div class="rounded-circle border border-3 border-dark mb-3 mx-auto d-flex align-items-center justify-content-center fw-bold fs-2 text-white" style="width: 100px; height: 100px; background: #0F172A;">
-        {{ driver.user.first_name|slice:":1" }}{{ driver.user.last_name|slice:":1" }}
-      </div>
+      {% if driver.qr_code_url %}
+      <a href="{{ driver.qr_code_url }}" download="SafeRide_QR_{{ driver.license_number }}.png" class="btn btn-outline-info rounded-pill px-4 fw-bold shadow-sm" id="btn-download-qr">
+        <i class="fa-solid fa-download me-2"></i> Download QR Code (PNG)
+      </a>
       {% endif %}
 
-      <h4 class="fw-bold text-dark mb-1">{{ driver.user.get_full_name|default:driver.user.username }}</h4>
-      <div class="badge bg-dark px-3 py-2 fs-6 mb-3">{{ vehicle.registration_number|default:"KL-05-AT-4455" }}</div>
-
-      <div class="p-3 bg-light rounded-3 d-inline-block border mb-3">
-        <img src="{{ driver.qr_code_url }}" style="width: 180px; height: 180px; object-fit: contain;" alt="Driver QR Badge">
-      </div>
-
-      <div class="row g-2 text-start small border-top pt-3">
-        <div class="col-6">
-          <span class="text-muted">License No:</span><br>
-          <strong>{{ driver.license_number }}</strong>
-        </div>
-        <div class="col-6">
-          <span class="text-muted">Vehicle Type:</span><br>
-          <strong>{{ vehicle.get_vehicle_type_display }}</strong>
-        </div>
-        <div class="col-6">
-          <span class="text-muted">Safety Score:</span><br>
-          <strong class="text-success">{{ driver.reputation_score }}/100</strong>
-        </div>
-        <div class="col-6">
-          <span class="text-muted">Emergency Dispatch:</span><br>
-          <strong class="text-danger">Police 112</strong>
-        </div>
-      </div>
+      <a href="{% url 'driver_dashboard' %}" class="btn btn-outline-secondary rounded-pill px-4 ms-1">
+        <i class="fa-solid fa-arrow-left me-1"></i> Back to Dashboard
+      </a>
     </div>
-
-    <div class="bg-dark text-white p-2 text-center small">
-      Scan this QR Code with any phone camera to verify credentials
+    <div class="small text-white opacity-75 mt-2">
+      <i class="fa-solid fa-circle-info me-1 text-cyan"></i> Display this QR Code inside your vehicle dashboard or windshield for passenger safety scanning.
     </div>
   </div>
+
+  <!-- Driver Official Vehicle QR Code Placard Card -->
+  <div class="driver-qr-container">
+    <div class="driver-qr-card">
+      
+      <!-- Card Header -->
+      <div class="qr-card-header">
+        <div class="d-flex align-items-center justify-content-center gap-2 mb-1">
+          <i class="fa-solid fa-shield-halved text-cyan fs-4" style="color: #06B6D4;"></i>
+          <h5 class="fw-bold mb-0 text-white tracking-wide">
+            Safe<span style="color: #06B6D4;">Ride</span> 
+            {% if driver.is_verified %}
+              VERIFIED DRIVER
+            {% else %}
+              DRIVER PROFILE (Pending)
+            {% endif %}
+          </h5>
+        </div>
+
+        {% if driver.is_verified %}
+        <span class="badge bg-success bg-opacity-25 text-success border border-success px-3 py-1 rounded-pill small fw-bold mt-1">
+          <i class="fa-solid fa-circle-check me-1"></i> OFFICIAL VEHICLE QR CODE
+        </span>
+        {% else %}
+        <span class="badge bg-warning bg-opacity-25 text-warning border border-warning px-3 py-1 rounded-pill small fw-bold mt-1">
+          <i class="fa-solid fa-clock me-1"></i> Pending Admin KYC Verification
+        </span>
+        {% endif %}
+      </div>
+
+      <!-- Card Body -->
+      <div class="p-4 text-center">
+        
+        {% if driver.is_verified %}
+          <!-- Driver Photo & Identity -->
+          <div class="d-flex align-items-center justify-content-center gap-3 mb-3">
+            {% if driver.driver_photo %}
+            <img src="{{ driver.driver_photo.url }}" class="rounded-circle border border-3 border-info shadow-sm" style="width: 70px; height: 70px; object-fit: cover;" alt="{{ driver.user.get_full_name }}">
+            {% else %}
+            <div class="rounded-circle border border-3 border-info shadow-sm d-flex align-items-center justify-content-center fw-bold fs-3 text-white" style="width: 70px; height: 70px; background: #0F172A;">
+              {{ driver.user.first_name|slice:":1" }}{{ driver.user.last_name|slice:":1"|default:"D" }}
+            </div>
+            {% endif %}
+            <div class="text-start">
+              <h4 class="fw-bold text-white mb-0">{{ driver.user.get_full_name|default:driver.user.username }}</h4>
+              <span class="small text-white opacity-75"><i class="fa-solid fa-id-card text-cyan me-1"></i> Lic: {{ driver.license_number }}</span>
+            </div>
+          </div>
+
+          <!-- Vehicle Plate Display -->
+          <div class="mb-3">
+            <div class="vehicle-plate-badge">
+              <span class="plate-country">IND</span>
+              <span>{{ vehicle.registration_number|default:driver.vehicle_number|default:"KL-05-AT-4455" }}</span>
+            </div>
+          </div>
+
+          <!-- HERO QR CODE DISPLAY -->
+          <div class="my-3">
+            <div class="qr-scanner-box">
+              <img src="{{ driver.qr_code_url }}" class="qr-img-display" alt="Official SafeRide Driver QR Code">
+            </div>
+            <div class="mt-2 text-cyan fw-bold small">
+              <i class="fa-solid fa-qrcode me-1"></i> SCAN TO VERIFY & START RIDE
+            </div>
+          </div>
+
+          <!-- Key Vehicle & Safety Metadata -->
+          <div class="row g-2 text-start small pt-3 border-top border-secondary mt-3">
+            <div class="col-6">
+              <div class="p-2 rounded-3 info-grid-box" style="background: #0F172A; border: 1px solid #1E293B;">
+                <span class="text-white opacity-75 small">Vehicle Type:</span><br>
+                <strong class="text-white">{{ vehicle.get_vehicle_type_display|default:driver.vehicle_type|default:"Commercial" }}</strong>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-2 rounded-3 info-grid-box" style="background: #0F172A; border: 1px solid #1E293B;">
+                <span class="text-white opacity-75 small">Safety Rating:</span><br>
+                <strong class="text-success"><i class="fa-solid fa-star text-warning me-1"></i>{{ driver.reputation_score|floatformat:1 }}/100</strong>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-2 rounded-3 info-grid-box" style="background: #0F172A; border: 1px solid #1E293B;">
+                <span class="text-white opacity-75 small">Experience:</span><br>
+                <strong class="text-white">{{ driver.experience_years|default:3 }} Years</strong>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-2 rounded-3 info-grid-box" style="background: #0F172A; border: 1px solid #1E293B;">
+                <span class="text-white opacity-75 small">Emergency Helpline:</span><br>
+                <strong class="text-danger"><i class="fa-solid fa-phone-volume me-1"></i>Police 112</strong>
+              </div>
+            </div>
+          </div>
+
+        {% else %}
+          <!-- Pending Verification State -->
+          <div class="py-4 px-3 text-center">
+            <div class="rounded-circle d-inline-flex align-items-center justify-content-center p-3 mb-3" style="background: rgba(245, 158, 11, 0.15); border: 2px solid #F59E0B;">
+              <i class="fa-solid fa-hourglass-half fa-3x text-warning"></i>
+            </div>
+            <h5 class="fw-bold text-white mb-2">Driver Verification Pending</h5>
+            <p class="text-white opacity-75 small mb-3">
+              Your official vehicle QR code will be generated and unlocked immediately once the SafeRide Authority reviews and verifies your driving license & vehicle documents.
+            </p>
+            <div class="badge bg-warning bg-opacity-10 text-warning border border-warning px-3 py-2 fs-6 mb-3">
+              Status: Pending Approval
+            </div>
+            <div>
+              <a href="{% url 'driver_profile' %}" class="btn btn-warning btn-sm rounded-pill px-4 fw-bold text-dark">
+                <i class="fa-solid fa-file-arrow-up me-1"></i> View KYC Status
+              </a>
+            </div>
+          </div>
+        {% endif %}
+
+      </div>
+
+      <!-- Card Footer Banner -->
+      <div class="bg-dark text-white p-3 text-center small border-top border-secondary">
+        <i class="fa-solid fa-camera-retro text-warning me-1"></i>
+        Scan this QR Code with any phone camera to verify credentials & initiate tracked journey
+      </div>
+
+    </div>
+  </div>
+
 </div>
 {% endblock %}

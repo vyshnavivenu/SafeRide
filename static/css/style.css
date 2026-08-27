@@ -681,20 +681,23 @@ button,
   line-height: 1;
 }
 
-/* Driver ID Card Badge */
+/* Official Driver Vehicle QR Code Card */
+.driver-qr-card,
 .driver-id-card {
-  max-width: 420px;
+  max-width: 460px;
   margin: 0 auto;
   border: 2px solid var(--color-dark-border-light);
-  border-radius: 16px;
+  border-radius: 20px;
   overflow: hidden;
   background-color: var(--color-dark-card);
+  box-shadow: var(--box-shadow-card);
 }
 
+.driver-qr-header,
 .driver-id-header {
   background-color: var(--color-dark-blue);
   color: #FFFFFF;
-  padding: 16px;
+  padding: 18px;
   text-align: center;
 }
 

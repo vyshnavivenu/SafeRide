@@ -720,7 +720,7 @@ def driver_dashboard(request):
 
 @driver_required
 def driver_id_badge(request):
-    """Digital and printable Driver ID verification badge with QR code."""
+    """Digital and printable Official Driver & Vehicle QR Code for passenger verification."""
     driver = _get_driver_for_request(request)
     if not driver:
         messages.error(request, "No driver profile found.")

@@ -2,6 +2,9 @@ import os
 import sys
 from pathlib import Path
 
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(line_buffering=True)
+
 # Add project root to sys.path
 BASE_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(BASE_DIR))
@@ -100,7 +103,7 @@ def run_diagnostics():
     if first_verified_driver:
         verify_url = f"/verify/{first_verified_driver.verification_token}/"
         res = client.get(verify_url)
-        log_check("Public Page", f"Safety Badge ({first_verified_driver.vehicle_number})", res.status_code == 200, f"HTTP {res.status_code}")
+        log_check("Public Page", f"Verified Driver Card ({first_verified_driver.vehicle_number})", res.status_code == 200, f"HTTP {res.status_code}")
 
     # 4. Passenger Module (Protected Routes)
     print("\n--- 4. PASSENGER PORTAL MODULE ---")
@@ -123,7 +126,8 @@ def run_diagnostics():
     client.login(username='driver_rajesh', password='driver123')
     driver_urls = [
         ('/driver/dashboard/', 'Driver Dashboard'),
-        ('/driver/id-badge/', 'Driver QR Safety ID Badge'),
+        ('/driver/id-badge/', 'Driver Vehicle QR Code'),
+        ('/driver/qr-code/', 'Driver Vehicle QR Code (Alias)'),
         ('/driver/trip-logs/', 'Driver Trip Logs'),
         ('/driver/profile/', 'Driver Profile & Vehicle Specs'),
     ]

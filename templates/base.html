@@ -83,7 +83,7 @@
             <a class="nav-link text-white text-nowrap" href="{% url 'driver_dashboard' %}"><i class="fa-solid fa-id-card me-1 text-success"></i> Driver Portal</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link text-white text-nowrap" href="{% url 'driver_id_badge' %}"><i class="fa-solid fa-award me-1 text-warning"></i> My QR Badge</a>
+            <a class="nav-link text-white text-nowrap" href="{% url 'driver_id_badge' %}"><i class="fa-solid fa-qrcode me-1 text-warning"></i> My QR Code</a>
           </li>
           <li class="nav-item">
             <a class="nav-link text-white text-nowrap" href="{% url 'driver_profile' %}"><i class="fa-solid fa-user-pen me-1 text-info"></i> Profile</a>
@@ -150,74 +150,91 @@
   <!-- ========================================================== -->
   <!-- 📱 MOBILE BOTTOM APP NAVIGATION BAR (d-md-none) -->
   <!-- ========================================================== -->
-  {% if user.is_authenticated %}
   <div class="mobile-bottom-appbar d-md-none">
-    {% if user.is_passenger_user %}
+    {% if user.is_authenticated %}
+      {% if user.is_passenger_user %}
+        <a href="{% url 'home' %}" class="nav-tab">
+          <i class="fa-solid fa-house"></i>
+          <span>Home</span>
+        </a>
+        <a href="{% url 'passenger_dashboard' %}" class="nav-tab">
+          <i class="fa-solid fa-qrcode text-warning"></i>
+          <span>Verify</span>
+        </a>
+        <a href="{% url 'passenger_trip_history' %}" class="nav-tab">
+          <i class="fa-solid fa-route"></i>
+          <span>Trips</span>
+        </a>
+        <a href="{% url 'passenger_profile' %}" class="nav-tab">
+          <i class="fa-solid fa-user-pen"></i>
+          <span>Profile</span>
+        </a>
+        <a href="{% url 'logout' %}" class="nav-tab">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          <span>Logout</span>
+        </a>
+      {% elif user.is_driver_user %}
+        <a href="{% url 'home' %}" class="nav-tab">
+          <i class="fa-solid fa-house"></i>
+          <span>Home</span>
+        </a>
+        <a href="{% url 'driver_dashboard' %}" class="nav-tab">
+          <i class="fa-solid fa-id-card text-success"></i>
+          <span>Portal</span>
+        </a>
+        <a href="{% url 'driver_id_badge' %}" class="nav-tab">
+          <i class="fa-solid fa-qrcode text-warning"></i>
+          <span>QR Code</span>
+        </a>
+        <a href="{% url 'driver_profile' %}" class="nav-tab">
+          <i class="fa-solid fa-user-pen"></i>
+          <span>Profile</span>
+        </a>
+        <a href="{% url 'logout' %}" class="nav-tab">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          <span>Logout</span>
+        </a>
+      {% elif user.is_admin_user %}
+        <a href="{% url 'admin_dashboard' %}" class="nav-tab">
+          <i class="fa-solid fa-shield-heart text-warning"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="{% url 'admin_driver_list' %}" class="nav-tab">
+          <i class="fa-solid fa-user-check"></i>
+          <span>KYC</span>
+        </a>
+        <a href="{% url 'admin_passenger_list' %}" class="nav-tab">
+          <i class="fa-solid fa-users"></i>
+          <span>Passengers</span>
+        </a>
+        <a href="{% url 'admin_sos_monitoring' %}" class="nav-tab">
+          <i class="fa-solid fa-triangle-exclamation text-danger"></i>
+          <span>SOS</span>
+        </a>
+        <a href="{% url 'logout' %}" class="nav-tab">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          <span>Logout</span>
+        </a>
+      {% endif %}
+    {% else %}
       <a href="{% url 'home' %}" class="nav-tab">
         <i class="fa-solid fa-house"></i>
         <span>Home</span>
       </a>
-      <a href="{% url 'passenger_dashboard' %}" class="nav-tab">
+      <a href="{% url 'verify_driver_search' %}" class="nav-tab">
         <i class="fa-solid fa-qrcode text-warning"></i>
         <span>Verify</span>
       </a>
-      <a href="{% url 'passenger_trip_history' %}" class="nav-tab">
-        <i class="fa-solid fa-route"></i>
-        <span>Trips</span>
+      <a href="{% url 'passenger_login' %}" class="nav-tab">
+        <i class="fa-solid fa-user text-primary"></i>
+        <span>Passenger</span>
       </a>
-      <a href="{% url 'passenger_profile' %}" class="nav-tab">
-        <i class="fa-solid fa-user-pen"></i>
-        <span>Profile</span>
-      </a>
-      <a href="{% url 'logout' %}" class="nav-tab">
-        <i class="fa-solid fa-right-from-bracket"></i>
-        <span>Logout</span>
-      </a>
-    {% elif user.is_driver_user %}
-      <a href="{% url 'home' %}" class="nav-tab">
-        <i class="fa-solid fa-house"></i>
-        <span>Home</span>
-      </a>
-      <a href="{% url 'driver_dashboard' %}" class="nav-tab">
-        <i class="fa-solid fa-id-card text-success"></i>
-        <span>Portal</span>
-      </a>
-      <a href="{% url 'driver_id_badge' %}" class="nav-tab">
-        <i class="fa-solid fa-award text-warning"></i>
-        <span>My Badge</span>
-      </a>
-      <a href="{% url 'driver_profile' %}" class="nav-tab">
-        <i class="fa-solid fa-user-pen"></i>
-        <span>Profile</span>
-      </a>
-      <a href="{% url 'logout' %}" class="nav-tab">
-        <i class="fa-solid fa-right-from-bracket"></i>
-        <span>Logout</span>
-      </a>
-    {% elif user.is_admin_user %}
-      <a href="{% url 'admin_dashboard' %}" class="nav-tab">
-        <i class="fa-solid fa-shield-heart text-warning"></i>
-        <span>Dashboard</span>
-      </a>
-      <a href="{% url 'admin_driver_list' %}" class="nav-tab">
-        <i class="fa-solid fa-user-check"></i>
-        <span>KYC</span>
-      </a>
-      <a href="{% url 'admin_passenger_list' %}" class="nav-tab">
-        <i class="fa-solid fa-users"></i>
-        <span>Passengers</span>
-      </a>
-      <a href="{% url 'admin_sos_monitoring' %}" class="nav-tab">
-        <i class="fa-solid fa-triangle-exclamation text-danger"></i>
-        <span>SOS</span>
-      </a>
-      <a href="{% url 'logout' %}" class="nav-tab">
-        <i class="fa-solid fa-right-from-bracket"></i>
-        <span>Logout</span>
+      <a href="{% url 'driver_login' %}" class="nav-tab">
+        <i class="fa-solid fa-car text-success"></i>
+        <span>Driver</span>
       </a>
     {% endif %}
   </div>
-  {% endif %}
   {% endblock %}
 
   <!-- Flash Messages Alert Box -->
@@ -310,7 +327,7 @@
             {% endif %}
 
             <div class="d-grid gap-2">
-              <button type="button" class="btn btn-danger btn-lg fw-bold rounded-pill shadow py-3 text-uppercase" id="global-confirm-sos-btn" onclick="triggerSOSEmergency('{{ SOS_TRIP.trip_id|default:'' }}')">
+              <button type="button" class="btn btn-danger btn-lg fw-bold rounded-pill shadow py-3 text-uppercase" id="global-confirm-sos-btn" data-trip-id="{{ SOS_TRIP.trip_id|default:'' }}" onclick="triggerSOSEmergency(this.dataset.tripId)">
                 <i class="fa-solid fa-bell me-2 fa-shake"></i> BROADCAST SOS NOW
               </button>
               <div class="row g-2 mt-1">
