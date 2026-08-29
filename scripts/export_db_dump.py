@@ -6,6 +6,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'saferide_project.settings')
+import django
 django.setup()
 
 from django.db import connection
@@ -63,7 +64,7 @@ def export_database_dump():
 
     dump_lines.append("SET FOREIGN_KEY_CHECKS=1;")
     
-    out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'saferide_database_dump.sql')
+    out_path = os.path.join(str(BASE_DIR), 'saferide_database_dump.sql')
     with open(out_path, 'w', encoding='utf-8') as f:
         f.write("\n".join(dump_lines) + "\n")
 
