@@ -211,7 +211,7 @@ class Driver(models.Model):
         img = qr.make_image(fill_color="#1A365D", back_color="white")
         
         buffer = BytesIO()
-        img.save(buffer, format="PNG")
+        img.save(buffer)
         
         # Delete old file referenced by the instance if it exists
         if self.qr_code_image and self.qr_code_image.name:

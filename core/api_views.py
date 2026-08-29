@@ -103,7 +103,7 @@ class SOSTriggerAPIView(APIView):
             'alert_id': str(alert.sos_id),
             'timestamp': alert.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
             'alert': serializer.data
-        }, status=status.HTTP_200_OK if existing_alert else status.HTTP_201_CREATED)
+        }, status=status.HTTP_200_OK)
 
 
 class TripLocationAPIView(APIView):
@@ -128,8 +128,10 @@ class TripLocationAPIView(APIView):
         if lat is not None and lng is not None:
             trip.live_latitude = float(lat)
             trip.live_longitude = float(lng)
+            trip.current_latitude = float(lat)
+            trip.current_longitude = float(lng)
             trip.live_updated_at = timezone.now()
-            trip.save(update_fields=['live_latitude', 'live_longitude', 'live_updated_at'])
+            trip.save(update_fields=['live_latitude', 'live_longitude', 'current_latitude', 'current_longitude', 'live_updated_at'])
             return Response({'success': True, 'trip_id': trip.trip_id}, status=status.HTTP_200_OK)
         return Response({'error': 'latitude and longitude are required'}, status=status.HTTP_400_BAD_REQUEST)
 

@@ -1,12 +1,5 @@
 # SAFERIDE: Driver Verification & Passenger Safety System
 
-**Course**: 24SJMCA245 – Mini Project  
-**Department**: Department of Computer Applications  
-**Institution**: St. Joseph’s College of Engineering and Technology, Palai  
-**Student**: Vyshnavi Venu (Reg No: SJC25MCA-2059, Roll No: 59, Batch: 2025 - 27)  
-**Project Guide**: Prof. Anju Saji (Assistant Professor, Dept. of MCA)  
-**Submission Date**: 14 / 07 / 2026  
-
 ---
 
 ## 📌 1. Project Overview & Abstract

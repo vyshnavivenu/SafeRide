@@ -15,7 +15,7 @@ import django
 from decimal import Decimal
 from datetime import timedelta
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'saferide_project.settings')
 django.setup()
 
