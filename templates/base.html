@@ -28,7 +28,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
   
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="/static/css/style.css?v=3.0">
+  <link rel="stylesheet" href="/static/css/style.css?v=3.5">
   {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -36,9 +36,9 @@
   <!-- Top Navigation Bar (🔵 Dark Blue) -->
   {% block navbar %}
   <nav class="navbar navbar-expand-lg navbar-dark navbar-saferide sticky-top py-2">
-    <div class="container">
+    <div class="container-fluid px-3 px-xl-4">
       <!-- SafeRide Brand Logo -->
-      <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'home' %}">
+      <a class="navbar-brand d-flex align-items-center gap-2 me-3" href="{% url 'home' %}">
         <i class="fa-solid fa-shield-halved fs-4" style="color: #FF9800;"></i>
         <span class="brand-font fs-4 text-white">Safe<span style="color: #FF9800;">Ride</span></span>
       </a>
@@ -48,7 +48,7 @@
       </button>
 
       <div class="collapse navbar-collapse" id="navbarContent">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-2 gap-lg-1">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-1 gap-xxl-2">
           <li class="nav-item">
             <a class="nav-link text-white text-nowrap" href="{% url 'home' %}"><i class="fa-solid fa-house me-1"></i> Home</a>
           </li>
@@ -117,8 +117,8 @@
           {% endif %}
         </ul>
 
-        <!-- Right Side: User Profile, Role-Specific SOS & Normal Logout Action -->
-        <div class="navbar-user-section d-flex align-items-center gap-3">
+        <!-- Right Side: User Profile, Role-Specific SOS & Distinct Logout Action -->
+        <div class="navbar-user-section d-flex align-items-center gap-2 gap-lg-3 ms-auto flex-shrink-0">
           {% if user.is_authenticated %}
             {% if user.is_passenger_user or user.is_driver_user %}
             <!-- 🚨 Top-Right Emergency SOS Trigger (For Passengers & Drivers) -->
@@ -127,16 +127,16 @@
             </button>
             {% elif user.is_admin_user and ACTIVE_SOS_COUNT > 0 %}
             <!-- 🚨 Active Distress Alert Shortcut for Admin (Direct to Command Center) -->
-            <a href="{% url 'admin_sos_monitoring' %}" class="btn btn-danger btn-sm rounded-pill fw-bold px-3 py-1 shadow-sm d-flex align-items-center gap-1 header-sos-btn text-decoration-none" title="🚨 {{ ACTIVE_SOS_COUNT }} Active Distress Beacon(s)">
+            <a href="{% url 'admin_sos_monitoring' %}" class="btn btn-danger btn-sm rounded-pill fw-bold px-2 px-md-3 py-1 shadow-sm d-flex align-items-center gap-1 header-sos-btn text-decoration-none" title="🚨 {{ ACTIVE_SOS_COUNT }} Active Distress Beacon(s)">
               <i class="fa-solid fa-bell fa-shake text-warning"></i> <span>SOS: {{ ACTIVE_SOS_COUNT }} ACTIVE</span>
             </a>
             {% endif %}
 
-            <span class="text-white small">
+            <span class="text-white small d-none d-md-inline-flex align-items-center text-nowrap">
               <i class="fa-solid fa-circle-user me-1 text-warning"></i> {{ user.first_name|default:user.username }}
               <span class="badge bg-primary ms-1" style="font-size: 0.72rem;">{{ user.get_role_display }}</span>
             </span>
-            <a href="{% url 'logout' %}" class="nav-link text-white d-inline-flex align-items-center" title="Log Out">
+            <a href="{% url 'logout' %}" class="btn btn-outline-danger btn-sm rounded-pill px-3 py-1 fw-bold text-nowrap d-inline-flex align-items-center shadow-sm" title="Log Out of SafeRide">
               <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
             </a>
           {% else %}
@@ -251,7 +251,7 @@
   </div>
 
   <!-- Main Content Body -->
-  <main class="flex-grow-1">
+  <main class="flex-grow-1 w-100" style="overflow-x: clip; min-width: 0;">
     {% block content %}{% endblock %}
   </main>
 

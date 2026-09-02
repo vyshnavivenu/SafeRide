@@ -7,8 +7,9 @@
 # Core Backend Framework
 Django>=5.0,<6.0
 
-# API Framework
+# API Framework & SSL Dev Server
 djangorestframework>=3.14.0
+django-sslserver>=0.22
 
 # MySQL Database Driver (XAMPP / phpMyAdmin compatibility)
 pymysql>=1.1.0

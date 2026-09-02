@@ -48,6 +48,11 @@
   --sal: env(safe-area-inset-left, 0px);
 }
 
+/* Universal Box-Sizing & Layout Boundary Normalization */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 /* Eliminate 300ms Tap Delay & Enhance Mobile Touch Responsiveness */
 html, body, button, a, input, select, textarea, .btn, .floating-sos-btn, [role="button"] {
   touch-action: manipulation;
@@ -57,6 +62,9 @@ html, body, button, a, input, select, textarea, .btn, .floating-sos-btn, [role="
 /* Base Document Styles - 100% Solid & Sharp Typography */
 html {
   height: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 body {
@@ -70,7 +78,10 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  max-width: 100%;
   overflow-x: hidden;
+  width: 100%;
+  margin: 0;
   padding-left: var(--sal);
   padding-right: var(--sar);
 }
@@ -162,6 +173,57 @@ h1, h2, h3, h4, h5, h6 {
   hyphens: none !important;
 }
 
+/* Standardized Responsive Page Containers & Layout Bounds */
+.container, .container-lg, .container-xl, .container-xxl {
+  width: 100% !important;
+  max-width: 1320px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: clamp(16px, 2.5vw, 28px) !important;
+  padding-right: clamp(16px, 2.5vw, 28px) !important;
+}
+
+.container-fluid {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding-left: clamp(16px, 2.5vw, 32px) !important;
+  padding-right: clamp(16px, 2.5vw, 32px) !important;
+}
+
+/* Layout Utilities for Centered Cards */
+.app-card-narrow {
+  max-width: 480px !important;
+  width: 100% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.app-card-medium {
+  max-width: 760px !important;
+  width: 100% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.app-card-wide {
+  max-width: 1080px !important;
+  width: 100% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Responsive Media Shield */
+img, svg, canvas, iframe, video {
+  max-width: 100% !important;
+  height: auto;
+}
+
+.row {
+  max-width: 100% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
 /* ⚫ Cards & Sections (Dark Background - 100% Solid) */
 .card, .saferide-card, .bg-white {
   background-color: var(--color-dark-card) !important;
@@ -171,6 +233,7 @@ h1, h2, h3, h4, h5, h6 {
   color: #FFFFFF !important;
   border: 1px solid var(--color-dark-border-light) !important;
   border-radius: var(--border-radius);
+  max-width: 100% !important;
 }
 
 .card-header {
@@ -583,16 +646,47 @@ button,
   font-size: 0.9rem;
 }
 
+.input-group {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  width: 100% !important;
+}
+
+.input-group > .form-control {
+  flex: 1 1 auto !important;
+  min-width: 180px !important;
+  width: auto !important;
+}
+
+.input-group > .btn {
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+}
+
 .input-group-text {
   background-color: var(--color-dark-blue-light) !important;
   color: #FFFFFF !important;
   border-color: var(--color-dark-border-light) !important;
+  flex-shrink: 0 !important;
+}
+
+/* Responsive Table Wrapper & Overflow Shield */
+.table-responsive {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  border-radius: var(--border-radius);
+  margin-bottom: 1rem;
 }
 
 /* Tables (100% Solid Dark Theme) */
 .table {
   color: #FFFFFF !important;
   border-color: var(--color-dark-border) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-bottom: 0 !important;
 }
 
 .table thead, .table thead th, .table-light, .table-light th {
@@ -878,16 +972,16 @@ button,
   }
 }
 
-/* 📱 Mobile-First Views Centered on Large Desktop Monitors (27"+) */
+/* 📱 Responsive Platform Container Widths */
 .app-max-container {
-  max-width: 640px !important;
+  max-width: 1320px !important;
   margin-left: auto !important;
   margin-right: auto !important;
   width: 100% !important;
 }
 
 .app-wide-container {
-  max-width: 880px !important;
+  max-width: 1320px !important;
   margin-left: auto !important;
   margin-right: auto !important;
   width: 100% !important;
@@ -900,6 +994,7 @@ button,
   position: fixed;
   top: 72px;
   right: 24px;
+  max-width: calc(100vw - 32px) !important;
   z-index: 1060;
   display: flex;
   align-items: center;
@@ -1138,59 +1233,34 @@ button,
   }
 }
 
-/* Admin Global Floating Distress Siren Notification Pill */
-.admin-sos-floating-pill {
-  position: fixed;
-  top: 76px;
-  right: 24px;
-  z-index: 10000;
-  background: linear-gradient(135deg, #7F1D1D, #DC2626);
-  border: 2px solid #FEF08A;
-  border-radius: 50px;
-  padding: 10px 20px;
-  color: #FFFFFF;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-shadow: 0 0 25px rgba(220, 38, 38, 0.8), 0 10px 30px rgba(0,0,0,0.6);
-  animation: adminSirenFlash 1.2s infinite alternate ease-in-out;
-  transition: transform 0.2s ease;
+/* Responsive Map Containers */
+#live-trip-map, #admin-sos-map, #boarding-map-container, #public-live-map {
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
-.admin-sos-floating-pill:hover {
-  transform: scale(1.04);
-  color: #FFFFFF;
-  border-color: #FFFFFF;
+@media (max-width: 768px) {
+  #live-trip-map, #admin-sos-map, #boarding-map-container, #public-live-map {
+    height: 340px !important;
+  }
 }
 
-.admin-sos-bell-icon {
-  background: rgba(0, 0, 0, 0.4);
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.1rem;
-  border: 1px solid #FEF08A;
-}
-
-.admin-sos-text-group {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.2;
-}
-
-.admin-sos-label {
-  font-weight: 800;
-  font-size: 0.85rem;
-  color: #FEF08A;
-  letter-spacing: 0.5px;
-}
-
-.admin-sos-subtext {
-  font-size: 0.78rem;
-  opacity: 0.95;
+@media (max-width: 576px) {
+  #live-trip-map, #admin-sos-map, #boarding-map-container, #public-live-map {
+    height: 280px !important;
+  }
+  .admin-sos-floating-pill {
+    top: auto !important;
+    bottom: 74px !important;
+    right: 12px !important;
+    left: 12px !important;
+    max-width: calc(100vw - 24px) !important;
+    justify-content: center !important;
+    padding: 8px 14px !important;
+  }
+  .admin-sos-subtext {
+    display: none !important;
+  }
 }
 
 @keyframes adminSirenFlash {

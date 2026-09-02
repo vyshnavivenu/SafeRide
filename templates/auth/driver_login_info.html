@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Driver Registration Info - SafeRide{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-9 col-lg-7">
+      <div class="card rounded-4 border shadow-lg p-4 p-md-5">
+        <div class="text-center mb-4 border-bottom pb-3">
+          <div class="mb-3 text-warning">
+            <i class="fa-solid fa-id-card-clip fa-3x"></i>
+          </div>
+          <h2 class="fw-bold text-white mb-1 text-uppercase tracking-wider">Driver Onboarding</h2>
+          <p class="text-muted small mb-0">Verified Driver Registration Information</p>
+        </div>
+
+        <div class="text-light mb-4">
+          <h5 class="fw-bold text-warning mb-3">How Driver Registration Works:</h5>
+          <p class="text-secondary small mb-3">
+            To ensure maximum passenger safety, drivers cannot register independently without document verification.
+          </p>
+          <ul class="list-unstyled small text-secondary">
+            <li class="mb-2"><i class="fa-solid fa-circle-check text-success me-2"></i> All driver accounts are created and verified by System Administrators.</li>
+            <li class="mb-2"><i class="fa-solid fa-circle-check text-success me-2"></i> Identity proof, RC book, driving license, and police clearance are audited.</li>
+            <li class="mb-2"><i class="fa-solid fa-circle-check text-success me-2"></i> Once approved, official login credentials and a unique QR Safety Code are issued.</li>
+          </ul>
+        </div>
+
+        <div class="d-grid gap-2">
+          <a href="{% url 'driver_login' %}" class="btn btn-primary rounded-pill py-2 fw-bold">
+            <i class="fa-solid fa-arrow-left me-2"></i> Return to Driver Login
+          </a>
+          <a href="{% url 'home' %}" class="btn btn-outline-secondary rounded-pill py-2">
+            Back to Home
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

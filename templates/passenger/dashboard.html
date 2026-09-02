@@ -70,7 +70,7 @@
   <!-- ========================================== -->
   <!-- 2. DRIVER VERIFICATION (CORE FEATURE) -->
   <!-- ========================================== -->
-  <div class="card rounded-4 border shadow-lg p-4 p-md-5 mb-4" style="background-color: #131C2E !important; border-color: #1E293B !important;">
+  <div class="card rounded-4 border shadow-lg p-3 p-sm-4 p-md-5 mb-4" style="background-color: #131C2E !important; border-color: #1E293B !important;">
     <div class="text-center mb-4 pb-2 border-bottom" style="border-color: #1E293B !important;">
       <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-1 rounded-pill fw-bold mb-2 border border-warning">
         <i class="fa-solid fa-qrcode me-1"></i> STEP 1: VERIFY BEFORE BOARDING
@@ -84,26 +84,32 @@
         
         <!-- Scan QR Button (Prominent) -->
         <div class="text-center mb-4">
-          <button type="button" class="btn btn-lg w-100 fw-bold rounded-pill shadow py-3 text-white border border-2 border-warning hover-lift" style="background: linear-gradient(135deg, #1E293B, #0F172A);" onclick="triggerSnapshotCapture()">
-            <i class="fa-solid fa-camera-retro me-2 text-warning fs-5"></i>
-            <span class="fs-5">SNAP DRIVER QR CODE</span>
-            <span class="badge bg-warning text-dark ms-2 rounded-pill small">Instant Snap</span>
+          <button type="button" class="btn btn-lg w-100 fw-bold rounded-pill shadow py-3 text-white border border-2 border-warning hover-lift d-flex align-items-center justify-content-center flex-wrap gap-2" style="background: linear-gradient(135deg, #1E293B, #0F172A);" onclick="triggerSnapshotCapture()">
+            <i class="fa-solid fa-camera-retro text-warning fs-5"></i>
+            <span class="fs-5 text-nowrap">SNAP DRIVER QR CODE</span>
+            <span class="badge bg-warning text-dark rounded-pill small">Instant Snap</span>
           </button>
           <div class="my-3 text-white opacity-50 fw-bold small text-uppercase tracking-widest">— OR ENTER VEHICLE NUMBER —</div>
         </div>
 
         <!-- Manual Vehicle Registration Search Form -->
-        <form action="{% url 'verify_driver_search' %}" method="GET" class="mb-2">
-          <div class="mb-3">
+        <form action="{% url 'verify_driver_search' %}" method="GET" class="mb-2 w-100">
+          <div class="mb-3 w-100">
             <label class="form-label fw-bold text-light small"><i class="fa-solid fa-car-side text-primary me-1"></i> Vehicle Registration Number :</label>
-            <div class="input-group input-group-lg">
-              <span class="input-group-text border-end-0 text-white" style="background-color: #0F172A; border-color: #334155;">
-                <i class="fa-solid fa-id-card text-warning"></i>
-              </span>
-              <input type="text" name="query" class="form-control text-uppercase fw-bold fs-5 text-white font-monospace" style="background-color: #0F172A; border-color: #334155;" placeholder="e.g. KL 05 AT 4455" required autofocus>
-              <button type="submit" class="btn btn-primary btn-lg fw-bold px-4 text-uppercase">
-                <i class="fa-solid fa-shield-check me-1"></i> VERIFY & BOARD
-              </button>
+            <div class="row g-2 align-items-stretch">
+              <div class="col-12 col-md">
+                <div class="input-group input-group-lg shadow-sm w-100">
+                  <span class="input-group-text border-end-0 text-white" style="background-color: #0F172A; border-color: #334155;">
+                    <i class="fa-solid fa-id-card text-warning fs-5"></i>
+                  </span>
+                  <input type="text" name="query" class="form-control text-uppercase fw-bold text-white fs-5" style="background-color: #0F172A; border-color: #334155;" placeholder="e.g. KL 05 AT 4455" required autofocus>
+                </div>
+              </div>
+              <div class="col-12 col-md-auto">
+                <button type="submit" class="btn btn-primary btn-lg fw-bold px-4 py-2 text-uppercase w-100 h-100 d-flex align-items-center justify-content-center text-nowrap rounded-3">
+                  <i class="fa-solid fa-shield-check me-2"></i> VERIFY & BOARD
+                </button>
+              </div>
             </div>
             <small class="text-white opacity-50 d-block mt-2">
               <i class="fa-solid fa-circle-info me-1"></i> Accepts all formats: <code>KL 05 AT 4455</code>, <code>KL05AT4455</code>, <code>KL-05-AT-4455</code>
@@ -118,55 +124,55 @@
   <!-- ========================================== -->
   <!-- 3. QUICK ACTIONS GRID -->
   <!-- ========================================== -->
-  <div class="row g-4 mb-4">
+  <div class="row g-3 g-lg-4 mb-4">
     
     <!-- 3.1 Trip History -->
-    <div class="col-md-4 col-sm-6">
-      <a href="{% url 'passenger_trip_history' %}" class="card rounded-4 border shadow-sm p-4 text-decoration-none h-100 hover-lift" style="background-color: #131C2E !important; border-color: #1E293B !important;">
-        <div class="d-flex align-items-center justify-content-between mb-3">
-          <div class="rounded-circle d-flex align-items-center justify-content-center text-primary" style="width: 48px; height: 48px; background: rgba(37, 99, 235, 0.15); border: 1px solid rgba(37, 99, 235, 0.3);">
+    <div class="col-12 col-md-4">
+      <a href="{% url 'passenger_trip_history' %}" class="card rounded-4 border shadow-sm p-4 text-decoration-none h-100 hover-lift d-flex flex-column" style="background-color: #131C2E !important; border-color: #1E293B !important;">
+        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+          <div class="rounded-circle d-flex align-items-center justify-content-center text-primary flex-shrink-0" style="width: 48px; height: 48px; background: rgba(37, 99, 235, 0.15); border: 1px solid rgba(37, 99, 235, 0.3);">
             <i class="fa-solid fa-clock-rotate-left fs-4"></i>
           </div>
-          <span class="badge bg-primary bg-opacity-25 text-primary border border-primary rounded-pill small">Past Rides</span>
+          <span class="badge bg-primary bg-opacity-25 text-primary border border-primary rounded-pill small px-3 py-1 text-nowrap">Past Rides</span>
         </div>
         <h5 class="fw-bold text-white mb-2 text-nowrap">Trip History</h5>
-        <p class="text-white opacity-75 small mb-3">View all past rides, driver safety scores, post-trip feedback & reviews.</p>
-        <div class="mt-auto">
-          <span class="fw-bold small text-primary">View Records &rarr;</span>
+        <p class="text-white opacity-75 small mb-3 flex-grow-1">View all past rides, driver safety scores, post-trip feedback & reviews.</p>
+        <div class="mt-auto pt-2">
+          <span class="fw-bold small text-primary text-nowrap">View Records &rarr;</span>
         </div>
       </a>
     </div>
 
     <!-- 3.2 Profile & Emergency Contacts -->
-    <div class="col-md-4 col-sm-6">
-      <a href="{% url 'emergency_contacts' %}" class="card rounded-4 border shadow-sm p-4 text-decoration-none h-100 hover-lift" style="background-color: #131C2E !important; border-color: #1E293B !important;">
-        <div class="d-flex align-items-center justify-content-between mb-3">
-          <div class="rounded-circle d-flex align-items-center justify-content-center text-danger" style="width: 48px; height: 48px; background: rgba(220, 38, 38, 0.15); border: 1px solid rgba(220, 38, 38, 0.3);">
+    <div class="col-12 col-md-4">
+      <a href="{% url 'emergency_contacts' %}" class="card rounded-4 border shadow-sm p-4 text-decoration-none h-100 hover-lift d-flex flex-column" style="background-color: #131C2E !important; border-color: #1E293B !important;">
+        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+          <div class="rounded-circle d-flex align-items-center justify-content-center text-danger flex-shrink-0" style="width: 48px; height: 48px; background: rgba(220, 38, 38, 0.15); border: 1px solid rgba(220, 38, 38, 0.3);">
             <i class="fa-solid fa-shield-heart fs-4"></i>
           </div>
-          <span class="badge bg-danger bg-opacity-25 text-danger border border-danger rounded-pill small">SOS Settings</span>
+          <span class="badge bg-danger bg-opacity-25 text-danger border border-danger rounded-pill small px-3 py-1 text-nowrap">SOS Settings</span>
         </div>
         <h5 class="fw-bold text-white mb-2 text-nowrap">Emergency Contacts</h5>
-        <p class="text-white opacity-75 small mb-3">Manage trusted guardian phone numbers that receive immediate alerts during 1-Touch SOS.</p>
-        <div class="mt-auto">
-          <span class="fw-bold small text-danger">Manage Contacts &rarr;</span>
+        <p class="text-white opacity-75 small mb-3 flex-grow-1">Manage trusted guardian phone numbers that receive immediate alerts during 1-Touch SOS.</p>
+        <div class="mt-auto pt-2">
+          <span class="fw-bold small text-danger text-nowrap">Manage Contacts &rarr;</span>
         </div>
       </a>
     </div>
 
     <!-- 3.3 Report an Issue -->
-    <div class="col-md-4 col-sm-12">
-      <a href="{% url 'report_incident' %}" class="card rounded-4 border shadow-sm p-4 text-decoration-none h-100 hover-lift" style="background-color: #131C2E !important; border-color: #1E293B !important;">
-        <div class="d-flex align-items-center justify-content-between mb-3">
-          <div class="rounded-circle d-flex align-items-center justify-content-center text-warning" style="width: 48px; height: 48px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3);">
+    <div class="col-12 col-md-4">
+      <a href="{% url 'report_incident' %}" class="card rounded-4 border shadow-sm p-4 text-decoration-none h-100 hover-lift d-flex flex-column" style="background-color: #131C2E !important; border-color: #1E293B !important;">
+        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+          <div class="rounded-circle d-flex align-items-center justify-content-center text-warning flex-shrink-0" style="width: 48px; height: 48px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3);">
             <i class="fa-solid fa-triangle-exclamation fs-4"></i>
           </div>
-          <span class="badge bg-warning bg-opacity-25 text-warning border border-warning rounded-pill small">Safety Help</span>
+          <span class="badge bg-warning bg-opacity-25 text-warning border border-warning rounded-pill small px-3 py-1 text-nowrap">Safety Help</span>
         </div>
         <h5 class="fw-bold text-white mb-2 text-nowrap">Report an Issue</h5>
-        <p class="text-white opacity-75 small mb-3">Submit a formal safety complaint, report driver misconduct, or log an incident.</p>
-        <div class="mt-auto">
-          <span class="fw-bold small text-warning">File Report &rarr;</span>
+        <p class="text-white opacity-75 small mb-3 flex-grow-1">Submit a formal safety complaint, report driver misconduct, or log an incident.</p>
+        <div class="mt-auto pt-2">
+          <span class="fw-bold small text-warning text-nowrap">File Report &rarr;</span>
         </div>
       </a>
     </div>

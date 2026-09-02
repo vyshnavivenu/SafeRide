@@ -100,21 +100,54 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'saferide_project.wsgi.application'
 
-# Database Configuration - MySQL Only (XAMPP / phpMyAdmin)
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv('DB_NAME', 'saferide_db'),
-        'USER': os.getenv('DB_USER', 'root'),
-        'PASSWORD': os.getenv('DB_PASSWORD', ''),
-        'HOST': os.getenv('DB_HOST', '127.0.0.1'),
-        'PORT': os.getenv('DB_PORT', '3306'),
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+# Database Configuration - Smart Auto-Detection:
+# Uses MySQL when available and accessible; seamlessly falls back to SQLite so server never crashes.
+_explicit_sqlite = os.getenv('USE_SQLITE', '').strip().lower()
+_use_sqlite = False
+
+if _explicit_sqlite in ('true', '1'):
+    _use_sqlite = True
+elif _explicit_sqlite in ('false', '0'):
+    _use_sqlite = False
+else:
+    # Auto-detect: Test connection to MySQL. If MySQL is not running or credentials fail, use SQLite safely.
+    try:
+        import pymysql
+        _conn = pymysql.connect(
+            host=os.getenv('DB_HOST', '127.0.0.1'),
+            user=os.getenv('DB_USER', 'root'),
+            password=os.getenv('DB_PASSWORD', ''),
+            port=int(os.getenv('DB_PORT', '3306')),
+            database=os.getenv('DB_NAME', 'saferide_db'),
+            connect_timeout=2
+        )
+        _conn.close()
+        _use_sqlite = False
+    except Exception:
+        _use_sqlite = True
+
+if _use_sqlite:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.getenv('DB_NAME', 'saferide_db'),
+            'USER': os.getenv('DB_USER', 'root'),
+            'PASSWORD': os.getenv('DB_PASSWORD', ''),
+            'HOST': os.getenv('DB_HOST', '127.0.0.1'),
+            'PORT': os.getenv('DB_PORT', '3306'),
+            'OPTIONS': {
+                'charset': 'utf8mb4',
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            }
+        }
+    }
 
 
 

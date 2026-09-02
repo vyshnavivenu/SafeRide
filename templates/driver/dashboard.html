@@ -3,7 +3,7 @@
 {% block title %}Driver Operations Portal - SafeRide{% endblock %}
 
 {% block content %}
-<div class="container py-4 app-max-container">
+<div class="container py-4">
 
   <!-- ========================================== -->
   <!-- 1. PROFILE & VERIFICATION STATUS HEADER -->
@@ -48,15 +48,9 @@
           </div>
 
           <div class="d-flex flex-wrap align-items-center gap-2 small text-white opacity-75">
-            <span class="badge bg-dark border text-warning font-monospace">
-              <i class="fa-solid fa-car-side me-1"></i> {{ vehicle.registration_number|default:driver.vehicle_number|default:"Vehicle Pending" }}
-            </span>
-            <span class="badge bg-secondary bg-opacity-25 text-light border">
-              {{ vehicle.get_vehicle_type_display|default:driver.vehicle_type|default:"Commercial Vehicle" }}
-            </span>
-            <span class="font-monospace text-light">
-              <i class="fa-solid fa-id-card text-info me-1"></i> Lic: {{ driver.license_number|default:"KL-05-2021000892" }}
-            </span>
+            <span><i class="fa-solid fa-phone me-1 text-warning"></i> {{ driver.user.phone|default:"+91 98471 23456" }}</span> &bull; 
+            <span><i class="fa-solid fa-car-side text-info me-1"></i> {{ driver.get_vehicle_type_display|default:"Sedan" }} (<strong class="text-white">{{ driver.vehicle_number }}</strong>)</span> &bull; 
+            <span><i class="fa-solid fa-id-card text-success me-1"></i> DL: <strong class="text-white font-monospace">{{ driver.license_number }}</strong></span>
           </div>
         </div>
       </div>
@@ -109,10 +103,10 @@
   <!-- ========================================== -->
   <!-- 2. RATINGS & METRICS ROW -->
   <!-- ========================================== -->
-  <div class="row g-4 mb-4">
+  <div class="row g-3 g-lg-4 mb-4">
     
     <!-- Average Star Rating -->
-    <div class="col-md-4">
+    <div class="col-12 col-md-4">
       <div class="card rounded-4 border shadow-sm p-4 h-100" style="background-color: #131C2E !important; border-color: #1E293B !important;">
         <div class="d-flex justify-content-between align-items-center mb-2">
           <span class="text-white opacity-75 small fw-semibold text-uppercase">Average Star Rating</span>
@@ -131,7 +125,7 @@
     </div>
 
     <!-- Safety Reputation Score -->
-    <div class="col-md-4">
+    <div class="col-12 col-md-4">
       <div class="card rounded-4 border shadow-sm p-4 h-100" style="background-color: #131C2E !important; border-color: #1E293B !important;">
         <div class="d-flex justify-content-between align-items-center mb-2">
           <span class="text-white opacity-75 small fw-semibold text-uppercase">Safety Reputation Score</span>
@@ -147,7 +141,7 @@
     </div>
 
     <!-- Total Completed Trips -->
-    <div class="col-md-4">
+    <div class="col-12 col-md-4">
       <div class="card rounded-4 border shadow-sm p-4 h-100" style="background-color: #131C2E !important; border-color: #1E293B !important;">
         <div class="d-flex justify-content-between align-items-center mb-2">
           <span class="text-white opacity-75 small fw-semibold text-uppercase">Completed Safe Commutes</span>
@@ -169,7 +163,7 @@
     <!-- ========================================== -->
     <!-- 3. DIGITAL QR CODE DISPLAY (GATEKEPT) -->
     <!-- ========================================== -->
-    <div class="col-lg-5">
+    <div class="col-12 col-lg-5">
       <div class="card rounded-4 border shadow-sm p-4 text-center h-100" style="background-color: #131C2E !important; border-color: #1E293B !important;">
         
         <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2" style="border-color: #1E293B !important;">
@@ -228,7 +222,7 @@
     <!-- ========================================== -->
     <!-- 4. RATINGS & PASSENGER REVIEWS MONITOR -->
     <!-- ========================================== -->
-    <div class="col-lg-7">
+    <div class="col-12 col-lg-7">
       <div class="card rounded-4 border shadow-sm p-4 h-100" style="background-color: #131C2E !important; border-color: #1E293B !important;">
         
         <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2" style="border-color: #1E293B !important;">

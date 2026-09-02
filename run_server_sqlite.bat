@@ -1,10 +1,8 @@
 @echo off
-TITLE SafeRide - Driver Verification (MySQL / phpMyAdmin)
+TITLE SafeRide - Driver Verification (Quick Run with SQLite)
 echo =====================================================================
 echo   SAFERIDE: DRIVER VERIFICATION AND PASSENGER SAFETY SYSTEM
-echo   Department of Computer Applications - Mini Project (24SJMCA245)
-echo   St. Joseph's College of Engineering and Technology, Palai
-echo   Database: MySQL (phpMyAdmin)
+echo   Running in Quick Mode (Local SQLite Database)
 echo =====================================================================
 echo.
 
@@ -16,28 +14,14 @@ IF NOT EXIST "%PYTHON_EXE%" (
     SET PYTHON_EXE=python
 )
 
-echo [*] Target Database: MySQL (saferide_db on 127.0.0.1:3307)
-echo [!] Make sure XAMPP (Apache and MySQL) is STARTED before proceeding!
-echo.
+SET USE_SQLITE=True
 
-echo [*] Applying MySQL database migrations...
+echo [*] Applying database migrations (SQLite)...
 "%PYTHON_EXE%" manage.py makemigrations core
 "%PYTHON_EXE%" manage.py migrate
 
 IF %ERRORLEVEL% NEQ 0 (
-    echo.
-    echo =====================================================================
-    echo [ERROR] Could not connect to MySQL database 'saferide_db'.
-    echo Please make sure:
-    echo  1. XAMPP Control Panel is open and MySQL is started (green).
-    echo  2. Open http://localhost/phpmyadmin in your browser.
-    echo  3. Click 'New', enter database name 'saferide_db', and click 'Create'.
-    echo =====================================================================
-    echo.
-    echo [TIP] Want to run immediately without XAMPP?
-    echo       Double-click 'run_server_sqlite.bat' instead!
-    echo =====================================================================
-    echo.
+    echo [ERROR] Migration failed.
     pause
     exit /b %ERRORLEVEL%
 )
@@ -48,7 +32,7 @@ echo [*] Seeding demo accounts, verified drivers, QR codes, and test rides...
 
 echo.
 echo =====================================================================
-echo   DEMO TEST ACCOUNTS IN MYSQL:
+echo   DEMO TEST ACCOUNTS:
 echo   1. Administrator:   username: admin           password: admin123
 echo   2. Passenger:       username: vyshnavi        password: passenger123
 echo   3. Auto Driver:     username: driver_rajesh   password: driver123
@@ -56,7 +40,6 @@ echo      Vehicle:         KL-05-AT-4455 (Bajaj RE Compact)
 echo =====================================================================
 echo.
 echo [*] Starting SafeRide Server at http://127.0.0.1:8000 ...
-echo [!] View all MySQL tables in phpMyAdmin at http://localhost/phpmyadmin
 echo.
 
 "%PYTHON_EXE%" manage.py runserver 0.0.0.0:8000
