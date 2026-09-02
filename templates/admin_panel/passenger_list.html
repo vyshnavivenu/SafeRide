@@ -60,11 +60,6 @@
                 <span class="badge bg-danger bg-opacity-25 text-danger border border-danger px-2 py-1 mb-1 d-block text-truncate" style="max-width: 220px;">
                   <i class="fa-solid fa-phone me-1"></i> {{ p.emergency_contact_1_name|default:"Guardian" }}: {{ p.emergency_contact_1_phone }}
                 </span>
-                {% if p.emergency_contact_2_phone %}
-                <span class="badge bg-dark border text-light px-2 py-1 d-block text-truncate" style="max-width: 220px;">
-                  <i class="fa-solid fa-phone me-1 text-warning"></i> {{ p.emergency_contact_2_name|default:"Secondary" }}: {{ p.emergency_contact_2_phone }}
-                </span>
-                {% endif %}
               {% else %}
                 <span class="badge bg-secondary bg-opacity-25 text-light border small">None Configured</span>
               {% endif %}
@@ -122,12 +117,9 @@
                       <div class="small mb-2"><strong class="text-white opacity-75">Account Status:</strong> {% if p.user.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-danger">Suspended</span>{% endif %}</div>
                       <div class="small mb-2"><strong class="text-white opacity-75">Date Registered:</strong> <span class="text-white">{{ p.user.date_joined|date:"M d, Y, h:i A" }}</span></div>
                       <hr style="border-color: #334155;">
-                      <h6 class="fw-bold text-warning small mb-2"><i class="fa-solid fa-phone-volume me-1"></i> Trusted Emergency Contacts</h6>
+                      <h6 class="fw-bold text-warning small mb-2"><i class="fa-solid fa-phone-volume me-1"></i> Trusted Emergency Contact</h6>
                       <div class="p-2 rounded bg-dark border small" style="border-color: #334155;">
-                        <div><strong>Primary:</strong> {{ p.emergency_contact_1_name|default:"Guardian" }} - {{ p.emergency_contact_1_phone|default:"None" }} ({{ p.emergency_contact_1_relation|default:"Family" }})</div>
-                        {% if p.emergency_contact_2_phone %}
-                        <div class="mt-1"><strong>Secondary:</strong> {{ p.emergency_contact_2_name|default:"Secondary" }} - {{ p.emergency_contact_2_phone }}</div>
-                        {% endif %}
+                        <div><strong>Contact:</strong> {{ p.emergency_contact_1_name|default:"Guardian" }} - {{ p.emergency_contact_1_phone|default:"None" }} ({{ p.emergency_contact_1_relation|default:"Family" }})</div>
                       </div>
                     </div>
                     <div class="modal-footer border-top" style="border-color: #334155;">

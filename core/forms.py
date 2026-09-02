@@ -93,23 +93,6 @@ class PassengerRegisterForm(UserCreationForm):
         })
     )
     
-    emergency_contact_1_name = forms.CharField(
-        max_length=100, 
-        required=False, 
-        validators=[name_validator],
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Emergency Contact Name (Optional)'})
-    )
-    emergency_contact_1_phone = forms.CharField(
-        max_length=20, 
-        required=False, 
-        widget=forms.TextInput(attrs={'class': 'form-control', 'type': 'tel', 'placeholder': 'Emergency Contact Phone (Optional)'})
-    )
-    emergency_contact_1_relation = forms.CharField(
-        max_length=50, 
-        required=False, 
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Relationship (e.g. Parent, Guardian)'})
-    )
-
     class Meta:
         model = User
         fields = ['username', 'first_name', 'last_name', 'email', 'phone']
@@ -152,22 +135,6 @@ class PassengerRegisterForm(UserCreationForm):
             raise forms.ValidationError("A passenger account with this phone number is already registered.")
         return phone
 
-    def clean_emergency_contact_1_name(self):
-        name = self.cleaned_data.get('emergency_contact_1_name', '').strip()
-        if name and not re.match(NAME_REGEX, name):
-            raise forms.ValidationError("Contact name must contain only letters and spaces.")
-        return name
-
-    def clean_emergency_contact_1_phone(self):
-        phone = self.cleaned_data.get('emergency_contact_1_phone', '').strip()
-        if phone:
-            digits = re.sub(r'\D', '', phone)
-            if len(digits) == 12 and digits.startswith('91'):
-                digits = digits[2:]
-            if len(digits) != 10:
-                raise forms.ValidationError("Emergency contact phone must be a valid 10-digit number.")
-        return phone
-
     def clean(self):
         cleaned_data = super().clean()
         if not cleaned_data.get('username') and cleaned_data.get('email'):
@@ -191,9 +158,6 @@ class PassengerRegisterForm(UserCreationForm):
                 email=user.email,
                 phone_number=user.phone or '',
                 password=user.password,
-                emergency_contact_1_name=self.cleaned_data.get('emergency_contact_1_name') or 'Primary Emergency Contact',
-                emergency_contact_1_phone=self.cleaned_data.get('emergency_contact_1_phone') or user.phone or '+91 9447012345',
-                emergency_contact_1_relation=self.cleaned_data.get('emergency_contact_1_relation') or 'Family',
             )
         return user
 
@@ -203,31 +167,23 @@ class EmergencyContactForm(forms.ModelForm):
         model = Passenger
         fields = [
             'emergency_contact_1_name', 'emergency_contact_1_phone', 'emergency_contact_1_relation',
-            'emergency_contact_2_name', 'emergency_contact_2_phone', 'emergency_contact_2_relation',
-            'emergency_contact_3_name', 'emergency_contact_3_phone', 'emergency_contact_3_relation',
             'address'
         ]
         widgets = {
             'emergency_contact_1_name': forms.TextInput(attrs={'class': 'form-control', 'pattern': NAME_REGEX, 'placeholder': 'Contact Name'}),
             'emergency_contact_1_phone': forms.TextInput(attrs={'class': 'form-control', 'type': 'tel', 'placeholder': '10-digit Phone'}),
             'emergency_contact_1_relation': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Father, Mother, Guardian'}),
-            'emergency_contact_2_name': forms.TextInput(attrs={'class': 'form-control', 'pattern': NAME_REGEX, 'placeholder': 'Contact Name'}),
-            'emergency_contact_2_phone': forms.TextInput(attrs={'class': 'form-control', 'type': 'tel', 'placeholder': '10-digit Phone'}),
-            'emergency_contact_2_relation': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Friend, Colleague'}),
-            'emergency_contact_3_name': forms.TextInput(attrs={'class': 'form-control', 'pattern': NAME_REGEX, 'placeholder': 'Contact Name'}),
-            'emergency_contact_3_phone': forms.TextInput(attrs={'class': 'form-control', 'type': 'tel', 'placeholder': '10-digit Phone'}),
-            'emergency_contact_3_relation': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Campus Hostel, Warden'}),
             'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Residential / Campus Address'}),
         }
 
-    def _validate_contact_name(self, field_name):
-        val = self.cleaned_data.get(field_name, '').strip()
+    def clean_emergency_contact_1_name(self):
+        val = self.cleaned_data.get('emergency_contact_1_name', '').strip()
         if val and not re.match(NAME_REGEX, val):
             raise forms.ValidationError("Contact name must contain only letters and spaces.")
         return val
 
-    def _validate_contact_phone(self, field_name):
-        val = self.cleaned_data.get(field_name, '').strip()
+    def clean_emergency_contact_1_phone(self):
+        val = self.cleaned_data.get('emergency_contact_1_phone', '').strip()
         if val:
             digits = re.sub(r'\D', '', val)
             if len(digits) == 12 and digits.startswith('91'):
@@ -235,24 +191,6 @@ class EmergencyContactForm(forms.ModelForm):
             if len(digits) != 10:
                 raise forms.ValidationError("Phone number must contain exactly 10 digits.")
         return val
-
-    def clean_emergency_contact_1_name(self):
-        return self._validate_contact_name('emergency_contact_1_name')
-
-    def clean_emergency_contact_2_name(self):
-        return self._validate_contact_name('emergency_contact_2_name')
-
-    def clean_emergency_contact_3_name(self):
-        return self._validate_contact_name('emergency_contact_3_name')
-
-    def clean_emergency_contact_1_phone(self):
-        return self._validate_contact_phone('emergency_contact_1_phone')
-
-    def clean_emergency_contact_2_phone(self):
-        return self._validate_contact_phone('emergency_contact_2_phone')
-
-    def clean_emergency_contact_3_phone(self):
-        return self._validate_contact_phone('emergency_contact_3_phone')
 
 
 class AdminDriverRegistrationForm(forms.Form):

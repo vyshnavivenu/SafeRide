@@ -187,14 +187,11 @@
           </div>
         </div>
 
-        <!-- Emergency Guardian Contacts Preview -->
-        <h6 class="fw-bold text-white text-uppercase small mb-2"><i class="fa-solid fa-phone-volume text-danger me-2"></i> SOS Alert Contacts</h6>
+        <!-- Emergency Guardian Contact Preview -->
+        <h6 class="fw-bold text-white text-uppercase small mb-2"><i class="fa-solid fa-phone-volume text-danger me-2"></i> Emergency Contact</h6>
         <div class="p-3 rounded-3 small mb-4 border text-white" style="background-color: #0F172A; border-color: #334155 !important;">
-          <div><i class="fa-solid fa-user-shield text-warning me-2"></i> {{ profile.emergency_contact_1_name|default:"Primary Guardian Contact" }}</div>
-          <div class="text-white ps-4 mb-2 font-monospace">{{ profile.emergency_contact_1_phone|default:"+91 94470 12345" }}</div>
-          
-          <div><i class="fa-solid fa-building-shield text-info me-2"></i> {{ profile.emergency_contact_2_name|default:"Campus Safety Helpdesk" }}</div>
-          <div class="text-white ps-4 font-monospace">{{ profile.emergency_contact_2_phone|default:"+91 4822 239700" }}</div>
+          <div><i class="fa-solid fa-user-shield text-warning me-2"></i> {{ profile.emergency_contact_1_name|default:"Guardian / Emergency Contact" }} ({{ profile.emergency_contact_1_relation|default:"Family" }})</div>
+          <div class="text-white ps-4 font-monospace">{{ profile.emergency_contact_1_phone|default:"+91 94470 12345" }}</div>
         </div>
 
         <!-- Arrived Safely (End Trip Form) -->

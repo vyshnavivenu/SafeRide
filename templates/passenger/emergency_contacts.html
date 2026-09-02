@@ -25,7 +25,7 @@
 
             <!-- Contact 1 -->
             <div class="p-3 rounded-3 mb-4 border" style="background-color: #0F172A; border-color: #334155 !important;">
-              <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-user-shield me-1"></i> Primary Emergency Contact (Required)</h6>
+              <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-user-shield me-1"></i> Emergency Contact (Guardian / Family)</h6>
               <div class="row g-3">
                 <div class="col-md-5">
                   <label class="form-label small fw-semibold text-light">Contact Name</label>
@@ -42,44 +42,6 @@
               </div>
             </div>
 
-            <!-- Contact 2 -->
-            <div class="p-3 rounded-3 mb-4 border" style="background-color: #0F172A; border-color: #334155 !important;">
-              <h6 class="fw-bold text-info mb-3"><i class="fa-solid fa-user-group me-1"></i> Secondary Emergency Contact (Optional)</h6>
-              <div class="row g-3">
-                <div class="col-md-5">
-                  <label class="form-label small fw-semibold text-light">Contact Name</label>
-                  {{ form.emergency_contact_2_name }}
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label small fw-semibold text-light">Phone Number</label>
-                  {{ form.emergency_contact_2_phone }}
-                </div>
-                <div class="col-md-3">
-                  <label class="form-label small fw-semibold text-light">Relationship</label>
-                  {{ form.emergency_contact_2_relation }}
-                </div>
-              </div>
-            </div>
-
-            <!-- Contact 3 -->
-            <div class="p-3 rounded-3 mb-4 border" style="background-color: #0F172A; border-color: #334155 !important;">
-              <h6 class="fw-bold text-warning mb-3"><i class="fa-solid fa-building-shield me-1"></i> Campus / Guardian Emergency Contact (Optional)</h6>
-              <div class="row g-3">
-                <div class="col-md-5">
-                  <label class="form-label small fw-semibold text-light">Contact Name / Organisation</label>
-                  {{ form.emergency_contact_3_name }}
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label small fw-semibold text-light">Phone Number</label>
-                  {{ form.emergency_contact_3_phone }}
-                </div>
-                <div class="col-md-3">
-                  <label class="form-label small fw-semibold text-light">Relationship</label>
-                  {{ form.emergency_contact_3_relation }}
-                </div>
-              </div>
-            </div>
-
             <!-- Address -->
             <div class="mb-4">
               <label class="form-label small fw-semibold text-light">Home / Campus Address (Optional)</label>
@@ -87,7 +49,7 @@
             </div>
 
             <button type="submit" class="btn btn-primary rounded-pill fw-bold px-5 py-2 w-100 shadow">
-              <i class="fa-solid fa-floppy-disk me-1"></i> Save Emergency Contacts
+              <i class="fa-solid fa-floppy-disk me-1"></i> Save Emergency Contact
             </button>
           </form>
         </div>
