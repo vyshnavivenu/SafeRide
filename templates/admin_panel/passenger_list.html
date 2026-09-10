@@ -33,7 +33,8 @@
             <th>Account Username</th>
             <th>Email Address</th>
             <th>Phone Number</th>
-            <th>Trusted Emergency Contacts</th>
+            <th>Emergency Contact Name</th>
+            <th>Emergency Contact Phone</th>
             <th>Account Status</th>
             <th>Actions</th>
           </tr>
@@ -56,12 +57,22 @@
             <td class="text-white opacity-90">{{ p.user.email|default:"Not provided" }}</td>
             <td class="text-white fw-semibold font-monospace">{{ p.user.phone|default:"Not listed" }}</td>
             <td>
-              {% if p.emergency_contact_1_phone %}
-                <span class="badge bg-danger bg-opacity-25 text-danger border border-danger px-2 py-1 mb-1 d-block text-truncate" style="max-width: 220px;">
-                  <i class="fa-solid fa-phone me-1"></i> {{ p.emergency_contact_1_name|default:"Guardian" }}: {{ p.emergency_contact_1_phone }}
+              {% if p.emergency_contact_name or p.emergency_contact_1_name %}
+                <span class="text-white fw-semibold">
+                  <i class="fa-solid fa-user-shield text-info me-1"></i>
+                  {{ p.emergency_contact_name|default:p.emergency_contact_1_name }}
                 </span>
               {% else %}
-                <span class="badge bg-secondary bg-opacity-25 text-light border small">None Configured</span>
+                <span class="text-white opacity-50 small">-</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if p.emergency_contact_phone or p.emergency_contact_1_phone %}
+                <span class="badge bg-danger bg-opacity-25 text-danger border border-danger font-monospace px-2 py-1">
+                  <i class="fa-solid fa-phone me-1"></i> {{ p.emergency_contact_phone|default:p.emergency_contact_1_phone }}
+                </span>
+              {% else %}
+                <span class="text-white opacity-50 small">-</span>
               {% endif %}
             </td>
             <td>

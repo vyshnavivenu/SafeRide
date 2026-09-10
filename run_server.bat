@@ -34,10 +34,6 @@ IF %ERRORLEVEL% NEQ 0 (
     echo  3. Click 'New', enter database name 'saferide_db', and click 'Create'.
     echo =====================================================================
     echo.
-    echo [TIP] Want to run immediately without XAMPP?
-    echo       Double-click 'run_server_sqlite.bat' instead!
-    echo =====================================================================
-    echo.
     pause
     exit /b %ERRORLEVEL%
 )
@@ -50,8 +46,9 @@ echo.
 echo =====================================================================
 echo   DEMO TEST ACCOUNTS IN MYSQL:
 echo   1. Administrator:   username: admin           password: admin123
-echo   2. Passenger:       username: vyshnavi        password: passenger123
-echo   3. Auto Driver:     username: driver_rajesh   password: driver123
+echo   2. Passenger 1:     username: vyshnavi        password: passenger123
+echo   3. Passenger 2:     username: rahul           password: passenger123
+echo   4. Auto Driver:     username: driver_rajesh   password: driver123
 echo      Vehicle:         KL-05-AT-4455 (Bajaj RE Compact)
 echo =====================================================================
 echo.

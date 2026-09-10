@@ -24,7 +24,7 @@ class AdminModelAdmin(admin.ModelAdmin):
 
 @admin.register(Passenger)
 class PassengerAdmin(admin.ModelAdmin):
-    list_display = ('passenger_id', 'name', 'email', 'phone_number', 'emergency_contact_1_phone', 'is_active_account', 'created_at')
+    list_display = ('passenger_id', 'name', 'email', 'phone_number', 'emergency_contact_name', 'emergency_contact_phone', 'is_active_account', 'created_at')
     search_fields = ('name', 'email', 'phone_number', 'user__username')
     actions = ['suspend_passenger_account', 'activate_passenger_account']
 
@@ -98,13 +98,13 @@ class VehicleDocumentsAdmin(admin.ModelAdmin):
 
 @admin.register(Trip)
 class TripAdmin(admin.ModelAdmin):
-    list_display = ('trip_id', 'passenger', 'driver', 'status', 'start_location', 'start_time', 'end_time')
+    list_display = ('trip_id', 'passenger', 'driver', 'status', 'start_location', 'destination_address', 'distance_km', 'fare_amount', 'start_time', 'end_time')
     list_filter = ('status', 'start_time')
-    search_fields = ('trip_id', 'passenger__username', 'passenger__email', 'driver__name', 'driver__vehicle_number')
+    search_fields = ('trip_id', 'passenger__username', 'passenger__email', 'driver__name', 'driver__vehicle_number', 'start_location', 'destination_address')
 
 @admin.register(RatingReview)
 class RatingReviewAdmin(admin.ModelAdmin):
-    list_display = ('rating_id', 'trip', 'driver', 'passenger', 'rating', 'driving_safety_rating', 'created_at')
+    list_display = ('rating_id', 'trip', 'driver', 'passenger', 'rating', 'created_at')
     list_filter = ('rating', 'created_at')
     search_fields = ('driver__name', 'passenger__username', 'review')
 

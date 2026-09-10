@@ -133,6 +133,26 @@
           {% endif %}
         </div>
 
+        <!-- Regulated Fare Tariff Notice -->
+        <div class="p-3 rounded-3 mb-3 border d-flex justify-content-between align-items-center flex-wrap gap-2" style="background-color: #0F172A; border-color: #334155 !important;">
+          <div class="d-flex align-items-center gap-2">
+            <span class="rounded-circle d-inline-flex align-items-center justify-content-center text-warning" style="width: 36px; height: 36px; background: rgba(245, 158, 11, 0.15);">
+              <i class="fa-solid fa-indian-rupee-sign"></i>
+            </span>
+            <div>
+              <strong class="text-white small d-block">Government Regulated Fare Tariff</strong>
+              {% if 'taxi' in driver.vehicle_type or 'cab' in driver.vehicle_type %}
+                <span class="text-white opacity-75 small">₹200.00 Base Fare (first 5.0 km) + ₹18.00 per km thereafter</span>
+              {% else %}
+                <span class="text-white opacity-75 small">₹30.00 Base Fare (first 1.5 km) + ₹15.00 per km thereafter</span>
+              {% endif %}
+            </div>
+          </div>
+          <span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-50 px-3 py-1 font-monospace">
+            Metered GPS Transit
+          </span>
+        </div>
+
         <!-- Proceed with Trip Action (Form 7 Primary Action) -->
         <div class="pt-2">
           {% if user.is_authenticated and user.is_passenger_user %}
@@ -141,7 +161,7 @@
               <div class="card rounded-3 p-3 mb-3 text-start shadow-sm" style="background-color: #131C2E; border: 1px solid #334155;">
                 <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
                   <label class="form-label fw-bold text-white small mb-0">
-                    <i class="fa-solid fa-map-pin text-warning me-1"></i> Boarding / Pickup Point:
+                    <i class="fa-solid fa-map-pin text-warning me-1"></i> 1. Boarding / Pickup Point:
                   </label>
                   <button type="button" class="btn btn-warning btn-sm rounded-pill fw-bold text-dark px-3 py-1 shadow-sm" id="detect-gps-btn" onclick="detectUserLocation()">
                     <i class="fa-solid fa-location-crosshairs me-1"></i> Detect Live Location
@@ -150,13 +170,41 @@
 
                 <div class="input-group mb-2">
                   <span class="input-group-text border-end-0 text-white" style="background-color: #0F172A; border-color: #334155;">
-                    <i class="fa-solid fa-location-dot text-danger"></i>
+                    <i class="fa-solid fa-circle-dot text-warning"></i>
                   </span>
                   <input type="text" name="pickup_name" id="pickup_name" class="form-control text-white" style="background-color: #0F172A; border-color: #334155;" placeholder="Detecting your current location..." value="Current Boarding Point" required>
                 </div>
 
-                <!-- Interactive Boarding Location Map Viewfinder (Google Maps Service) -->
-                <div id="boarding-map-container" class="rounded-3 overflow-hidden border mb-2 position-relative shadow-sm" style="height: 180px; width: 100%; border-color: #334155 !important; background: #0F172A;">
+                <input type="hidden" name="pickup_lat" id="pickup_lat" value="9.6843">
+                <input type="hidden" name="pickup_lng" id="pickup_lng" value="76.6853">
+
+                <!-- 2. Destination / Drop-off Place -->
+                <div class="mt-3 pt-2 border-top" style="border-color: #334155 !important;">
+                  <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
+                    <label class="form-label fw-bold text-white small mb-0">
+                      <i class="fa-solid fa-flag-checkered text-danger me-1"></i> 2. Destination / Drop-off Place:
+                    </label>
+                    <span class="badge bg-dark border text-info small font-monospace" id="dest-coords-badge">
+                      <i class="fa-solid fa-route me-1"></i> Drop Point
+                    </span>
+                  </div>
+
+                  <div class="input-group mb-2">
+                    <span class="input-group-text border-end-0 text-white" style="background-color: #0F172A; border-color: #334155;">
+                      <i class="fa-solid fa-location-dot text-danger"></i>
+                    </span>
+                    <input type="text" name="destination_name" id="destination_name" class="form-control text-white" style="background-color: #0F172A; border-color: #334155;" placeholder="Enter destination or search drop-off place...">
+                    <button class="btn btn-outline-secondary text-white-50" type="button" id="clear-dest-btn" onclick="clearDestination()" title="Clear destination">
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
+                  </div>
+
+                  <input type="hidden" name="destination_lat" id="destination_lat" value="">
+                  <input type="hidden" name="destination_lng" id="destination_lng" value="">
+                </div>
+
+                <!-- Interactive Boarding & Destination Map Viewfinder (Google Maps Service) -->
+                <div id="boarding-map-container" class="rounded-3 overflow-hidden border mb-2 position-relative shadow-sm mt-2" style="height: 200px; width: 100%; border-color: #334155 !important; background: #0F172A;">
                   <div id="map-loading-spinner" class="position-absolute top-50 start-50 translate-middle text-white small opacity-75 text-center">
                     <span class="spinner-border spinner-border-sm text-warning mb-1"></span><br>Detecting live location & loading map...
                   </div>
@@ -167,14 +215,24 @@
                     <i class="fa-solid fa-satellite-dish text-success me-1 fa-beat"></i> Live GPS: 9.6843, 76.6853
                   </span>
                   <span class="badge bg-primary bg-opacity-25 text-primary border border-primary small">
-                    <i class="fa-brands fa-google me-1"></i> Google Maps Geocoded
+                    <i class="fa-brands fa-google me-1"></i> Google Places & Maps
                   </span>
                 </div>
               </div>
 
-              <input type="hidden" name="pickup_lat" id="pickup_lat" value="9.6843">
-              <input type="hidden" name="pickup_lng" id="pickup_lng" value="76.6853">
-              
+              <!-- Live Location Sharing Checkbox (Form 7 Safety Feature) -->
+              <div class="card p-3 mb-3 rounded-3 text-start shadow-sm" style="background-color: #0F172A; border: 1px solid #334155;">
+                <div class="form-check form-switch d-flex align-items-center gap-2 mb-1">
+                  <input class="form-check-input" type="checkbox" role="switch" id="live_location_sharing" name="live_location_sharing" value="true" checked style="cursor: pointer; width: 2.5em; height: 1.3em;">
+                  <label class="form-check-label text-white fw-bold small mb-0" for="live_location_sharing" style="cursor: pointer;">
+                    <i class="fa-solid fa-satellite-dish text-success me-1 fa-beat"></i> Enable Live Location Sharing
+                  </label>
+                </div>
+                <div class="text-white opacity-75 small ps-4 ms-2">
+                  Transmits live GPS coordinates and route telemetry to your designated emergency contact and SafeRide safety monitors throughout the trip.
+                </div>
+              </div>
+
               <div class="text-center">
                 <button type="submit" class="btn btn-primary btn-lg fw-bold px-5 rounded-pill shadow text-uppercase">
                   <i class="fa-solid fa-shield-halved me-2"></i> PROCEED WITH TRIP
@@ -239,28 +297,46 @@
 <script>
   let boardingMap = null;
   let boardingMarker = null;
+  let destinationMarker = null;
   let isGoogleMapsLoaded = false;
   let leafletMap = null;
   let leafletMarker = null;
+  let leafletDestMarker = null;
 
-  // 1. Google Places Autocomplete for Boarding Point
+  // 1. Google Places Autocomplete for Boarding & Destination Points
   function initPlacesAutocomplete() {
-    const input = document.getElementById('pickup_name');
-    if (!input) return;
+    const pickupInput = document.getElementById('pickup_name');
+    const destInput = document.getElementById('destination_name');
 
     if (typeof google !== 'undefined' && google.maps && google.maps.places) {
       try {
-        const autocomplete = new google.maps.places.Autocomplete(input, {
-          types: ['geocode', 'establishment']
-        });
-        autocomplete.addListener('place_changed', function () {
-          const place = autocomplete.getPlace();
-          if (place.geometry && place.geometry.location) {
-            const lat = place.geometry.location.lat();
-            const lng = place.geometry.location.lng();
-            setBoardingLocation(lat, lng, place.formatted_address || place.name);
-          }
-        });
+        if (pickupInput) {
+          const pickupAuto = new google.maps.places.Autocomplete(pickupInput, {
+            types: ['geocode', 'establishment']
+          });
+          pickupAuto.addListener('place_changed', function () {
+            const place = pickupAuto.getPlace();
+            if (place.geometry && place.geometry.location) {
+              const lat = place.geometry.location.lat();
+              const lng = place.geometry.location.lng();
+              setBoardingLocation(lat, lng, place.formatted_address || place.name);
+            }
+          });
+        }
+
+        if (destInput) {
+          const destAuto = new google.maps.places.Autocomplete(destInput, {
+            types: ['geocode', 'establishment']
+          });
+          destAuto.addListener('place_changed', function () {
+            const place = destAuto.getPlace();
+            if (place.geometry && place.geometry.location) {
+              const lat = place.geometry.location.lat();
+              const lng = place.geometry.location.lng();
+              setDestinationLocation(lat, lng, place.formatted_address || place.name);
+            }
+          });
+        }
       } catch (e) {
         console.warn("Google Places Autocomplete warning:", e);
       }
@@ -430,12 +506,154 @@
     if (boardingMap && boardingMarker) {
       const pos = new google.maps.LatLng(lat, lng);
       boardingMarker.setPosition(pos);
-      boardingMap.panTo(pos);
+      if (destinationMarker) {
+        const bounds = new google.maps.LatLngBounds();
+        bounds.extend(pos);
+        bounds.extend(destinationMarker.getPosition());
+        boardingMap.fitBounds(bounds, 40);
+      } else {
+        boardingMap.panTo(pos);
+      }
     } else if (leafletMap && leafletMarker) {
-      leafletMap.panTo([lat, lng]);
       leafletMarker.setLatLng([lat, lng]);
+      if (leafletDestMarker) {
+        const group = L.featureGroup([leafletMarker, leafletDestMarker]);
+        leafletMap.fitBounds(group.getBounds().pad(0.2));
+      } else {
+        leafletMap.panTo([lat, lng]);
+      }
     } else {
       initBoardingMap(lat, lng);
+    }
+  }
+
+  // 4b. Update Destination Location on Map and Inputs
+  function setDestinationLocation(lat, lng, addressName) {
+    const destLatInput = document.getElementById('destination_lat');
+    const destLngInput = document.getElementById('destination_lng');
+    const destNameInput = document.getElementById('destination_name');
+    const destBadge = document.getElementById('dest-coords-badge');
+
+    if (destLatInput) destLatInput.value = lat;
+    if (destLngInput) destLngInput.value = lng;
+    if (destNameInput && addressName) destNameInput.value = addressName;
+    if (destBadge) {
+      destBadge.className = 'badge bg-danger border text-white small font-monospace';
+      destBadge.innerHTML = `<i class="fa-solid fa-flag-checkered me-1"></i> Drop: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    }
+
+    if (boardingMap && typeof google !== 'undefined' && google.maps) {
+      const pos = new google.maps.LatLng(lat, lng);
+      if (!destinationMarker) {
+        destinationMarker = new google.maps.Marker({
+          position: pos,
+          map: boardingMap,
+          draggable: true,
+          title: "Destination Drop-off Point (Drag to adjust)",
+          icon: {
+            path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+            scale: 6,
+            fillColor: "#EF4444",
+            fillOpacity: 1,
+            strokeColor: "#FFFFFF",
+            strokeWeight: 2
+          }
+        });
+
+        google.maps.event.addListener(destinationMarker, 'dragend', function (e) {
+          reverseGeocodeDestination(e.latLng.lat(), e.latLng.lng());
+        });
+      } else {
+        destinationMarker.setPosition(pos);
+        destinationMarker.setMap(boardingMap);
+      }
+
+      if (boardingMarker) {
+        const bounds = new google.maps.LatLngBounds();
+        bounds.extend(boardingMarker.getPosition());
+        bounds.extend(pos);
+        boardingMap.fitBounds(bounds, 40);
+      } else {
+        boardingMap.panTo(pos);
+      }
+    } else if (leafletMap && typeof L !== 'undefined') {
+      if (!leafletDestMarker) {
+        const destIcon = L.divIcon({
+          className: 'dest-marker-pin',
+          html: '<div style="background:#EF4444; width:22px; height:22px; border-radius:50%; border:3px solid #FFF; box-shadow:0 0 10px #EF4444; display:flex; align-items:center; justify-content:center; color:#FFF; font-size:10px;"><i class="fa-solid fa-flag"></i></div>',
+          iconSize: [22, 22],
+          iconAnchor: [11, 11]
+        });
+        leafletDestMarker = L.marker([lat, lng], { icon: destIcon, draggable: true }).addTo(leafletMap);
+        leafletDestMarker.on('dragend', function(e) {
+          const coord = e.target.getLatLng();
+          reverseGeocodeDestination(coord.lat, coord.lng);
+        });
+      } else {
+        leafletDestMarker.setLatLng([lat, lng]);
+        leafletDestMarker.addTo(leafletMap);
+      }
+
+      if (leafletMarker) {
+        const group = L.featureGroup([leafletMarker, leafletDestMarker]);
+        leafletMap.fitBounds(group.getBounds().pad(0.2));
+      } else {
+        leafletMap.panTo([lat, lng]);
+      }
+    }
+  }
+
+  function clearDestination() {
+    const destName = document.getElementById('destination_name');
+    const destLat = document.getElementById('destination_lat');
+    const destLng = document.getElementById('destination_lng');
+    const destBadge = document.getElementById('dest-coords-badge');
+
+    if (destName) destName.value = '';
+    if (destLat) destLat.value = '';
+    if (destLng) destLng.value = '';
+    if (destBadge) {
+      destBadge.className = 'badge bg-dark border text-info small font-monospace';
+      destBadge.innerHTML = '<i class="fa-solid fa-route me-1"></i> Drop Point';
+    }
+
+    if (destinationMarker) {
+      destinationMarker.setMap(null);
+      destinationMarker = null;
+    }
+    if (leafletDestMarker && leafletMap) {
+      leafletMap.removeLayer(leafletDestMarker);
+      leafletDestMarker = null;
+    }
+    if (boardingMarker && boardingMap) {
+      boardingMap.panTo(boardingMarker.getPosition());
+      boardingMap.setZoom(16);
+    } else if (leafletMarker && leafletMap) {
+      leafletMap.panTo(leafletMarker.getLatLng());
+      leafletMap.setZoom(16);
+    }
+  }
+
+  function reverseGeocodeDestination(lat, lng) {
+    const destLat = document.getElementById('destination_lat');
+    const destLng = document.getElementById('destination_lng');
+    const destName = document.getElementById('destination_name');
+    const destBadge = document.getElementById('dest-coords-badge');
+
+    if (destLat) destLat.value = lat;
+    if (destLng) destLng.value = lng;
+    if (destBadge) {
+      destBadge.className = 'badge bg-danger border text-white small font-monospace';
+      destBadge.innerHTML = `<i class="fa-solid fa-flag-checkered me-1"></i> Drop: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    }
+
+    if (typeof google !== 'undefined' && google.maps && google.maps.Geocoder) {
+      const geocoder = new google.maps.Geocoder();
+      geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+        if (status === 'OK' && results && results[0] && destName) {
+          destName.value = results[0].formatted_address;
+        }
+      });
     }
   }
 

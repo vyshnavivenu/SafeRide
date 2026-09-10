@@ -22,8 +22,7 @@ class PassengerSerializer(serializers.ModelSerializer):
         model = Passenger
         fields = [
             'passenger_id', 'user', 'name', 'email', 'phone_number', 
-            'emergency_contact_1_name', 'emergency_contact_1_phone',
-            'emergency_contact_2_name', 'emergency_contact_2_phone',
+            'emergency_contact_name', 'emergency_contact_phone',
             'created_at'
         ]
 
@@ -50,8 +49,9 @@ class TripSerializer(serializers.ModelSerializer):
         model = Trip
         fields = [
             'trip_id', 'passenger', 'driver', 'status', 'start_time', 'end_time',
-            'start_location', 'end_location', 'live_latitude', 'live_longitude',
-            'live_updated_at', 'share_token'
+            'start_location', 'end_location', 'destination_address',
+            'destination_latitude', 'destination_longitude',
+            'live_latitude', 'live_longitude', 'live_updated_at', 'share_token'
         ]
 
 

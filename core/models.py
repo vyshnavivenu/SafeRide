@@ -1,4 +1,5 @@
 import uuid
+import math
 import qrcode
 from io import BytesIO
 from django.db import models
@@ -87,18 +88,10 @@ class Passenger(models.Model):
     password = models.CharField(max_length=255, db_column='password')
     created_at = models.DateTimeField(default=timezone.now, db_column='created_at')
 
-    # Emergency Contacts & Address for Safety Portal
-    emergency_contact_1_name = models.CharField(max_length=100, blank=True, null=True)
-    emergency_contact_1_phone = models.CharField(max_length=20, blank=True, null=True)
-    emergency_contact_1_relation = models.CharField(max_length=50, blank=True, null=True, default="Family")
-    
-    emergency_contact_2_name = models.CharField(max_length=100, blank=True, null=True)
-    emergency_contact_2_phone = models.CharField(max_length=20, blank=True, null=True)
-    emergency_contact_2_relation = models.CharField(max_length=50, blank=True, null=True, default="Friend")
-
-    emergency_contact_3_name = models.CharField(max_length=100, blank=True, null=True)
-    emergency_contact_3_phone = models.CharField(max_length=20, blank=True, null=True)
-    emergency_contact_3_relation = models.CharField(max_length=50, blank=True, null=True, default="Guardian")
+    # Single Emergency Contact for Safety Portal (Table 1 Specification)
+    emergency_contact_name = models.CharField(max_length=50, blank=True, null=True, db_column='emergency_contact_name')
+    emergency_contact_phone = models.CharField(max_length=20, blank=True, null=True, db_column='emergency_contact_phone', validators=[PHONE_VALIDATOR])
+    emergency_contact_relation = models.CharField(max_length=50, blank=True, null=True, default="Family", db_column='emergency_contact_relation')
 
     address = models.TextField(blank=True, null=True)
     profile_photo = models.ImageField(upload_to='avatars/', blank=True, null=True)
@@ -107,6 +100,31 @@ class Passenger(models.Model):
         db_table = 'tbl_passenger'
         verbose_name = 'Passenger'
         verbose_name_plural = 'Passengers'
+
+    # Compatibility properties for emergency contact 1
+    @property
+    def emergency_contact_1_name(self):
+        return self.emergency_contact_name
+
+    @emergency_contact_1_name.setter
+    def emergency_contact_1_name(self, value):
+        self.emergency_contact_name = value
+
+    @property
+    def emergency_contact_1_phone(self):
+        return self.emergency_contact_phone
+
+    @emergency_contact_1_phone.setter
+    def emergency_contact_1_phone(self, value):
+        self.emergency_contact_phone = value
+
+    @property
+    def emergency_contact_1_relation(self):
+        return self.emergency_contact_relation
+
+    @emergency_contact_1_relation.setter
+    def emergency_contact_1_relation(self, value):
+        self.emergency_contact_relation = value
 
     def save(self, *args, **kwargs):
         if self.user:
@@ -389,6 +407,12 @@ class Trip(models.Model):
     live_updated_at = models.DateTimeField(auto_now=True)
     share_token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
+    # 5. Fare Calculation & Safety Tracking Fields (Table 5 Extension)
+    distance_km = models.DecimalField(max_digits=8, decimal_places=2, default=0.00, db_column='distance_km', help_text="Total distance travelled in kilometers")
+    fare_amount = models.DecimalField(max_digits=8, decimal_places=2, default=30.00, db_column='fare_amount', help_text="Calculated fare in INR")
+    live_location_sharing = models.BooleanField(default=True, db_column='live_location_sharing', help_text="Whether passenger enabled live GPS tracking sharing")
+    fare_qr_code = models.ImageField(upload_to='fare_qrcodes/', blank=True, null=True, db_column='fare_qr_code', help_text="Digital QR Code for fare receipt and UPI settlement")
+
     # Legacy & Compatibility Aliases for DB columns and templates
     start_location = models.CharField(max_length=255, default="Current Boarding Point", blank=True, null=True, db_column='start_location')
     end_location = models.CharField(max_length=255, blank=True, null=True, db_column='end_location')
@@ -450,11 +474,112 @@ class Trip(models.Model):
 
     @property
     def destination_point(self):
-        return self.destination_address or self.end_location or self.drop_location_name or "Destination Point"
+        val = self.destination_address or self.end_location or self.drop_location_name
+        if val and str(val).strip() and str(val).strip().lower() not in [
+            'destination point', 'destination drop point', 'destination', 'none', 'null'
+        ]:
+            return str(val).strip()
+        return None
+
+    @staticmethod
+    def haversine_distance(lat1, lon1, lat2, lon2):
+        """Calculate distance between two GPS coordinates using the Haversine formula (in km)."""
+        R = 6371  # Earth's radius in kilometers
+        lat1, lon1, lat2, lon2 = map(math.radians, [float(lat1), float(lon1), float(lat2), float(lon2)])
+        dlat = lat2 - lat1
+        dlon = lon2 - lon1
+        a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+        c = 2 * math.asin(math.sqrt(a))
+        return round(R * c, 2)
+
+    def calculate_distance_and_fare(self):
+        """Calculate distance (Haversine) and legally valid government metered tariff."""
+        from decimal import Decimal, ROUND_HALF_UP
+
+        # Determine vehicle-specific tariff parameters
+        v_type = 'auto'
+        if hasattr(self, 'driver') and self.driver:
+            v_type = str(getattr(self.driver, 'vehicle_type', 'auto') or 'auto').lower()
+
+        if 'taxi' in v_type or 'cab' in v_type or 'van' in v_type:
+            # Regulated Taxi / Cab tariff structure (Minimum fare for first 5 km)
+            BASE_DISTANCE = Decimal('5.00')
+            BASE_FARE = Decimal('200.00')
+            PER_KM_RATE = Decimal('18.00')
+        else:
+            # Kerala MVD Regulated Auto-Rickshaw Tariff (₹30 for first 1.5 km, ₹15/km thereafter)
+            BASE_DISTANCE = Decimal('1.50')
+            BASE_FARE = Decimal('30.00')
+            PER_KM_RATE = Decimal('15.00')
+
+        distance = self.haversine_distance(
+            self.boarding_latitude, self.boarding_longitude,
+            self.current_latitude, self.current_longitude
+        )
+        self.distance_km = Decimal(str(distance)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+        if self.distance_km <= BASE_DISTANCE:
+            self.fare_amount = BASE_FARE
+        else:
+            additional_km = self.distance_km - BASE_DISTANCE
+            self.fare_amount = (BASE_FARE + (additional_km * PER_KM_RATE)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+        return self.distance_km, self.fare_amount
+
+    def generate_fare_qr_code(self, base_url="http://127.0.0.1:8000"):
+        """Generate a QR code containing fare receipt & UPI payment details for the completed trip."""
+        import qrcode
+        from io import BytesIO
+        from django.core.files.base import ContentFile
+        from django.core.files.storage import default_storage
+
+        # Formatted digital receipt & UPI payment string
+        upi_pay_str = f"upi://pay?pa=saferide@upi&pn={self.driver.name or 'SafeRide Driver'}&am={self.fare_amount}&cu=INR&tn=SafeRide_TRP_{self.trip_id}"
+        receipt_text = (
+            f"SafeRide Verified Fare Receipt\n"
+            f"Trip ID: #TRP-{str(self.trip_id).zfill(4)}\n"
+            f"Passenger: {self.passenger.get_full_name() or self.passenger.username}\n"
+            f"Driver: {self.driver.name or self.driver.user.get_full_name()}\n"
+            f"Vehicle: {self.driver.vehicle_number}\n"
+            f"Distance: {self.distance_km} km\n"
+            f"Total Fare: INR {self.fare_amount}\n"
+            f"Date: {self.start_time.strftime('%d-%m-%Y %I:%M %p') if self.start_time else 'N/A'}\n"
+            f"UPI Pay: {upi_pay_str}\n"
+            f"Verify: {base_url}/verify/{self.driver.verification_token}/"
+        )
+
+        qr = qrcode.QRCode(
+            version=None,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=8,
+            border=2,
+        )
+        qr.add_data(receipt_text)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="#0F172A", back_color="white")
+
+        buffer = BytesIO()
+        img.save(buffer, format='PNG')
+        filename = f"fare_qr_trip_{self.trip_id}.png"
+
+        if self.fare_qr_code and self.fare_qr_code.name:
+            try:
+                if default_storage.exists(self.fare_qr_code.name):
+                    default_storage.delete(self.fare_qr_code.name)
+            except Exception:
+                pass
+
+        self.fare_qr_code.save(filename, ContentFile(buffer.getvalue()), save=False)
+        return self.fare_qr_code
 
     def complete_trip(self):
         self.status = 'Completed'
         self.end_time = timezone.now()
+        self.calculate_distance_and_fare()
+        try:
+            self.generate_fare_qr_code()
+        except Exception as e:
+            print(f"Error generating fare QR code: {e}")
         self.save()
         self.driver.total_trips += 1
         self.driver.save()
@@ -481,12 +606,6 @@ class RatingReview(models.Model):
     )
     review = models.TextField(blank=True, null=True, db_column='review')
     created_at = models.DateTimeField(default=timezone.now, db_column='created_at')
-
-    # Multi-dimensional safety sub-ratings
-    driving_safety_rating = models.PositiveSmallIntegerField(default=5)
-    vehicle_cleanliness_rating = models.PositiveSmallIntegerField(default=5)
-    behavior_rating = models.PositiveSmallIntegerField(default=5)
-    fare_honesty_rating = models.PositiveSmallIntegerField(default=5)
 
     class Meta:
         db_table = 'tbl_rating_review'

@@ -374,6 +374,8 @@ def start_trip(request, driver_id):
     destination_lat = request.POST.get('destination_lat')
     destination_lng = request.POST.get('destination_lng')
 
+    live_sharing = request.POST.get('live_location_sharing') in ['true', '1', 'on', True]
+
     trip = TripSession.objects.create(
         passenger=request.user,
         driver=driver,
@@ -390,9 +392,11 @@ def start_trip(request, driver_id):
         pickup_longitude=pickup_lng,
         live_latitude=pickup_lat,
         live_longitude=pickup_lng,
+        live_location_sharing=live_sharing,
         status=TripSession.Status.ACTIVE,
     )
-    messages.success(request, f"Safe Trip started with driver {driver.user.get_full_name() or driver.user.username}. Live tracking enabled!")
+    share_status_msg = "Live tracking enabled!" if live_sharing else "Trip initiated."
+    messages.success(request, f"Safe Trip started with driver {driver.user.get_full_name() or driver.user.username}. {share_status_msg}")
     return redirect('active_trip', trip_id=trip.trip_id)
 
 @passenger_required
@@ -449,10 +453,6 @@ def rate_trip(request, trip_id):
             passenger=request.user,
             rating=rating_val,
             review=review_text,
-            driving_safety_rating=int(request.POST.get('driving_safety_rating', rating_val)),
-            vehicle_cleanliness_rating=int(request.POST.get('vehicle_cleanliness_rating', rating_val)),
-            behavior_rating=int(request.POST.get('behavior_rating', rating_val)),
-            fare_honesty_rating=int(request.POST.get('fare_honesty_rating', rating_val)),
         )
         trip.driver.recalculate_reputation()
 
@@ -482,7 +482,28 @@ def rate_trip(request, trip_id):
 
         return redirect('passenger_dashboard')
 
-    return render(request, 'trip_feedback.html', {'trip': trip})
+    from django.core.files.storage import default_storage
+
+    # Ensure distance & valid regulated fare are calculated
+    trip.calculate_distance_and_fare()
+
+    # Ensure fare QR code actually exists on disk; if missing or invalid, regenerate it
+    qr_exists = bool(trip.fare_qr_code and trip.fare_qr_code.name and default_storage.exists(trip.fare_qr_code.name))
+    if not qr_exists:
+        try:
+            trip.generate_fare_qr_code(request.build_absolute_uri('/')[:-1])
+            trip.save(update_fields=['fare_amount', 'distance_km', 'fare_qr_code'])
+        except Exception as e:
+            pass
+    else:
+        trip.save(update_fields=['fare_amount', 'distance_km'])
+
+    fare_qr_url = trip.fare_qr_code.url if (trip.fare_qr_code and trip.fare_qr_code.name and default_storage.exists(trip.fare_qr_code.name)) else None
+
+    return render(request, 'trip_feedback.html', {
+        'trip': trip,
+        'fare_qr_url': fare_qr_url,
+    })
 
 @passenger_required
 def report_complaint(request, driver_id=None, trip_id=None):
@@ -490,7 +511,7 @@ def report_complaint(request, driver_id=None, trip_id=None):
     driver = None
     trip = None
     if driver_id:
-        driver = get_object_or_404(DriverProfile, id=driver_id)
+        driver = get_object_or_404(DriverProfile, pk=driver_id)
     if trip_id:
         trip = get_object_or_404(TripSession, trip_id=trip_id)
         driver = trip.driver
@@ -499,7 +520,7 @@ def report_complaint(request, driver_id=None, trip_id=None):
         form = ComplaintForm(request.POST, request.FILES)
         selected_driver_id = request.POST.get('driver_id')
         if selected_driver_id:
-            driver = get_object_or_404(DriverProfile, id=selected_driver_id)
+            driver = get_object_or_404(DriverProfile, pk=selected_driver_id)
 
         if form.is_valid() and driver:
             complaint = form.save(commit=False)
@@ -530,7 +551,7 @@ def emergency_contacts_view(request):
         form = EmergencyContactForm(request.POST, instance=profile)
         if form.is_valid():
             form.save()
-            messages.success(request, "Emergency contacts updated successfully.")
+            messages.success(request, "Emergency contact updated successfully.")
             return redirect('passenger_dashboard')
     else:
         form = EmergencyContactForm(instance=profile)
@@ -589,12 +610,15 @@ def report_incident_view(request):
             if trip_ref:
                 trip_obj = TripSession.objects.filter(trip_id__istartswith=trip_ref.replace('TRP-', '')).first()
 
+            inc_dt = form.cleaned_data.get('incident_date_time') or timezone.now()
+
             incident = IncidentReport.objects.create(
                 passenger=request.user,
                 trip=trip_obj,
                 incident_type=inc_type,
                 description=desc,
-                status=IncidentReport.Status.PENDING
+                status=IncidentReport.Status.PENDING,
+                reported_at=inc_dt
             )
             messages.success(request, f"Incident Report #{str(incident.incident_id)[:8]} has been submitted and escalated to safety administration.")
             return redirect('passenger_dashboard')
@@ -1077,13 +1101,23 @@ def update_trip_location(request, trip_id):
     trip.live_latitude = lat
     trip.live_longitude = lng
     trip.live_updated_at = timezone.now()
-    trip.save(update_fields=['current_latitude', 'current_longitude', 'live_latitude', 'live_longitude', 'live_updated_at'])
+
+    # Recalculate distance and valid regulated fare
+    trip.calculate_distance_and_fare()
+
+    trip.save(update_fields=[
+        'current_latitude', 'current_longitude',
+        'live_latitude', 'live_longitude',
+        'live_updated_at', 'distance_km', 'fare_amount'
+    ])
 
     return JsonResponse({
         'status': 'success',
         'trip_id': trip.trip_id,
         'current_latitude': float(trip.current_latitude),
         'current_longitude': float(trip.current_longitude),
+        'distance_km': float(trip.distance_km),
+        'fare_amount': float(trip.fare_amount),
         'timestamp': trip.live_updated_at.isoformat()
     })
 
@@ -1097,14 +1131,29 @@ def trigger_sos_alert(request):
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'POST request required.'}, status=405)
 
+    # Restrict SOS alerts strictly to passengers
+    if not (hasattr(request.user, 'is_passenger_user') and request.user.is_passenger_user()):
+        return JsonResponse({
+            'status': 'error',
+            'success': False,
+            'message': 'Access restricted: SOS emergency alerts can only be triggered by passengers.'
+        }, status=403)
+
     try:
-        data = json.loads(request.body) if request.body else request.POST
+        if request.content_type == 'application/json' and request.body:
+            data = json.loads(request.body)
+        else:
+            try:
+                data = json.loads(request.body) if request.body else request.POST
+            except Exception:
+                data = request.POST
+
         trip_id = data.get('trip_id')
         driver_id = data.get('driver_id')
         lat = float(data.get('latitude', 9.684300))
         lng = float(data.get('longitude', 76.685300))
         location_name = data.get('location_name', f'GPS Coordinates: {lat:.6f}, {lng:.6f}')
-    except (ValueError, TypeError, json.JSONDecodeError):
+    except (ValueError, TypeError):
         return JsonResponse({'status': 'error', 'message': 'Invalid payload data.'}, status=400)
 
     passenger = request.user
@@ -1250,7 +1299,53 @@ def manifest_view(request):
         content = "{}"
     return HttpResponse(content, content_type="application/manifest+json")
 
-def offline_view(request):
-    """Displays the PWA offline dead-zone fallback screen."""
-    return render(request, 'offline.html')
+
+def serve_trip_fare_qr(request, trip_id):
+    """Dynamically generate and stream Fare Receipt QR code PNG image."""
+    from django.http import HttpResponse, Http404
+    from io import BytesIO
+    import qrcode
+
+    trip = Trip.objects.filter(
+        Q(trip_id=int(trip_id) if str(trip_id).isdigit() else -1) | Q(trip_uuid=trip_id if len(str(trip_id)) > 30 else uuid.uuid4())
+    ).first()
+    if not trip:
+        raise Http404("Trip not found")
+
+    trip.calculate_distance_and_fare()
+
+    # Formatted digital receipt & UPI payment string
+    upi_pay_str = f"upi://pay?pa=saferide@upi&pn={trip.driver.name or 'SafeRide Driver'}&am={trip.fare_amount}&cu=INR&tn=SafeRide_TRP_{trip.trip_id}"
+    receipt_text = (
+        f"SafeRide Verified Fare Receipt\n"
+        f"Trip ID: #TRP-{str(trip.trip_id).zfill(4)}\n"
+        f"Passenger: {trip.passenger.get_full_name() or trip.passenger.username}\n"
+        f"Driver: {trip.driver.name or trip.driver.user.get_full_name()}\n"
+        f"Vehicle: {trip.driver.vehicle_number}\n"
+        f"Distance: {trip.distance_km} km\n"
+        f"Total Fare: INR {trip.fare_amount}\n"
+        f"UPI Pay: {upi_pay_str}\n"
+    )
+
+    qr = qrcode.QRCode(
+        version=None,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=8,
+        border=2,
+    )
+    qr.add_data(receipt_text)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="#0F172A", back_color="white")
+    buffer = BytesIO()
+    img.save(buffer, format='PNG')
+
+    # Also persist to model storage
+    try:
+        from django.core.files.base import ContentFile
+        filename = f"fare_qr_trip_{trip.trip_id}.png"
+        trip.fare_qr_code.save(filename, ContentFile(buffer.getvalue()), save=True)
+    except Exception:
+        pass
+
+    return HttpResponse(buffer.getvalue(), content_type='image/png')
 

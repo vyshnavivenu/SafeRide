@@ -1,8 +1,9 @@
+import json
 import tempfile
 from decimal import Decimal
 from django.test import TestCase, Client, override_settings
 from django.urls import reverse
-from core.models import User, Passenger, Driver, Trip, RatingReview
+from core.models import User, Passenger, Driver, Trip, RatingReview, SOSAlert
 
 @override_settings(MEDIA_ROOT=tempfile.gettempdir())
 class RoleBasedAccessControlTests(TestCase):
@@ -164,3 +165,27 @@ class RoleBasedAccessControlTests(TestCase):
         response = self.client.get(reverse('admin_sos_monitoring'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Live Emergency SOS Dispatch Command')
+
+    def test_driver_cannot_trigger_sos_view_endpoint(self):
+        """Verify that a driver is denied HTTP 403 when attempting to trigger SOS."""
+        self.client.force_login(self.verified_driver.user)
+        response = self.client.post(
+            reverse('trigger_sos_alert'),
+            data=json.dumps({
+                'latitude': 9.684300,
+                'longitude': 76.685300,
+                'location_name': 'Driver Distress Attempt'
+            }),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(SOSAlert.objects.filter(location_name='Driver Distress Attempt').exists())
+
+    def test_driver_navbar_and_dashboard_has_no_sos_button(self):
+        """Verify that the SOS emergency button is not rendered in driver navbar or dashboard."""
+        self.client.force_login(self.verified_driver.user)
+        response = self.client.get(reverse('driver_dashboard'))
+        self.assertEqual(response.status_code, 200)
+        # Should not contain the SOS emergency button in header or floating
+        self.assertNotContains(response, 'header-sos-btn')
+        self.assertNotContains(response, 'floating-sos-trigger')

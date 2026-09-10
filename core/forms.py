@@ -166,24 +166,24 @@ class EmergencyContactForm(forms.ModelForm):
     class Meta:
         model = Passenger
         fields = [
-            'emergency_contact_1_name', 'emergency_contact_1_phone', 'emergency_contact_1_relation',
+            'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relation',
             'address'
         ]
         widgets = {
-            'emergency_contact_1_name': forms.TextInput(attrs={'class': 'form-control', 'pattern': NAME_REGEX, 'placeholder': 'Contact Name'}),
-            'emergency_contact_1_phone': forms.TextInput(attrs={'class': 'form-control', 'type': 'tel', 'placeholder': '10-digit Phone'}),
-            'emergency_contact_1_relation': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Father, Mother, Guardian'}),
+            'emergency_contact_name': forms.TextInput(attrs={'class': 'form-control', 'pattern': NAME_REGEX, 'placeholder': 'Contact Name'}),
+            'emergency_contact_phone': forms.TextInput(attrs={'class': 'form-control', 'type': 'tel', 'placeholder': '10-digit Phone'}),
+            'emergency_contact_relation': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Father, Mother, Guardian'}),
             'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Residential / Campus Address'}),
         }
 
-    def clean_emergency_contact_1_name(self):
-        val = self.cleaned_data.get('emergency_contact_1_name', '').strip()
+    def clean_emergency_contact_name(self):
+        val = self.cleaned_data.get('emergency_contact_name', '').strip()
         if val and not re.match(NAME_REGEX, val):
             raise forms.ValidationError("Contact name must contain only letters and spaces.")
         return val
 
-    def clean_emergency_contact_1_phone(self):
-        val = self.cleaned_data.get('emergency_contact_1_phone', '').strip()
+    def clean_emergency_contact_phone(self):
+        val = self.cleaned_data.get('emergency_contact_phone', '').strip()
         if val:
             digits = re.sub(r'\D', '', val)
             if len(digits) == 12 and digits.startswith('91'):

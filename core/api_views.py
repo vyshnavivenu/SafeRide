@@ -49,6 +49,12 @@ class SOSTriggerAPIView(APIView):
     POST /api/v1/sos/trigger/
     """
     def post(self, request):
+        if request.user.is_authenticated and hasattr(request.user, 'role') and request.user.role == User.Role.DRIVER:
+            return Response({
+                'success': False,
+                'message': 'Access restricted: SOS emergency broadcast is only available for passengers.'
+            }, status=status.HTTP_403_FORBIDDEN)
+
         lat = float(request.data.get('latitude', 9.6843))
         lng = float(request.data.get('longitude', 76.6853))
         location_name = request.data.get('location_name', 'Live GPS Distress Signal')

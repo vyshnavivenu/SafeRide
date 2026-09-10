@@ -42,18 +42,104 @@
           </div>
         </div>
 
-        <!-- ========================================== -->
-        <!-- 2. STAR RATING & FEEDBACK FORM -->
-        <!-- ========================================== -->
-        <div class="p-4 p-md-5">
-          <!-- Post-Ride Emergency Protection Banner -->
-          <div class="alert alert-dark border-warning d-flex align-items-center gap-3 p-3 rounded-3 mb-4 shadow-sm" style="background-color: #0F172A; border-color: #FF9800 !important;">
-            <i class="fa-solid fa-shield-halved text-warning fs-3"></i>
-            <div>
-              <strong class="text-white small d-block"><i class="fa-solid fa-clock me-1 text-warning"></i> 20-Minute Post-Ride SOS Protection Active</strong>
-              <span class="text-white opacity-75 small">For your safety after deboarding, the 1-Touch Emergency SOS button remains available for the next 20 minutes across your SafeRide dashboard.</span>
+          <!-- ========================================== -->
+          <!-- 1.5 FARE RECEIPT & DIGITAL QR CODE -->
+          <!-- ========================================== -->
+          <div class="px-4 pt-4 px-md-5 pt-md-4">
+            <div class="p-4 rounded-3 border" style="background-color: #0F172A; border-color: #334155 !important;">
+              <div class="row g-4 align-items-center">
+                
+                <!-- Fare Breakdown Details -->
+                <div class="col-md-7">
+                  <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="fw-bold text-white mb-0">
+                      <i class="fa-solid fa-receipt text-warning me-2"></i> Official Fare Receipt
+                    </h5>
+                    <span class="badge bg-success bg-opacity-25 text-success border border-success small">
+                      <i class="fa-solid fa-shield-check me-1"></i> Metered Tariff
+                    </span>
+                  </div>
+
+                  <div class="table-responsive">
+                    <table class="table table-borderless mb-0 text-white small">
+                      <tbody>
+                        <tr class="border-bottom" style="border-color: #1E293B !important;">
+                          <td class="opacity-75 py-2"><i class="fa-solid fa-route text-info me-2"></i> Distance Travelled</td>
+                          <td class="fw-bold text-end py-2 font-monospace">{{ trip.distance_km|default:"0.00" }} km</td>
+                        </tr>
+                        <tr class="border-bottom" style="border-color: #1E293B !important;">
+                          <td class="opacity-75 py-2">
+                            <i class="fa-solid fa-flag text-success me-2"></i> 
+                            {% if 'taxi' in trip.driver.vehicle_type or 'cab' in trip.driver.vehicle_type %}
+                              Base Tariff (Min Fare - Up to 5.0 km)
+                            {% else %}
+                              Base Tariff (Min Fare - Up to 1.5 km)
+                            {% endif %}
+                          </td>
+                          <td class="fw-semibold text-end py-2 font-monospace">
+                            {% if 'taxi' in trip.driver.vehicle_type or 'cab' in trip.driver.vehicle_type %}₹ 200.00{% else %}₹ 30.00{% endif %}
+                          </td>
+                        </tr>
+                        <tr class="border-bottom" style="border-color: #1E293B !important;">
+                          <td class="opacity-75 py-2"><i class="fa-solid fa-calculator text-primary me-2"></i> Rate Beyond Base Distance</td>
+                          <td class="fw-semibold text-end py-2 font-monospace">
+                            {% if 'taxi' in trip.driver.vehicle_type or 'cab' in trip.driver.vehicle_type %}₹ 18.00 / km{% else %}₹ 15.00 / km{% endif %}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td class="text-warning fw-bold py-3 fs-6"><i class="fa-solid fa-indian-rupee-sign me-2"></i> Total Regulated Fare Payable</td>
+                          <td class="text-warning fw-bold text-end py-3 fs-4 font-monospace">₹ {{ trip.fare_amount|default:"30.00" }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="text-white opacity-50 small mt-1">
+                    <i class="fa-solid fa-circle-info me-1"></i> Regulated government metered tariff applied automatically based on GPS telemetry coordinates.
+                  </div>
+                </div>
+
+                <!-- Fare QR Code (Digital Receipt & UPI Settlement) -->
+                <div class="col-md-5 text-center">
+                  <div class="p-3 rounded-3 border d-inline-block shadow" style="background-color: #FFFFFF;">
+                    {% if fare_qr_url %}
+                      <img src="{{ fare_qr_url }}" alt="Fare Receipt QR Code" style="width: 175px; height: 175px; image-rendering: pixelated;" class="rounded" onerror="this.onerror=null; this.src='/api/trip/{{ trip.trip_id }}/qr-fallback/';">
+                    {% elif trip.fare_qr_code %}
+                      <img src="{{ trip.fare_qr_code.url }}" alt="Fare Receipt QR Code" style="width: 175px; height: 175px; image-rendering: pixelated;" class="rounded" onerror="this.onerror=null; this.src='/api/trip/{{ trip.trip_id }}/qr-fallback/';">
+                    {% else %}
+                      <div style="width: 175px; height: 175px;" class="d-flex align-items-center justify-content-center text-dark small">
+                        <div class="text-center">
+                          <i class="fa-solid fa-qrcode fs-1 text-secondary mb-2 d-block"></i>
+                          Generating Fare QR...
+                        </div>
+                      </div>
+                    {% endif %}
+                  </div>
+                  <div class="mt-2">
+                    <span class="badge bg-dark border text-warning font-monospace small px-3 py-1">
+                      <i class="fa-solid fa-qrcode me-1"></i> FARE RECEIPT QR
+                    </span>
+                    <p class="text-white opacity-75 small mt-1 mb-0" style="font-size: 0.8rem;">
+                      Scan to view digital fare receipt & UPI payment
+                    </p>
+                  </div>
+                </div>
+
+              </div>
             </div>
           </div>
+
+          <!-- ========================================== -->
+          <!-- 2. STAR RATING & FEEDBACK FORM -->
+          <!-- ========================================== -->
+          <div class="p-4 p-md-5">
+            <!-- Post-Ride Emergency Protection Banner -->
+            <div class="alert alert-dark border-warning d-flex align-items-center gap-3 p-3 rounded-3 mb-4 shadow-sm" style="background-color: #0F172A; border-color: #FF9800 !important;">
+              <i class="fa-solid fa-shield-halved text-warning fs-3"></i>
+              <div>
+                <strong class="text-white small d-block"><i class="fa-solid fa-clock me-1 text-warning"></i> 20-Minute Post-Ride SOS Protection Active</strong>
+                <span class="text-white opacity-75 small">For your safety after deboarding, the 1-Touch Emergency SOS button remains available for the next 20 minutes across your SafeRide dashboard.</span>
+              </div>
+            </div>
 
           <form method="POST" action="{% url 'rate_trip' trip.trip_id %}">
             {% csrf_token %}

@@ -60,6 +60,7 @@ urlpatterns = [
     path('api/sos/trigger/', views.trigger_sos_alert, name='trigger_sos_alert'),
     path('api/trip/<str:trip_id>/update-location/', views.update_trip_location, name='update_trip_location'),
     path('api/trip/<str:trip_id>/location/', views.update_trip_location, name='update_trip_location_alias'),
+    path('api/trip/<str:trip_id>/qr-fallback/', views.serve_trip_fare_qr, name='serve_trip_fare_qr'),
     path('api/admin/sos/active/', views.check_active_sos_alerts, name='check_active_sos_alerts'),
     path('track/<str:token>/', views.live_share_view, name='live_share_trip_track_alias'),
 
@@ -70,8 +71,7 @@ urlpatterns = [
     path('api/v1/trips/<str:trip_id>/location/', api_views.TripLocationAPIView.as_view(), name='api_trip_location'),
     path('api/v1/incidents/report/', api_views.IncidentReportAPIView.as_view(), name='api_incident_report'),
 
-    # PWA (Progressive Web App) Endpoints
+    # PWA Endpoints
     path('sw.js', views.service_worker_view, name='pwa_service_worker'),
     path('manifest.json', views.manifest_view, name='pwa_manifest'),
-    path('offline/', views.offline_view, name='pwa_offline'),
 ]

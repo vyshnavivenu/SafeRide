@@ -738,13 +738,20 @@ function releaseScreenWakeLock() {
 }
 
 /**
- * SafeRide PWA Service Worker Registration
+ * SafeRide Service Worker Uninstaller / Cache Cleanup
  */
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then((reg) => console.log('🛡️ SafeRide PWA Service Worker Registered. Scope:', reg.scope))
-      .catch((err) => console.warn('PWA Service Worker registration warning:', err));
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    for (const registration of registrations) {
+      registration.unregister();
+    }
   });
+  if (window.caches) {
+    caches.keys().then((names) => {
+      for (const name of names) {
+        caches.delete(name);
+      }
+    });
+  }
 }
 

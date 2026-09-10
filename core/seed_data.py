@@ -64,12 +64,9 @@ def run_seed():
             'email': 'vyshnavi@sjcetpalai.ac.in',
             'phone_number': '+91 9847123456',
             'password': p1_user.password,
-            'emergency_contact_1_name': 'Venu Chandrasekharan Nair (Father)',
-            'emergency_contact_1_phone': '+91 9447012345',
-            'emergency_contact_1_relation': 'Parent',
-            'emergency_contact_2_name': 'SJCET Security / Helpdesk',
-            'emergency_contact_2_phone': '+91 4822239700',
-            'emergency_contact_2_relation': 'Campus Security',
+            'emergency_contact_name': 'Venu C Nair',
+            'emergency_contact_phone': '+91 9447012345',
+            'emergency_contact_relation': 'Parent',
             'address': 'Palai, Kottayam, Kerala',
         }
     )
@@ -95,14 +92,25 @@ def run_seed():
             'email': 'rahul.k@gmail.com',
             'phone_number': '+91 9895001122',
             'password': p2_user.password,
-            'emergency_contact_1_name': 'Anita Kurian',
-            'emergency_contact_1_phone': '+91 9895009988',
-            'emergency_contact_1_relation': 'Sister',
+            'emergency_contact_name': 'Anita Kurian',
+            'emergency_contact_phone': '+91 9895009988',
+            'emergency_contact_relation': 'Sister',
             'address': 'Kottayam Road, Palai',
         }
     )
+    print("[+] Created Passenger in tbl_passenger: username='rahul', password='passenger123'")
 
-    # 3. Create Drivers & Vehicle Documents (tbl_driver & tbl_vehicle_documents)
+    # Clean up any extraneous or test records so strictly only vyshnavi and rahul exist in tbl_passenger
+    official_passenger_usernames = ['vyshnavi', 'rahul']
+    extra_passengers = Passenger.objects.exclude(user__username__in=official_passenger_usernames)
+    if extra_passengers.exists():
+        for ep in extra_passengers:
+            u = ep.user
+            print(f"[-] Removing non-passenger / test record from tbl_passenger: '{ep.name}' ({ep.email})")
+            ep.delete()
+            if u and not u.is_superuser and u.role == User.Role.PASSENGER:
+                u.delete()
+
     drivers_data = [
         {
             'username': 'driver_rajesh',
@@ -169,102 +177,30 @@ def run_seed():
             'avg_rating': 4.2,
         },
         {
-            'username': 'driver_pradeep',
+            'username': 'driver_varun',
             'password': 'driver123',
-            'name': 'Pradeep Chandran',
-            'first_name': 'Pradeep',
-            'last_name': 'Chandran',
-            'phone': '+91 9447665544',
-            'license_no': 'KL-05-20170008821',
-            'experience': 8,
-            'status': Driver.VerificationStatus.VERIFIED,
-            'reg_no': 'KL-05-AT-7788',
-            'v_type': 'auto',
-            'rep_score': 95.0,
-            'trips': 520,
-            'avg_rating': 4.85,
-        },
-        {
-            'username': 'driver_mathew',
-            'password': 'driver123',
-            'name': 'Mathew Varghese',
-            'first_name': 'Mathew',
-            'last_name': 'Varghese',
-            'phone': '+91 9847119988',
-            'license_no': 'KL-35-20160007743',
-            'experience': 10,
-            'status': Driver.VerificationStatus.VERIFIED,
-            'reg_no': 'KL-35-TX-4521',
-            'v_type': 'taxi',
-            'rep_score': 98.5,
-            'trips': 780,
-            'avg_rating': 4.95,
-        },
-        {
-            'username': 'driver_hari',
-            'password': 'driver123',
-            'name': 'Harikrishnan Nair',
-            'first_name': 'Harikrishnan',
-            'last_name': 'Nair',
-            'phone': '+91 9745887766',
-            'license_no': 'KL-05-20190005512',
+            'name': 'Varun Menon',
+            'first_name': 'Varun',
+            'last_name': 'Menon',
+            'phone': '+91 9847223344',
+            'license_no': 'KL-05-20210008899',
             'experience': 5,
             'status': Driver.VerificationStatus.VERIFIED,
-            'reg_no': 'KL-05-CB-3344',
+            'reg_no': 'KL-05-CB-4422',
             'v_type': 'cab',
-            'rep_score': 91.0,
-            'trips': 340,
-            'avg_rating': 4.75,
-        },
-        {
-            'username': 'driver_shaji',
-            'password': 'driver123',
-            'name': 'Shaji Thomas',
-            'first_name': 'Shaji',
-            'last_name': 'Thomas',
-            'phone': '+91 9495223311',
-            'license_no': 'KL-05-20210006678',
-            'experience': 3,
-            'status': Driver.VerificationStatus.VERIFIED,
-            'reg_no': 'KL-05-EV-1205',
-            'v_type': 'cab',
-            'rep_score': 93.5,
-            'trips': 195,
-            'avg_rating': 4.90,
-        },
-        {
-            'username': 'driver_anoop',
-            'password': 'driver123',
-            'name': 'Anoop Rajan',
-            'first_name': 'Anoop',
-            'last_name': 'Rajan',
-            'phone': '+91 9605443322',
-            'license_no': 'KL-35-20230009988',
-            'experience': 2,
-            'status': Driver.VerificationStatus.PENDING,
-            'reg_no': 'KL-35-AT-6622',
-            'v_type': 'auto',
-            'rep_score': 78.0,
-            'trips': 45,
-            'avg_rating': 4.40,
-        },
-        {
-            'username': 'driver_deepak',
-            'password': 'driver123',
-            'name': 'Deepak K. S.',
-            'first_name': 'Deepak',
-            'last_name': 'K. S.',
-            'phone': '+91 9946115500',
-            'license_no': 'KL-07-20140003321',
-            'experience': 11,
-            'status': Driver.VerificationStatus.VERIFIED,
-            'reg_no': 'KL-07-CB-9080',
-            'v_type': 'cab',
-            'rep_score': 97.0,
-            'trips': 910,
-            'avg_rating': 4.92,
+            'rep_score': 93.0,
+            'trips': 310,
+            'avg_rating': 4.85,
         }
     ]
+
+    # Clean up any extraneous driver accounts
+    seeded_usernames = [d['username'] for d in drivers_data]
+    extra_drivers = User.objects.filter(role=User.Role.DRIVER).exclude(username__in=seeded_usernames)
+    if extra_drivers.exists():
+        cleaned_count = extra_drivers.count()
+        extra_drivers.delete()
+        print(f"[-] Removed {cleaned_count} extraneous driver account(s).")
 
     driver_objs = []
     for d in drivers_data:
@@ -343,10 +279,6 @@ def run_seed():
             'driver': rajesh_driver,
             'passenger': p1_user,
             'rating': 5,
-            'driving_safety_rating': 5,
-            'vehicle_cleanliness_rating': 5,
-            'behavior_rating': 5,
-            'fare_honesty_rating': 5,
             'review': 'Very polite driver, drove safely at regulated speeds, and followed the direct meter fare! Highly recommend.',
         }
     )
@@ -375,28 +307,33 @@ def run_seed():
             'driver': anand_driver,
             'passenger': p2_user,
             'rating': 5,
-            'driving_safety_rating': 5,
-            'vehicle_cleanliness_rating': 5,
-            'behavior_rating': 5,
-            'fare_honesty_rating': 5,
             'review': 'Clean cab and smooth driving. Helped with luggage and took the safest route.',
         }
     )
 
-    # 5. Create Sample Complaint (tbl_complaint)
-    Complaint.objects.get_or_create(
-        passenger=p2_user,
-        driver=driver_objs[3], # Vinod
-        category=Complaint.Category.OVERCHARGING,
-        defaults={
-            'description': 'Driver demanded excess fare above meter rate during night commute and refused to use standard fare table.',
-            'status': 'Pending',
-            'penalty_points_deducted': 5,
-        }
+    # 4b. Backfill any trips missing destination points with realistic Palai locations
+    dest_defaults = [
+        ("Pala KSRTC Bus Station", 9.691200, 76.690400),
+        ("St. Thomas Cathedral, Palai", 9.709000, 76.682000),
+        ("Lalam Bridge Junction, Palai", 9.708200, 76.683500),
+        ("Palai Town Civil Station", 9.710000, 76.680000),
+    ]
+    unspecified_trips = Trip.objects.filter(destination_address__isnull=True) | Trip.objects.filter(
+        destination_address__in=['', 'Destination Point', 'Destination Drop Point']
     )
-    print("[+] Created Complaint in tbl_complaint")
+    for idx, t in enumerate(unspecified_trips):
+        d_name, d_lat, d_lng = dest_defaults[idx % len(dest_defaults)]
+        t.destination_address = d_name
+        t.end_location = d_name
+        t.drop_location_name = d_name
+        t.destination_latitude = d_lat
+        t.destination_longitude = d_lng
+        t.drop_latitude = d_lat
+        t.drop_longitude = d_lng
+        t.save()
+    print("[+] Verified and populated Destination Points for all completed trips")
 
-    # 6. Create Active SOS Alert (tbl_sos_alert)
+    # 5. Create Active SOS Alert (tbl_sos_alert)
     if not SOSAlert.objects.filter(passenger=p1_user, driver=rajesh_driver, status='Active').exists():
         SOSAlert.objects.create(
             passenger=p1_user,
@@ -410,16 +347,6 @@ def run_seed():
             dispatched_services='Local Police Station (112), Campus Safety Hotline',
         )
     print("[+] Created SOS Alert in tbl_sos_alert")
-
-    # 7. Create Sample Incident Report (tbl_incident_report)
-    if not IncidentReport.objects.filter(passenger=p1_user, incident_type='Unsafe Driving').exists():
-        IncidentReport.objects.create(
-            passenger=p1_user,
-            incident_type='Unsafe Driving',
-            description='Aggressive overtaking near steep turn on Pala highway.',
-            status='Pending',
-        )
-    print("[+] Created Incident Report in tbl_incident_report")
 
     print("\n[SUCCESS] SafeRide Database Tables (tbl_*) seeded successfully!")
 

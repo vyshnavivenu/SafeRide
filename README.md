@@ -89,14 +89,22 @@ Open **`http://127.0.0.1:8000`** in your browser.
 | **Passenger (Alt)** | `rahul` | `passenger123` | Secondary test passenger account |
 | **Verified Auto Driver** | `driver_rajesh` | `driver123` | Vehicle: `KL-05-AT-4455` (Bajaj RE, 96.5 Reputation, Active QR code) |
 | **Verified Taxi Driver** | `driver_anand` | `driver123` | Vehicle: `KL-05-TX-1024` (Dzire, 94.0 Reputation, Active QR code) |
-| **Pending KYC Driver** | `driver_vinod` | `driver123` | Vehicle: `KL-05-AT-9911` (Awaiting Admin document review) |
+| **Verified Cab Driver** | `driver_suresh` | `driver123` | Vehicle: `KL-05-CB-8890` (Cab, 89.5 Reputation, Active QR code) |
+| **Verified Cab Driver (Varun)** | `driver_varun` | `driver123` | Vehicle: `KL-05-CB-4422` (Cab, 93.0 Reputation, Active QR code) |
+| **Pending KYC Driver** | `driver_vinod` | `driver123` | Vehicle: `KL-05-AT-9911` (Auto, Awaiting Admin document review) |
 
 ---
 
 ## 🛠️ 6. Technology Stack
 
-- **Frontend & Mapping**: HTML5, CSS3, Bootstrap 5.3, JavaScript (ES6+), Leaflet.js / Google Maps API, `html5-qrcode`
-- **Backend**: Python 3.12, Django 5.x (MVC Architecture, ORM, Session Security)
-- **REST APIs**: Django REST Framework (DRF)
-- **Database**: MySQL 8.x / MariaDB (managed via XAMPP & phpMyAdmin)
-- **QR Code Engine**: Python `qrcode` + Pillow
+- **Backend Framework**: Python 3.12 / 3.14 & Django 5.x (MVC Architecture, ORM, Cryptographic Session Security, Role-Based Access Control)
+- **Database Engine**: **MySQL / MariaDB** strictly (Database: `saferide_db`, Default Port: `3307` via XAMPP Control Panel)
+- **Database Driver & Connector**: `PyMySQL` (`pymysql.install_as_MySQLdb()` with XAMPP MariaDB transaction compatibility)
+- **Database Management**: phpMyAdmin Web Interface ([`http://localhost/phpmyadmin`](http://localhost/phpmyadmin))
+- **Frontend Technologies**: HTML5, CSS3, Bootstrap 5.3 (Dark Mode / Glassmorphism Aesthetic), Vanilla JavaScript (ES6+)
+- **Interactive Geospatial Mapping**: Google Maps Platform API & Leaflet.js / OpenStreetMap Geolocation fallback
+- **QR Code Recognition & Generation**: 
+  - Scanning: Client-side `html5-qrcode` & Camera Stream Video Pipeline
+  - Generation: Server-side Python `qrcode` + Pillow (PIL) for Driver Security Badges & Digital Fare QR Codes
+- **REST APIs**: Django REST Framework (DRF) for mobile telemetry & real-time GPS pings
+- **Progressive Web App (PWA)**: Service Worker caching & Web App Manifest for mobile installation

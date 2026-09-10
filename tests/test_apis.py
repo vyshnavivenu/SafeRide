@@ -139,6 +139,29 @@ class EmergencyAndTrackingAPITests(APITestCase):
         self.trip.refresh_from_db()
         self.assertEqual(self.trip.status, Trip.Status.SOS_TRIGGERED)
 
+    def test_driver_cannot_trigger_sos_api(self):
+        """
+        Scenario: Driver attempts to trigger the SOS endpoint.
+        Action: Send JSON POST to /api/sos/trigger/ as authenticated driver.
+        Expectation: HTTP 403 Forbidden, SOS alert is NOT created, Trip status unchanged.
+        """
+        self.client.force_authenticate(user=self.driver.user)
+
+        payload = {
+            'trip_id': self.trip.trip_id,
+            'driver_id': self.driver.driver_id,
+            'latitude': 9.691234,
+            'longitude': 76.690456,
+            'location_name': 'Unauthorized Driver SOS Dispatch'
+        }
+
+        url = reverse('api_sos_trigger')
+        response = self.client.post(url, data=payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        # Ensure no active SOS alert was created
+        self.assertFalse(SOSAlert.objects.filter(location_name='Unauthorized Driver SOS Dispatch').exists())
+
     # -------------------------------------------------------------
     # 3. VERIFIED DRIVERS DIRECTORY API
     # -------------------------------------------------------------

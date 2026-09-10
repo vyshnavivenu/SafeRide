@@ -58,10 +58,16 @@
         </div>
       </div>
 
-      <div>
-        <a href="{% url 'active_trip' active_trip.trip_id %}" class="btn btn-warning btn-lg rounded-pill fw-bold px-4 shadow text-dark" style="background-color: #FF9800; border: none;">
-          <i class="fa-solid fa-map-location-dot me-2"></i> Return to Active Trip &rarr;
+      <div class="d-flex flex-wrap gap-2">
+        <a href="{% url 'active_trip' active_trip.trip_id %}" class="btn btn-warning rounded-pill fw-bold px-3 px-sm-4 shadow text-dark" style="background-color: #FF9800; border: none;">
+          <i class="fa-solid fa-map-location-dot me-2"></i> Live Map & SOS &rarr;
         </a>
+        <form action="{% url 'end_trip' active_trip.trip_id %}" method="POST" class="d-inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-success rounded-pill fw-bold px-3 px-sm-4 shadow text-uppercase" onclick="return confirm('Confirm safe arrival at destination and end this trip session?')">
+            <i class="fa-solid fa-circle-check me-2"></i> Arrived Safely (End Trip)
+          </button>
+        </form>
       </div>
     </div>
   </div>
@@ -214,7 +220,11 @@
                 <span class="text-success fw-semibold"><i class="fa-solid fa-circle-dot me-1"></i> {{ t.boarding_point|default:t.pickup_location_name|truncatechars:28 }}</span>
               </td>
               <td class="small">
-                <span class="text-danger fw-semibold"><i class="fa-solid fa-location-dot me-1"></i> {{ t.destination_point|default:t.drop_location_name|default:"Destination Drop Point"|truncatechars:28 }}</span>
+                {% if t.destination_point %}
+                <span class="text-danger fw-semibold"><i class="fa-solid fa-location-dot me-1"></i> {{ t.destination_point|truncatechars:28 }}</span>
+                {% else %}
+                <span class="text-white opacity-50 fst-italic"><i class="fa-solid fa-route me-1 opacity-50"></i> Open / Metered</span>
+                {% endif %}
               </td>
               <td>
                 {% if t.status == 'Completed' or t.status == 'COMPLETED' %}
@@ -272,8 +282,13 @@
             <div class="small text-success mb-1">
               <i class="fa-solid fa-circle-dot me-1"></i> <span class="text-white opacity-75">From:</span> <strong>{{ t.boarding_point|default:t.pickup_location_name|truncatechars:32 }}</strong>
             </div>
-            <div class="small text-danger">
-              <i class="fa-solid fa-location-dot me-1"></i> <span class="text-white opacity-75">To:</span> <strong>{{ t.destination_point|default:t.drop_location_name|default:"Destination Point"|truncatechars:32 }}</strong>
+            <div class="small">
+              <i class="fa-solid fa-location-dot me-1"></i> <span class="text-white opacity-75">To:</span> 
+              {% if t.destination_point %}
+              <strong class="text-danger">{{ t.destination_point|truncatechars:32 }}</strong>
+              {% else %}
+              <span class="text-white opacity-50 fst-italic">Open / Metered</span>
+              {% endif %}
             </div>
           </div>
 

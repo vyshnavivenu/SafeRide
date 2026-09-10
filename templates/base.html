@@ -49,12 +49,16 @@
 
       <div class="collapse navbar-collapse" id="navbarContent">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-1 gap-xxl-2">
+          <!-- ========================================== -->
+          <!-- 1. GUEST / LOGGED OUT NAVIGATION -->
+          <!-- ========================================== -->
+          {% if not user.is_authenticated %}
           <li class="nav-item">
             <a class="nav-link text-white text-nowrap" href="{% url 'home' %}"><i class="fa-solid fa-house me-1"></i> Home</a>
           </li>
-
-          <!-- Logged Out User Navigation -->
-          {% if not user.is_authenticated %}
+          <li class="nav-item">
+            <a class="nav-link text-white text-nowrap" href="{% url 'verify_driver_search' %}"><i class="fa-solid fa-qrcode me-1 text-info"></i> Verify Driver</a>
+          </li>
           <li class="nav-item">
             <a class="nav-link text-white text-nowrap" href="{% url 'passenger_login' %}"><i class="fa-solid fa-user me-1 text-warning"></i> Passenger Login</a>
           </li>
@@ -62,7 +66,9 @@
             <a class="nav-link text-white text-nowrap" href="{% url 'driver_login' %}"><i class="fa-solid fa-id-card me-1 text-success"></i> Driver Login</a>
           </li>
 
-          <!-- Logged In Passenger Navigation -->
+          <!-- ========================================== -->
+          <!-- 2. LOGGED IN PASSENGER NAVIGATION -->
+          <!-- ========================================== -->
           {% elif user.is_passenger_user %}
           <li class="nav-item">
             <a class="nav-link text-white text-nowrap" href="{% url 'passenger_dashboard' %}"><i class="fa-solid fa-gauge-high me-1 text-primary"></i> Dashboard</a>
@@ -71,13 +77,18 @@
             <a class="nav-link text-white text-nowrap" href="{% url 'passenger_trip_history' %}"><i class="fa-solid fa-route me-1 text-warning"></i> Trip History</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link text-white text-nowrap" href="{% url 'passenger_profile' %}"><i class="fa-solid fa-user-pen me-1 text-info"></i> Profile</a>
+            <a class="nav-link text-white text-nowrap" href="{% url 'emergency_contacts' %}"><i class="fa-solid fa-phone-volume me-1 text-danger"></i> Emergency Contacts</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link text-white text-nowrap" href="{% url 'report_incident' %}"><i class="fa-solid fa-triangle-exclamation me-1 text-danger"></i> Report Issue</a>
+            <a class="nav-link text-white text-nowrap" href="{% url 'report_incident' %}"><i class="fa-solid fa-triangle-exclamation me-1 text-warning"></i> Report Issue</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-white text-nowrap" href="{% url 'passenger_profile' %}"><i class="fa-solid fa-user-pen me-1 text-info"></i> Profile</a>
           </li>
 
-          <!-- Logged In Driver Navigation -->
+          <!-- ========================================== -->
+          <!-- 3. LOGGED IN DRIVER NAVIGATION -->
+          <!-- ========================================== -->
           {% elif user.is_driver_user %}
           <li class="nav-item">
             <a class="nav-link text-white text-nowrap" href="{% url 'driver_dashboard' %}"><i class="fa-solid fa-id-card me-1 text-success"></i> Driver Portal</a>
@@ -89,7 +100,9 @@
             <a class="nav-link text-white text-nowrap" href="{% url 'driver_profile' %}"><i class="fa-solid fa-user-pen me-1 text-info"></i> Profile</a>
           </li>
 
-          <!-- Logged In Admin Navigation -->
+          <!-- ========================================== -->
+          <!-- 4. LOGGED IN ADMIN NAVIGATION -->
+          <!-- ========================================== -->
           {% elif user.is_admin_user %}
           <li class="nav-item">
             <a class="nav-link text-white fw-bold text-nowrap" href="{% url 'admin_dashboard' %}"><i class="fa-solid fa-shield-heart me-1 text-warning"></i> Dashboard</a>
@@ -120,8 +133,8 @@
         <!-- Right Side: User Profile, Role-Specific SOS & Distinct Logout Action -->
         <div class="navbar-user-section d-flex align-items-center gap-2 gap-lg-3 ms-auto flex-shrink-0">
           {% if user.is_authenticated %}
-            {% if user.is_passenger_user or user.is_driver_user %}
-            <!-- 🚨 Top-Right Emergency SOS Trigger (For Passengers & Drivers) -->
+            {% if user.is_passenger_user %}
+            <!-- 🚨 Top-Right Emergency SOS Trigger (Passengers Only) -->
             <button type="button" class="btn btn-danger btn-sm rounded-pill fw-bold px-3 py-1 shadow-sm d-flex align-items-center gap-1 header-sos-btn" onclick="triggerHeaderSOS()" title="🚨 Broadcast Emergency SOS Beacon">
               <i class="fa-solid fa-triangle-exclamation fa-shake text-warning"></i> <span>SOS</span>
             </button>
@@ -362,6 +375,7 @@
   <script src="/static/js/app.js?v=6.0"></script>
   <script>
     function triggerHeaderSOS() {
+      {% if user.is_authenticated and user.is_passenger_user %}
       const globalSosModal = document.getElementById('globalSosEmergencyModal');
       if (globalSosModal && typeof bootstrap !== 'undefined') {
         const modalInstance = bootstrap.Modal.getOrCreateInstance(globalSosModal);
@@ -376,6 +390,7 @@
           triggerSOSEmergency();
         }
       }
+      {% endif %}
     }
   </script>
   {% block extra_js %}{% endblock %}

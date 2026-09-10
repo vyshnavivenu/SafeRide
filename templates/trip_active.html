@@ -120,6 +120,37 @@
         </div>
 
         <div class="row g-3 mb-3">
+          <!-- Route Corridor: Boarding & Destination Points -->
+          <div class="col-12">
+            <div class="p-3 rounded-3 border" style="background-color: #0F172A; border-color: #334155;">
+              <div class="row g-2 align-items-center">
+                <div class="col-12 col-md-5">
+                  <span class="text-white opacity-75 small d-block mb-1">
+                    <i class="fa-solid fa-circle-dot text-warning me-1"></i> Boarding / Pickup Point:
+                  </span>
+                  <strong class="text-white small text-truncate d-block" title="{{ trip.boarding_point }}">
+                    <i class="fa-solid fa-map-pin text-warning me-1"></i>{{ trip.boarding_point|default:trip.pickup_location_name|default:"Current Boarding Point" }}
+                  </strong>
+                </div>
+                <div class="col-12 col-md-2 text-center d-none d-md-block">
+                  <i class="fa-solid fa-arrow-right text-warning fs-5"></i>
+                </div>
+                <div class="col-12 col-md-5">
+                  <span class="text-white opacity-75 small d-block mb-1">
+                    <i class="fa-solid fa-flag-checkered text-danger me-1"></i> Destination Drop Place:
+                  </span>
+                  <strong class="text-white small text-truncate d-block" title="{{ trip.destination_point }}">
+                    {% if trip.destination_address or trip.end_location or trip.drop_location_name %}
+                      <span class="text-danger fw-bold"><i class="fa-solid fa-location-dot me-1"></i>{{ trip.destination_point }}</span>
+                    {% else %}
+                      <span class="text-muted fst-italic"><i class="fa-solid fa-route me-1"></i>Open / Metered Destination</span>
+                    {% endif %}
+                  </strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="col-md-6">
             <label class="form-label fw-bold text-light small">Passenger Name :</label>
             <input type="text" class="form-control py-2 text-white font-monospace" style="background-color: #0F172A; border-color: #334155;" value="{{ request.user.get_full_name|default:request.user.username }}" readonly>
@@ -135,6 +166,22 @@
           <div class="col-md-6">
             <label class="form-label fw-bold text-light small">Live Coordinates :</label>
             <input type="text" class="form-control py-2 text-warning font-monospace small" style="background-color: #0F172A; border-color: #334155;" id="sos-live-loc-display" value="GPS: {{ trip.live_latitude|default:9.6843|floatformat:4 }}, {{ trip.live_longitude|default:76.6853|floatformat:4 }}" readonly>
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-bold text-light small"><i class="fa-solid fa-indian-rupee-sign text-warning me-1"></i> Government Regulated Tariff :</label>
+            <div class="p-2 rounded-3 border d-flex justify-content-between align-items-center flex-wrap gap-2" style="background-color: #0F172A; border-color: #334155;">
+              <span class="small text-white opacity-75">
+                {% if 'taxi' in driver.vehicle_type or 'cab' in driver.vehicle_type %}
+                  Base ₹200.00 (first 5 km) + ₹18.00/km thereafter
+                {% else %}
+                  Base ₹30.00 (first 1.5 km) + ₹15.00/km thereafter
+                {% endif %}
+              </span>
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-secondary text-light font-monospace small px-2 py-1" id="live-dist-badge"><i class="fa-solid fa-route me-1"></i>{{ trip.distance_km|default:'0.00' }} km</span>
+                <span class="badge bg-warning text-dark font-monospace fs-6 px-3 py-1" id="live-est-fare-badge">Est. Fare: ₹{{ trip.fare_amount|default:'30.00' }}</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -357,6 +404,9 @@
 
   let currentLat = Number('{{ trip.live_latitude|default:9.684300 }}');
   let currentLng = Number('{{ trip.live_longitude|default:76.685300 }}');
+  let destLat = {% if trip.destination_latitude %}{{ trip.destination_latitude }}{% elif trip.drop_latitude %}{{ trip.drop_latitude }}{% else %}null{% endif %};
+  let destLng = {% if trip.destination_longitude %}{{ trip.destination_longitude }}{% elif trip.drop_longitude %}{{ trip.drop_longitude }}{% else %}null{% endif %};
+  let destName = "{{ trip.destination_point|default:trip.destination_address|default:''|escapejs }}";
   let isDistressActive = '{{ trip.status }}' === 'SOS_Triggered';
 
   // Synthetic Web Audio Alert Beep
@@ -455,6 +505,44 @@
           radius: 100
         });
 
+        // Destination Marker (if specified)
+        if (destLat && destLng) {
+          const destPos = new google.maps.LatLng(destLat, destLng);
+          const destMarker = new google.maps.Marker({
+            position: destPos,
+            map: gMap,
+            title: "Destination: " + (destName || "Drop-off Place"),
+            icon: {
+              path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+              scale: 6,
+              fillColor: "#EF4444",
+              fillOpacity: 1,
+              strokeColor: "#FFFFFF",
+              strokeWeight: 2
+            }
+          });
+
+          const destInfoWindow = new google.maps.InfoWindow({
+            content: `
+              <div style="font-family: 'Inter', sans-serif; padding: 4px; color: #0F172A;">
+                <h6 style="margin: 0; font-weight: 700; color: #DC2626;"><i class="fa-solid fa-flag-checkered me-1"></i> Destination</h6>
+                <p style="margin: 3px 0 0 0; font-size: 13px;"><b>Place:</b> ${destName || 'Drop-off Place'}</p>
+                <span style="display:inline-block; background: #EF4444; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-top: 4px;">
+                  Target Drop Point
+                </span>
+              </div>
+            `
+          });
+          destMarker.addListener('click', () => {
+            destInfoWindow.open(gMap, destMarker);
+          });
+
+          const bounds = new google.maps.LatLngBounds();
+          bounds.extend(initialPos);
+          bounds.extend(destPos);
+          gMap.fitBounds(bounds, 60);
+        }
+
         reverseGeocodePosition(currentLat, currentLng);
         isGoogleMapsActive = true;
       } catch (err) {
@@ -493,6 +581,19 @@
         <span style="background:${isDistressActive ? '#DC2626' : '#065F46'}; color:#FFF; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:700;">${isDistressActive ? '🚨 SOS ACTIVE' : 'SafeRide GPS Live'}</span>
       </div>
     `).openPopup();
+
+    if (destLat && destLng) {
+      const destIcon = L.divIcon({
+        className: 'custom-dest-marker',
+        html: `<div style="background:#DC2626; width:34px; height:34px; border-radius:50%; border:3px solid #FFF; display:flex; align-items:center; justify-content:center; color:#FFF; font-size:16px; box-shadow:0 0 12px #DC2626;"><i class="fa-solid fa-flag-checkered"></i></div>`,
+        iconSize: [34, 34],
+        iconAnchor: [17, 17]
+      });
+      const destLMarker = L.marker([destLat, destLng], { icon: destIcon }).addTo(lMap);
+      destLMarker.bindPopup(`<b>Destination:</b> ${destName || 'Drop-off Place'}`);
+      const group = L.featureGroup([lMarker, destLMarker]);
+      lMap.fitBounds(group.getBounds().pad(0.2));
+    }
   }
 
   window.gm_authFailure = function() {
@@ -613,6 +714,18 @@
       if (syncBadge) {
         syncBadge.className = 'badge bg-success bg-opacity-25 text-success border border-success small';
         syncBadge.innerText = 'GPS Stream Active (10s)';
+      }
+      if (data.fare_amount !== undefined) {
+        const fareBadge = document.getElementById('live-est-fare-badge');
+        if (fareBadge) {
+          fareBadge.innerText = `Est. Fare: ₹${parseFloat(data.fare_amount).toFixed(2)}`;
+        }
+      }
+      if (data.distance_km !== undefined) {
+        const distBadge = document.getElementById('live-dist-badge');
+        if (distBadge) {
+          distBadge.innerHTML = `<i class="fa-solid fa-route me-1"></i>${parseFloat(data.distance_km).toFixed(2)} km`;
+        }
       }
     })
     .catch(e => console.warn("GPS Location Sync Error:", e));

@@ -191,6 +191,100 @@ class TripModelPrecisionTests(TestCase):
         self.assertEqual(trip.status, Trip.Status.COMPLETED)
         self.assertIsNotNone(trip.end_time)
         self.assertEqual(self.driver.total_trips, initial_trips + 1)
+        self.assertGreaterEqual(trip.fare_amount, Decimal('30.00'))
+
+    def test_fare_calculation_within_base_distance(self):
+        """Auto trip <= 1.50 km must charge the minimum base fare of exactly Rs 30.00."""
+        trip = Trip.objects.create(
+            passenger=self.passenger_user,
+            driver=self.driver,
+            boarding_latitude=Decimal('9.684300'),
+            boarding_longitude=Decimal('76.685300'),
+            current_latitude=Decimal('9.688000'),
+            current_longitude=Decimal('76.688000'),
+            status=Trip.Status.ACTIVE
+        )
+        # Force distance to 0.8 km (within 1.5 km base)
+        trip.haversine_distance = lambda *args: 0.80
+        dist, fare = trip.calculate_distance_and_fare()
+
+        self.assertEqual(dist, Decimal('0.80'))
+        self.assertEqual(fare, Decimal('30.00'))
+        self.assertEqual(trip.fare_amount, Decimal('30.00'))
+
+    def test_fare_calculation_at_exact_base_distance(self):
+        """Auto trip at exactly 1.50 km must charge base fare of Rs 30.00."""
+        trip = Trip.objects.create(
+            passenger=self.passenger_user,
+            driver=self.driver,
+            boarding_latitude=Decimal('9.684300'),
+            boarding_longitude=Decimal('76.685300'),
+            current_latitude=Decimal('9.695000'),
+            current_longitude=Decimal('76.695000'),
+            status=Trip.Status.ACTIVE
+        )
+        trip.haversine_distance = lambda *args: 1.50
+        dist, fare = trip.calculate_distance_and_fare()
+
+        self.assertEqual(dist, Decimal('1.50'))
+        self.assertEqual(fare, Decimal('30.00'))
+
+    def test_fare_calculation_beyond_base_distance(self):
+        """Auto trip > 1.50 km must charge Rs 30.00 + (distance - 1.5) * Rs 15.00/km."""
+        trip = Trip.objects.create(
+            passenger=self.passenger_user,
+            driver=self.driver,
+            boarding_latitude=Decimal('9.684300'),
+            boarding_longitude=Decimal('76.685300'),
+            current_latitude=Decimal('9.710000'),
+            current_longitude=Decimal('76.710000'),
+            status=Trip.Status.ACTIVE
+        )
+        # 3.5 km: 1.5 km base (30) + 2.0 km extra (2 * 15 = 30) = 60.00
+        trip.haversine_distance = lambda *args: 3.50
+        dist, fare = trip.calculate_distance_and_fare()
+
+        self.assertEqual(dist, Decimal('3.50'))
+        self.assertEqual(fare, Decimal('60.00'))
+
+        # 5.0 km: 1.5 km base (30) + 3.5 km extra (3.5 * 15 = 52.50) = 82.50
+        trip.haversine_distance = lambda *args: 5.00
+        dist, fare = trip.calculate_distance_and_fare()
+
+        self.assertEqual(dist, Decimal('5.00'))
+        self.assertEqual(fare, Decimal('82.50'))
+
+    def test_taxi_cab_regulated_tariff(self):
+        """Taxi/cab trip must use taxi tariff: Rs 200 min (5 km) + Rs 18/km thereafter."""
+        taxi_user = User.objects.create_user(
+            username='taxi_driver',
+            email='taxi@saferide.org',
+            password='testpassword123',
+            role=User.Role.DRIVER
+        )
+        taxi_driver = Driver.objects.create(
+            user=taxi_user,
+            name='Taxi Driver',
+            vehicle_type='taxi',
+            phone_number='9846011111',
+            license_number='KL-05-2019001111',
+            vehicle_number='KL-05-TX-1024',
+            verification_status=Driver.VerificationStatus.VERIFIED
+        )
+        trip = Trip.objects.create(
+            passenger=self.passenger_user,
+            driver=taxi_driver,
+            status=Trip.Status.ACTIVE
+        )
+        # 3.0 km within 5.0 km base -> Rs 200.00
+        trip.haversine_distance = lambda *args: 3.00
+        dist, fare = trip.calculate_distance_and_fare()
+        self.assertEqual(fare, Decimal('200.00'))
+
+        # 7.0 km: 5 km base (200) + 2.0 km extra (2 * 18 = 36) = 236.00
+        trip.haversine_distance = lambda *args: 7.00
+        dist, fare = trip.calculate_distance_and_fare()
+        self.assertEqual(fare, Decimal('236.00'))
 
 
 class SOSAlertModelTests(TestCase):
