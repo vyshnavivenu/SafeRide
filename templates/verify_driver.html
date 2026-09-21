@@ -22,15 +22,24 @@
         </div>
 
         <!-- Vehicle Number Form -->
-        <form action="{% url 'verify_driver_search' %}" method="GET">
-          <div class="mb-4">
-            <label class="form-label fw-bold text-light">Vehicle Number :</label>
-            <input type="text" name="query" class="form-control py-3 text-uppercase fw-bold text-center fs-5 text-white" style="background-color: #0F172A; border-color: #334155;" placeholder="e.g. KL 05 AT 4455" value="{{ search_query|default:'' }}" required autofocus>
+        <form action="{% url 'verify_driver_search' %}" method="GET" class="mb-4">
+          <div class="mb-3">
+            <label class="form-label fw-bold text-light small"><i class="fa-solid fa-car-side text-primary me-1"></i> Vehicle Registration Number :</label>
+            <div class="d-flex align-items-stretch gap-2 gap-sm-3 w-100 flex-nowrap">
+              <div class="input-group input-group-lg shadow-sm flex-grow-1">
+                <span class="input-group-text border-end-0 text-white rounded-start-3" style="background-color: #0F172A; border-color: #334155;">
+                  <i class="fa-solid fa-id-card text-warning fs-5"></i>
+                </span>
+                <input type="text" name="query" class="form-control text-uppercase fw-bold text-white fs-5 rounded-end-3" style="background-color: #0F172A; border-color: #334155;" placeholder="e.g. KL 05 AT 4455" value="{{ search_query|default:'' }}" required autofocus>
+              </div>
+              <button type="submit" class="btn btn-primary btn-lg fw-bold px-3 px-sm-4 text-uppercase d-flex align-items-center justify-content-center text-nowrap rounded-3 shadow-sm flex-shrink-0">
+                <i class="fa-solid fa-shield-check me-2"></i> VERIFY & BOARD
+              </button>
+            </div>
+            <small class="text-white opacity-50 d-block mt-2">
+              <i class="fa-solid fa-circle-info me-1"></i> Accepts all formats: <code>KL 05 AT 4455</code>, <code>KL05AT4455</code>, <code>KL-05-AT-4455</code>
+            </small>
           </div>
-
-          <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold rounded-pill mb-4 shadow-sm text-uppercase">
-            VERIFY
-          </button>
         </form>
 
         <!-- Unverified / Not Found Alert Box -->
