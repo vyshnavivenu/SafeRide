@@ -41,22 +41,16 @@
             </div>
           </div>
 
-          <!-- Username & Email -->
+          <!-- Contact Info: Email & Phone -->
           <div class="row g-2 mb-3">
             <div class="col-md-6">
-              <label class="form-label fw-bold text-light">Username :</label>
-              <input type="text" name="username" class="form-control py-2 text-white" style="background-color: #0F172A;" placeholder="Choose a username" minlength="3" maxlength="50" value="{{ form.username.value|default:'' }}">
+              <label class="form-label fw-bold text-light">Email Address :</label>
+              <input type="email" name="email" class="form-control py-2 text-white" style="background-color: #0F172A;" placeholder="Email (e.g. name@example.com)" value="{{ form.email.value|default:'' }}" required>
             </div>
             <div class="col-md-6">
-              <label class="form-label fw-bold text-light">Email Address :</label>
-              <input type="email" name="email" class="form-control py-2 text-white" style="background-color: #0F172A;" placeholder="Email Address" value="{{ form.email.value|default:'' }}" required>
+              <label class="form-label fw-bold text-light">Phone Number :</label>
+              <input type="tel" name="phone" class="form-control py-2 text-white" style="background-color: #0F172A;" placeholder="10-digit Mobile (e.g. 9876543210)" pattern="(\+91[\-\s]?)?[6-9]\d{9}" minlength="10" maxlength="15" title="Valid 10-digit mobile number" value="{{ form.phone.value|default:'' }}" required>
             </div>
-          </div>
-
-          <!-- Phone Number -->
-          <div class="mb-3">
-            <label class="form-label fw-bold text-light">Phone Number :</label>
-            <input type="tel" name="phone" class="form-control py-2 text-white" style="background-color: #0F172A;" placeholder="10-digit Mobile Number (e.g. 9876543210)" pattern="(\+91[\-\s]?)?[6-9]\d{9}" minlength="10" maxlength="15" title="Valid 10-digit mobile number" value="{{ form.phone.value|default:'' }}" required>
           </div>
 
           <!-- Password -->

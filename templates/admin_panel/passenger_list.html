@@ -58,20 +58,33 @@
             <td class="text-white fw-semibold font-monospace">{{ p.user.phone|default:"Not listed" }}</td>
             <td>
               {% if p.emergency_contact_name or p.emergency_contact_1_name %}
-                <span class="text-white fw-semibold">
-                  <i class="fa-solid fa-user-shield text-info me-1"></i>
+                <div class="text-white fw-semibold small">
+                  <i class="fa-solid fa-user-shield text-warning me-1"></i>
                   {{ p.emergency_contact_name|default:p.emergency_contact_1_name }}
-                </span>
-              {% else %}
+                </div>
+              {% endif %}
+              {% if p.emergency_contact_2_name %}
+                <div class="text-info small mt-1">
+                  <i class="fa-solid fa-user-plus me-1"></i>
+                  {{ p.emergency_contact_2_name }}
+                </div>
+              {% endif %}
+              {% if not p.emergency_contact_name and not p.emergency_contact_1_name and not p.emergency_contact_2_name %}
                 <span class="text-white opacity-50 small">-</span>
               {% endif %}
             </td>
             <td>
               {% if p.emergency_contact_phone or p.emergency_contact_1_phone %}
-                <span class="badge bg-danger bg-opacity-25 text-danger border border-danger font-monospace px-2 py-1">
+                <span class="badge bg-danger bg-opacity-25 text-danger border border-danger font-monospace px-2 py-1 small d-inline-block mb-1">
                   <i class="fa-solid fa-phone me-1"></i> {{ p.emergency_contact_phone|default:p.emergency_contact_1_phone }}
                 </span>
-              {% else %}
+              {% endif %}
+              {% if p.emergency_contact_2_phone %}
+                <span class="badge bg-info bg-opacity-25 text-info border border-info font-monospace px-2 py-1 small d-inline-block">
+                  <i class="fa-solid fa-phone me-1"></i> {{ p.emergency_contact_2_phone }}
+                </span>
+              {% endif %}
+              {% if not p.emergency_contact_phone and not p.emergency_contact_1_phone and not p.emergency_contact_2_phone %}
                 <span class="text-white opacity-50 small">-</span>
               {% endif %}
             </td>

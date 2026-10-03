@@ -53,7 +53,7 @@
 
       <!-- Action Buttons: Share Location & SOS Trigger -->
       <div class="d-flex flex-wrap gap-2 align-items-center">
-        <button type="button" class="btn btn-warning rounded-pill fw-bold px-3 shadow text-dark" id="btn-share-live-location" onclick="shareLiveLocation()">
+        <button type="button" class="btn btn-warning rounded-pill fw-bold px-3 shadow text-dark" id="btn-share-live-location" data-bs-toggle="modal" data-bs-target="#shareLocationModal">
           <i class="fa-solid fa-share-nodes me-1"></i> Share Live Location
         </button>
         
@@ -234,17 +234,69 @@
           </div>
         </div>
 
-        <!-- Emergency Guardian Contact Preview -->
-        <h6 class="fw-bold text-white text-uppercase small mb-2"><i class="fa-solid fa-phone-volume text-danger me-2"></i> Emergency Contact</h6>
-        <div class="p-3 rounded-3 small mb-4 border text-white" style="background-color: #0F172A; border-color: #334155 !important;">
-          <div><i class="fa-solid fa-user-shield text-warning me-2"></i> {{ profile.emergency_contact_1_name|default:"Guardian / Emergency Contact" }} ({{ profile.emergency_contact_1_relation|default:"Family" }})</div>
-          <div class="text-white ps-4 font-monospace">{{ profile.emergency_contact_1_phone|default:"+91 94470 12345" }}</div>
+        <!-- Emergency Contacts Preview -->
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h6 class="fw-bold text-white text-uppercase small mb-0"><i class="fa-solid fa-phone-volume text-danger me-2"></i> Emergency Contacts</h6>
+          <a href="{% url 'emergency_contacts' %}" class="small text-warning text-decoration-none"><i class="fa-solid fa-pen-to-square me-1"></i> Manage</a>
+        </div>
+
+        <!-- Contact 1 Card -->
+        <div class="p-3 rounded-3 small mb-2 border text-white" style="background-color: #0F172A; border-color: #334155 !important;">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="fw-bold text-warning"><i class="fa-solid fa-user-shield me-1"></i> {{ profile.emergency_contact_name|default:profile.emergency_contact_1_name|default:"Primary Contact" }}</span>
+            <span class="badge bg-warning bg-opacity-25 text-warning border border-warning small">{{ profile.emergency_contact_relation|default:profile.emergency_contact_1_relation|default:"Family" }}</span>
+          </div>
+          <div class="text-white-50 font-monospace mb-2">{{ profile.emergency_contact_phone|default:profile.emergency_contact_1_phone|default:"+91 94470 12345" }}</div>
+          
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-success btn-sm rounded-pill fw-bold flex-grow-1 shadow-sm py-1" onclick="sendWhatsAppToContact(1)">
+              <i class="fa-brands fa-whatsapp fs-6 me-1"></i> WhatsApp
+            </button>
+            <button type="button" class="btn btn-outline-info btn-sm rounded-pill fw-bold flex-grow-1 shadow-sm py-1" onclick="sendSMSToContact(1)">
+              <i class="fa-solid fa-comment-sms me-1"></i> SMS
+            </button>
+          </div>
+        </div>
+
+        <!-- Contact 2 Card (if configured) -->
+        {% if profile.emergency_contact_2_phone %}
+        <div class="p-3 rounded-3 small mb-2 border text-white" style="background-color: #0F172A; border-color: #334155 !important;">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="fw-bold text-info"><i class="fa-solid fa-user-plus me-1"></i> {{ profile.emergency_contact_2_name|default:"Contact 2" }}</span>
+            <span class="badge bg-info bg-opacity-25 text-info border border-info small">{{ profile.emergency_contact_2_relation|default:"Friend" }}</span>
+          </div>
+          <div class="text-white-50 font-monospace mb-2">{{ profile.emergency_contact_2_phone }}</div>
+          
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-success btn-sm rounded-pill fw-bold flex-grow-1 shadow-sm py-1" onclick="sendWhatsAppToContact(2)">
+              <i class="fa-brands fa-whatsapp fs-6 me-1"></i> WhatsApp
+            </button>
+            <button type="button" class="btn btn-outline-info btn-sm rounded-pill fw-bold flex-grow-1 shadow-sm py-1" onclick="sendSMSToContact(2)">
+              <i class="fa-solid fa-comment-sms me-1"></i> SMS
+            </button>
+          </div>
+        </div>
+        {% else %}
+        <div class="mb-2 text-center">
+          <a href="{% url 'emergency_contacts' %}" class="small text-info text-decoration-none">
+            <i class="fa-solid fa-plus-circle me-1"></i> + Add 2nd Emergency Contact
+          </a>
+        </div>
+        {% endif %}
+
+        <div class="d-grid mb-3">
+          <button type="button" class="btn btn-link btn-sm text-white-50 text-decoration-none py-1" data-bs-toggle="modal" data-bs-target="#shareLocationModal">
+            <i class="fa-solid fa-link me-1 text-warning"></i> Copy Link / Other Options
+          </button>
         </div>
 
         <!-- Arrived Safely (End Trip Form) -->
-        <form action="{% url 'end_trip' trip.trip_id %}" method="POST">
+        <form action="{% url 'end_trip' trip.trip_id %}" method="POST" id="end-trip-form">
           {% csrf_token %}
-          <button type="submit" class="btn btn-success btn-lg w-100 fw-bold rounded-pill shadow text-uppercase py-3" onclick="return confirm('Confirm safe arrival at destination and complete this trip session?')">
+          <input type="hidden" name="final_lat" id="final_drop_lat" value="">
+          <input type="hidden" name="final_lng" id="final_drop_lng" value="">
+          <input type="hidden" name="final_address" id="final_drop_address" value="">
+          <button type="submit" class="btn btn-success btn-lg w-100 fw-bold rounded-pill shadow text-uppercase py-3">
             <i class="fa-solid fa-circle-check me-2"></i> ARRIVED SAFELY (END TRIP)
           </button>
         </form>
@@ -293,9 +345,106 @@
         <button type="button" class="btn btn-danger btn-lg w-100 fw-bold rounded-pill shadow py-3 text-uppercase" id="confirm-sos-dispatch-btn" onclick="executeSOSDispatch()">
           <i class="fa-solid fa-satellite-dish me-2"></i> YES, BROADCAST DISTRESS SIGNAL
         </button>
+
+        <div class="pt-3 mt-3 border-top border-secondary border-opacity-25">
+          <span class="small text-white-50 d-block mb-2">Also Alert Emergency Contact Directly:</span>
+          <div class="d-flex gap-2 justify-content-center">
+            <button type="button" class="btn btn-sm btn-outline-success rounded-pill fw-bold px-3" onclick="sendWhatsAppSOS()">
+              <i class="fa-brands fa-whatsapp me-1"></i> WhatsApp SOS
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-info rounded-pill fw-bold px-3" onclick="sendSMSSOS()">
+              <i class="fa-solid fa-comment-sms me-1"></i> SMS SOS
+            </button>
+          </div>
+        </div>
       </div>
       <div class="modal-footer border-top justify-content-center" style="border-color: #334155 !important;">
         <button type="button" class="btn btn-outline-light btn-sm rounded-pill px-4" data-bs-dismiss="modal">Cancel / False Alarm</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- SHARE LIVE LOCATION MODAL -->
+<!-- ========================================== -->
+<div class="modal fade" id="shareLocationModal" tabindex="-1" aria-labelledby="shareLocationModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border shadow-lg" style="background-color: #131C2E; border-color: #334155 !important;">
+      <div class="modal-header border-bottom" style="border-color: #334155 !important;">
+        <h5 class="modal-title fw-bold text-white" id="shareLocationModalLabel">
+          <i class="fa-solid fa-satellite-dish text-warning me-2"></i> Share Live Location
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4 text-white">
+        
+        <p class="small text-white-50 mb-3">
+          SafeRide streams your moving GPS position live. Anyone opening your tracking link can watch your route in real-time until you tap <b>Arrived Safely</b>.
+        </p>
+
+        <!-- Emergency Contact 1 Box -->
+        <div class="p-3 rounded-3 mb-2 border" style="background-color: #0F172A; border-color: #334155 !important;">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="small text-white-50"><i class="fa-solid fa-user-shield text-warning me-1"></i> Contact 1 (Primary):</span>
+            <span class="badge bg-warning bg-opacity-25 text-warning border border-warning small">{{ profile.emergency_contact_relation|default:profile.emergency_contact_1_relation|default:"Family" }}</span>
+          </div>
+          <div class="fw-bold text-white fs-6 mb-1">{{ profile.emergency_contact_name|default:profile.emergency_contact_1_name|default:"Emergency Contact" }}</div>
+          <div class="font-monospace text-warning small mb-2">{{ profile.emergency_contact_phone|default:profile.emergency_contact_1_phone|default:"No phone configured" }}</div>
+
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-success fw-bold rounded-pill py-2 flex-grow-1 shadow-sm" onclick="sendWhatsAppToContact(1)">
+              <i class="fa-brands fa-whatsapp fs-5 me-1"></i> WhatsApp
+            </button>
+            <button type="button" class="btn btn-outline-info fw-semibold rounded-pill py-2 flex-grow-1" onclick="sendSMSToContact(1)">
+              <i class="fa-solid fa-comment-sms me-1"></i> SMS
+            </button>
+          </div>
+        </div>
+
+        <!-- Emergency Contact 2 Box (if present) -->
+        {% if profile.emergency_contact_2_phone %}
+        <div class="p-3 rounded-3 mb-3 border" style="background-color: #0F172A; border-color: #334155 !important;">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="small text-white-50"><i class="fa-solid fa-user-plus text-info me-1"></i> Contact 2 (Secondary):</span>
+            <span class="badge bg-info bg-opacity-25 text-info border border-info small">{{ profile.emergency_contact_2_relation|default:"Friend" }}</span>
+          </div>
+          <div class="fw-bold text-white fs-6 mb-1">{{ profile.emergency_contact_2_name|default:"Secondary Contact" }}</div>
+          <div class="font-monospace text-info small mb-2">{{ profile.emergency_contact_2_phone }}</div>
+
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-success fw-bold rounded-pill py-2 flex-grow-1 shadow-sm" onclick="sendWhatsAppToContact(2)">
+              <i class="fa-brands fa-whatsapp fs-5 me-1"></i> WhatsApp
+            </button>
+            <button type="button" class="btn btn-outline-info fw-semibold rounded-pill py-2 flex-grow-1" onclick="sendSMSToContact(2)">
+              <i class="fa-solid fa-comment-sms me-1"></i> SMS
+            </button>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Copy Tracking Link Box -->
+        <label class="form-label small fw-bold text-white-50 mb-1">Live Tracking URL:</label>
+        <div class="input-group mb-2">
+          <input type="text" class="form-control bg-dark border-secondary text-white font-monospace small" id="live-share-url-input" value="{{ share_url|default:'' }}" readonly>
+          <button class="btn btn-primary fw-bold px-3" type="button" id="btn-modal-copy-url" onclick="copyShareUrlToClipboard()">
+            <i class="fa-solid fa-copy me-1"></i> Copy
+          </button>
+        </div>
+        <small class="text-white-50 d-block mb-3">No login or app install needed for the receiver.</small>
+
+        {% if not profile.emergency_contact_phone and not profile.emergency_contact_1_phone %}
+        <div class="alert alert-warning py-2 px-3 small rounded-3 mb-0">
+          <i class="fa-solid fa-circle-info me-1"></i> You haven't configured an emergency contact yet. <a href="{% url 'emergency_contacts' %}" class="alert-link text-decoration-underline">Add Contact Here</a>.
+        </div>
+        {% endif %}
+
+      </div>
+      <div class="modal-footer border-top justify-content-between" style="border-color: #334155 !important;">
+        <button type="button" class="btn btn-outline-light btn-sm rounded-pill" onclick="shareViaSystem()">
+          <i class="fa-solid fa-share-nodes me-1"></i> More Apps...
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm rounded-pill px-4" data-bs-dismiss="modal">Close</button>
       </div>
     </div>
   </div>
@@ -637,25 +786,49 @@
     }
   }
 
+  let lastGeocodedAddress = "";
+
   function reverseGeocodePosition(lat, lng) {
     const now = Date.now();
-    if (now - lastGeocodeTime < 10000) return;
+    if (now - lastGeocodeTime < 6000) return;
     lastGeocodeTime = now;
+
+    function applyLoc(name) {
+      if (!name) return;
+      lastGeocodedAddress = name;
+      const locDisplay = document.getElementById('sos-live-loc-display');
+      if (locDisplay) locDisplay.value = name;
+      const coordsDisplay = document.getElementById('live-coords-text');
+      if (coordsDisplay) {
+        coordsDisplay.innerHTML = `<i class="fa-solid fa-location-dot text-primary me-1"></i> ${name.split(',').slice(0, 2).join(',')} (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+      }
+    }
 
     if (typeof google !== 'undefined' && google.maps && google.maps.Geocoder) {
       const geocoder = new google.maps.Geocoder();
       geocoder.geocode({ location: { lat, lng } }, (results, status) => {
         if (status === 'OK' && results && results[0]) {
-          const locName = results[0].formatted_address;
-          const locDisplay = document.getElementById('sos-live-loc-display');
-          if (locDisplay) locDisplay.value = locName;
-          const coordsDisplay = document.getElementById('live-coords-text');
-          if (coordsDisplay) {
-            coordsDisplay.innerHTML = `<i class="fa-solid fa-location-dot text-primary me-1"></i> ${locName.split(',').slice(0, 2).join(',')} (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
-          }
+          applyLoc(results[0].formatted_address);
+        } else {
+          fallbackReverseGeocode(lat, lng, applyLoc);
         }
       });
+    } else {
+      fallbackReverseGeocode(lat, lng, applyLoc);
     }
+  }
+
+  function fallbackReverseGeocode(lat, lng, cb) {
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.display_name) {
+          const parts = data.display_name.split(',');
+          const name = parts.slice(0, 3).join(',').trim();
+          cb(name);
+        }
+      })
+      .catch(() => {});
   }
 
   function updateMapPosition(lat, lng) {
@@ -792,17 +965,137 @@
     }
   }
 
-  // 6. Share Live Location
-  function shareLiveLocation() {
-    const shareUrl = window.location.origin + "/live-track/{{ trip.share_token }}/";
+  // 6. Share Live Location Utilities
+  // 6. Share Live Location Utilities (Contact 1 & 2 Support)
+  function getLiveTrackingMessage(num = 1) {
+    const shareUrl = "{{ share_url|default:'' }}" || (window.location.origin + "/live-track/{{ trip.share_token }}/");
+    const driverName = "{{ driver.name|default:driver.user.get_full_name|default:driver.user.username|escapejs }}";
+    const vehicleNum = "{{ vehicle.registration_number|default:driver.vehicle_number|default:'SafeRide Vehicle'|escapejs }}";
+    const contactName = (num === 2) 
+      ? "{{ profile.emergency_contact_2_name|default:''|escapejs }}" 
+      : "{{ profile.emergency_contact_name|default:profile.emergency_contact_1_name|default:''|escapejs }}";
+    
+    let greeting = contactName ? `Hi ${contactName}, ` : '';
+    return `🚨 SafeRide Live Trip Tracking:\n${greeting}I am en-route with driver ${driverName} (Vehicle: ${vehicleNum}).\n\nTrack my real-time GPS location live on the map here:\n${shareUrl}\n\n(No app download needed. Works directly in your browser)`;
+  }
+
+  function getCleanContactPhone(num = 1) {
+    let rawPhone = (num === 2)
+      ? "{{ profile.emergency_contact_2_phone|default:''|escapejs }}"
+      : "{{ profile.emergency_contact_phone|default:profile.emergency_contact_1_phone|default:''|escapejs }}";
+    let cleaned = rawPhone.replace(/\D/g, '');
+    if (cleaned.length === 10) {
+      cleaned = '91' + cleaned;
+    }
+    return cleaned;
+  }
+
+  function sendWhatsAppToContact(num = 1) {
+    const phone = getCleanContactPhone(num);
+    const msg = encodeURIComponent(getLiveTrackingMessage(num));
+    const waUrl = phone ? `https://wa.me/${phone}?text=${msg}` : `https://api.whatsapp.com/send?text=${msg}`;
+    window.open(waUrl, '_blank');
+  }
+
+  function sendSMSToContact(num = 1) {
+    const phone = getCleanContactPhone(num);
+    const shareUrl = "{{ share_url|default:'' }}" || (window.location.origin + "/live-track/{{ trip.share_token }}/");
+    const driverName = "{{ driver.name|default:driver.user.get_full_name|default:driver.user.username|escapejs }}";
+    const vehicleNum = "{{ vehicle.registration_number|default:driver.vehicle_number|default:'SafeRide Vehicle'|escapejs }}";
+    const contactName = (num === 2)
+      ? "{{ profile.emergency_contact_2_name|default:''|escapejs }}"
+      : "{{ profile.emergency_contact_name|default:profile.emergency_contact_1_name|default:''|escapejs }}";
+    
+    let greeting = contactName ? `Hi ${contactName}, ` : '';
+    const text = `🚨 SafeRide Alert: ${greeting}I am en-route with driver ${driverName} (${vehicleNum}). Track my live location here: ${shareUrl}`;
+    const msg = encodeURIComponent(text);
+    
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const separator = isIOS ? '&body=' : '?body=';
+    const smsUrl = phone ? `sms:${phone}${separator}${msg}` : `sms:${separator}${msg}`;
+    window.location.href = smsUrl;
+  }
+
+  function sendWhatsAppSOS(num = 1) {
+    const phone = getCleanContactPhone(num);
+    const shareUrl = "{{ share_url|default:'' }}" || (window.location.origin + "/live-track/{{ trip.share_token }}/");
+    const driverName = "{{ driver.name|default:driver.user.get_full_name|default:driver.user.username|escapejs }}";
+    const vehicleNum = "{{ vehicle.registration_number|default:driver.vehicle_number|default:'SafeRide Vehicle'|escapejs }}";
+    const contactName = (num === 2)
+      ? "{{ profile.emergency_contact_2_name|default:''|escapejs }}"
+      : "{{ profile.emergency_contact_name|default:profile.emergency_contact_1_name|default:''|escapejs }}";
+    
+    let greeting = contactName ? `Hi ${contactName}, ` : '';
+    const text = `🚨 *EMERGENCY SOS ALERT!* 🚨\n\n${greeting}I need immediate assistance! I have triggered an emergency distress beacon on my SafeRide trip.\n\n*Driver:* ${driverName}\n*Vehicle:* ${vehicleNum}\n*Live GPS Tracking:* ${shareUrl}\n\nPlease contact me or emergency services immediately!`;
+    const msg = encodeURIComponent(text);
+    const waUrl = phone ? `https://wa.me/${phone}?text=${msg}` : `https://api.whatsapp.com/send?text=${msg}`;
+    window.open(waUrl, '_blank');
+  }
+
+  function sendSMSSOS(num = 1) {
+    const phone = getCleanContactPhone(num);
+    const shareUrl = "{{ share_url|default:'' }}" || (window.location.origin + "/live-track/{{ trip.share_token }}/");
+    const driverName = "{{ driver.name|default:driver.user.get_full_name|default:driver.user.username|escapejs }}";
+    const vehicleNum = "{{ vehicle.registration_number|default:driver.vehicle_number|default:'SafeRide Vehicle'|escapejs }}";
+    const text = `EMERGENCY SOS! I need urgent help on SafeRide. Driver: ${driverName}, Vehicle: ${vehicleNum}. Track me: ${shareUrl}`;
+    const msg = encodeURIComponent(text);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const separator = isIOS ? '&body=' : '?body=';
+    const smsUrl = phone ? `sms:${phone}${separator}${msg}` : `sms:${separator}${msg}`;
+    window.location.href = smsUrl;
+  }
+
+  function copyShareUrlToClipboard() {
+    const input = document.getElementById('live-share-url-input');
+    const shareUrl = (input && input.value) ? input.value : ("{{ share_url|default:'' }}" || (window.location.origin + "/live-track/{{ trip.share_token }}/"));
+    
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(shareUrl).then(() => {
-        alert("✅ Live Location Sharing Link copied to clipboard!\n\n" + shareUrl);
+        const btn = document.getElementById('btn-modal-copy-url');
+        if (btn) {
+          btn.innerHTML = '<i class="fa-solid fa-check me-1"></i> Copied!';
+          btn.className = 'btn btn-success fw-bold px-3';
+          setTimeout(() => {
+            btn.innerHTML = '<i class="fa-solid fa-copy me-1"></i> Copy';
+            btn.className = 'btn btn-primary fw-bold px-3';
+          }, 2500);
+        } else {
+          alert("✅ Live Location Sharing Link copied to clipboard!\n\n" + shareUrl);
+        }
       }).catch(() => {
         prompt("Copy Live Tracking Link:", shareUrl);
       });
     } else {
-      prompt("Copy Live Tracking Link:", shareUrl);
+      if (input) {
+        input.select();
+        document.execCommand('copy');
+        alert("✅ Live Location Link copied!");
+      } else {
+        prompt("Copy Live Tracking Link:", shareUrl);
+      }
+    }
+  }
+
+  function shareViaSystem() {
+    const shareUrl = "{{ share_url|default:'' }}" || (window.location.origin + "/live-track/{{ trip.share_token }}/");
+    if (navigator.share) {
+      navigator.share({
+        title: 'SafeRide Real-Time Live Tracking',
+        text: 'Track my ride live on SafeRide:',
+        url: shareUrl
+      }).catch(() => {});
+    } else {
+      copyShareUrlToClipboard();
+    }
+  }
+
+  function shareLiveLocation() {
+    const modalEl = document.getElementById('shareLocationModal');
+    if (modalEl && typeof bootstrap !== 'undefined') {
+      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+      modal.show();
+    } else {
+      copyShareUrlToClipboard();
     }
   }
 
@@ -810,6 +1103,23 @@
     initLiveTripMap();
     startContinuousGPSWatch();
     requestScreenWakeLock();
+
+    // Attach final live coordinates and reverse-geocoded address when concluding trip
+    const endTripForm = document.getElementById('end-trip-form');
+    if (endTripForm) {
+      endTripForm.addEventListener('submit', function (e) {
+        if (!confirm('Confirm safe arrival at your destination and complete this trip session?')) {
+          e.preventDefault();
+          return false;
+        }
+        const latInput = document.getElementById('final_drop_lat');
+        const lngInput = document.getElementById('final_drop_lng');
+        const addrInput = document.getElementById('final_drop_address');
+        if (latInput) latInput.value = currentLat;
+        if (lngInput) lngInput.value = currentLng;
+        if (addrInput) addrInput.value = lastGeocodedAddress || '';
+      });
+    }
   });
 </script>
 {% endblock %}

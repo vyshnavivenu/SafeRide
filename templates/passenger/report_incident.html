@@ -6,53 +6,124 @@
 <div class="container py-5">
   <div class="row justify-content-center">
     <div class="col-12 col-md-10 col-lg-9">
-      <div class="card rounded-4 border shadow-lg p-4 p-md-5" style="background-color: #131C2E !important;">
+      <div class="card rounded-4 border shadow-lg p-4 p-md-5" style="background-color: #131C2E !important; border-color: rgba(255, 255, 255, 0.1) !important;">
         
         <!-- Form Header -->
-        <div class="text-center mb-4 border-bottom pb-3">
+        <div class="text-center mb-4 border-bottom pb-3" style="border-color: rgba(255, 255, 255, 0.1) !important;">
           <h2 class="fw-bold text-white mb-0 text-uppercase tracking-wider">INCIDENT REPORT</h2>
         </div>
 
-        <form method="POST">
+        <form method="POST" id="incidentReportForm">
           {% csrf_token %}
 
           <!-- Passenger Name -->
           <div class="mb-3">
             <label class="form-label fw-bold text-light">Passenger Name :</label>
-            <input type="text" name="passenger_name" class="form-control py-2 text-white" style="background-color: #0F172A;" placeholder="Passenger Name" value="{{ user.get_full_name|default:user.username }}" pattern="[a-zA-Z\s\.\'\-]+" minlength="2" maxlength="100" title="Letters and spaces only" required>
+            <input type="text" name="passenger_name" class="form-control py-2 text-white" style="background-color: #0F172A; border-color: rgba(255,255,255,0.15);" placeholder="Passenger Name" value="{{ user.get_full_name|default:user.username }}" pattern="[a-zA-Z\s\.\'\-]+" minlength="2" maxlength="100" title="Letters and spaces only" required>
           </div>
 
-          <!-- Trip ID -->
+          <!-- Trip Selection (Required) -->
+          {% if recent_trips %}
           <div class="mb-3">
-            <label class="form-label fw-bold text-light">Trip ID (Optional) :</label>
-            <input type="text" name="trip_id" class="form-control py-2 text-white font-monospace" style="background-color: #0F172A;" placeholder="e.g. TRP-12345678">
+            <label class="form-label fw-bold text-light" for="recentTripSelector">
+              Trip :
+            </label>
+            <select id="recentTripSelector" name="trip_id" class="form-select py-2 text-white" style="background-color: #0F172A; border-color: rgba(255, 152, 0, 0.4); font-size: 1rem;" required>
+              <option value="" selected disabled>-- Select Trip ▼ --</option>
+              {% for t in recent_trips %}
+                <option value="TRP-{{ t.trip_id }}"
+                        data-trip-code="TRP-{{ t.trip_id }}"
+                        data-time="{{ t.start_time|date:'Y-m-d\TH:i' }}"
+                        data-driver="{% if t.driver %}{{ t.driver.user.get_full_name|default:t.driver.user.username }}{% endif %}"
+                        {% if form.trip_id.value == 'TRP-'|add:t.trip_id or form.trip_id.value == t.trip_id %}selected{% endif %}>
+                  Trip #{{ t.trip_id }} &bull; {{ t.start_time|date:"M d, Y - h:i A" }}{% if t.driver %} &bull; Driver: {{ t.driver.user.get_full_name|default:t.driver.user.username }}{% endif %}
+                </option>
+              {% endfor %}
+              <option value="__MANUAL__">Enter Another Trip ID Manually...</option>
+            </select>
+
+            <!-- Manual Trip ID input (Shown if passenger picks manual) -->
+            <div id="manualTripIdWrapper" class="mt-2 d-none">
+              <label class="form-label text-secondary small mb-1">Enter Trip ID :</label>
+              <input type="text" id="manualTripIdInput" class="form-control py-2 text-white font-monospace" style="background-color: #0F172A; border-color: rgba(255,255,255,0.15);" placeholder="e.g. TRP-12345678">
+            </div>
+
+            <div id="tripSelectedNotice" class="small text-success mt-2 d-none">
+              <span id="tripNoticeText">Trip selected and date auto-filled!</span>
+            </div>
           </div>
+          {% else %}
+          <!-- Trip ID Input (Required) -->
+          <div class="mb-3">
+            <label class="form-label fw-bold text-light" for="tripIdInput">Trip ID :</label>
+            <input type="text" id="tripIdInput" name="trip_id" class="form-control py-2 text-white font-monospace" style="background-color: #0F172A; border-color: rgba(255,255,255,0.15);" placeholder="e.g. TRP-12345678" value="{{ form.trip_id.value|default:'' }}" required>
+          </div>
+          {% endif %}
 
           <!-- Select Incident Type ▼ -->
           <div class="mb-3">
             <label class="form-label fw-bold text-light">Incident Type :</label>
-            <select name="incident_type" class="form-select py-2 text-white" style="background-color: #0F172A;" required>
+            <select name="incident_type" class="form-select py-2 text-white" style="background-color: #0F172A; border-color: rgba(255,255,255,0.15);" required>
               <option value="" selected disabled>Select Incident Type ▼</option>
-              <option value="ACCIDENT">🚗 Accident / Vehicle Collision</option>
-              <option value="HARASSMENT">🚨 Harassment / Threat / Verbal Abuse</option>
-              <option value="RECKLESS_DRIVING">⚠️ Unsafe Driving / Overspeeding</option>
-              <option value="MISCONDUCT">🛑 Driver Misconduct / Inappropriate Behavior</option>
-              <option value="OVERCHARGING">💵 Overcharging / Meter Tampering</option>
-              <option value="ROUTE_DEVIATION">🗺️ Unauthorized Route Deviation</option>
-              <option value="OTHER">📋 Other Emergency Safety Incident</option>
+              <option value="ACCIDENT">Accident / Vehicle Collision</option>
+              <option value="HARASSMENT">Harassment / Threat / Verbal Abuse</option>
+              <option value="PHYSICAL_ASSAULT">Physical Assault / Violence / Safety Threat</option>
+              <option value="RECKLESS_DRIVING">Unsafe Driving / Overspeeding / Reckless Maneuvers</option>
+              <option value="INTOXICATED_DRIVER">Driver Suspected Impaired / Alcohol or Drug Use</option>
+              <option value="MISCONDUCT">Driver Misconduct / Inappropriate Behavior</option>
+              <option value="WRONG_VEHICLE">Driver or Vehicle Did Not Match Profile</option>
+              <option value="ROUTE_DEVIATION">Unauthorized Route Deviation / Unknown Direction</option>
+              <option value="REFUSED_DROP">Refusal to Complete Trip / Forced Drop-Off</option>
+              <option value="UNAUTHORIZED_PERSON">Unauthorized Passenger or Co-Rider in Vehicle</option>
+              <option value="OVERCHARGING">Overcharging / Fare Extortion / Meter Tampering</option>
+              <option value="VEHICLE_BREAKDOWN">Vehicle Breakdown / Mechanical Failure / Flat Tire</option>
+              <option value="THEFT_LOST_ITEM">Theft / Withheld Luggage / Property Dispute</option>
+              <option value="MEDICAL_EMERGENCY">Medical Emergency During Journey</option>
+              <option value="OTHER">Other Emergency Safety Incident</option>
             </select>
           </div>
 
           <!-- Describe the incident... -->
           <div class="mb-3">
             <label class="form-label fw-bold text-light">Description :</label>
-            <textarea name="description" class="form-control text-white" style="background-color: #0F172A;" rows="3" minlength="10" placeholder="Describe what happened in detail (min 10 characters)..." required></textarea>
+            <textarea name="description" id="incidentDescription" class="form-control text-white" style="background-color: #0F172A; border-color: rgba(255,255,255,0.15);" rows="3" minlength="10" placeholder="Describe what happened in detail (min 10 characters)..." required>{{ form.description.value|default:'' }}</textarea>
           </div>
 
-          <!-- Date & Time -->
+          <!-- Date & Time of Incident as Dropdown -->
           <div class="mb-4">
-            <label class="form-label fw-bold text-light">Date & Time :</label>
-            <input type="datetime-local" name="incident_date_time" class="form-control py-2 text-white" style="background-color: #0F172A;" required>
+            <div class="mb-2">
+              <label class="form-label fw-bold text-light mb-0" for="incidentTimeOption">
+                Date & Time of Incident :
+              </label>
+            </div>
+
+            <!-- Date & Time Dropdown with 'Don't Know' -->
+            <select id="incidentTimeOption" name="incident_time_option" class="form-select py-2 text-white" style="background-color: #0F172A; border-color: rgba(255, 152, 0, 0.4); font-size: 1rem;" required>
+              <option value="now" selected>Just Now / Occurred Recently</option>
+              <option value="dont_know">I Don't Know / Not Sure (Record as Approximate)</option>
+              <option value="1h">Approximately 1 Hour Ago</option>
+              <option value="today">Earlier Today</option>
+              <option value="yesterday">Yesterday</option>
+              <option value="this_week">Earlier This Week</option>
+              <option value="custom">Specific Date & Time (Choose from calendar...)</option>
+            </select>
+
+            <!-- Friendly Notice when "I Don't Know" is selected -->
+            <div id="dontKnowBanner" class="p-3 rounded-3 mt-2 d-none" style="background-color: rgba(255, 152, 0, 0.12); border: 1px dashed #FF9800;">
+              <div>
+                <div class="text-warning fw-bold small mb-1">Don't know the exact date and time? No problem!</div>
+                <div class="text-secondary small">SafeRide will automatically log this report with the current timestamp and flag it as an approximate timeframe. Our safety investigation team will correlate this with your vehicle and GPS logs.</div>
+              </div>
+            </div>
+
+            <!-- Specific Date & Time Input (Shown when "Specific Date & Time" is selected) -->
+            <div id="customDateTimeWrapper" class="mt-2 d-none">
+              <label class="form-label text-secondary small mb-1">Pick Exact Date & Time :</label>
+              <input type="datetime-local" id="incidentDateTime" name="incident_date_time" class="form-control py-2 text-white" style="background-color: #0F172A; border-color: rgba(255,255,255,0.15);" value="{{ form.incident_date_time.value|default:'' }}">
+            </div>
+
+            <!-- Hidden input for approximate flag -->
+            <input type="hidden" id="approxTimeCheck" name="is_approximate" value="false">
           </div>
 
           <!-- Action Buttons -->
@@ -60,7 +131,7 @@
             <button type="submit" class="btn btn-danger btn-lg fw-bold flex-grow-1 rounded-pill shadow-sm text-uppercase">
               SUBMIT
             </button>
-            <a href="{% url 'passenger_dashboard' %}" class="btn btn-outline-light btn-lg rounded-pill fw-semibold">
+            <a href="{% url 'passenger_dashboard' %}" class="btn btn-outline-light btn-lg rounded-pill fw-semibold px-4">
               Cancel
             </a>
           </div>
@@ -71,6 +142,136 @@
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const timeOption = document.getElementById('incidentTimeOption');
+  const dtInput = document.getElementById('incidentDateTime');
+  const customWrapper = document.getElementById('customDateTimeWrapper');
+  const dontKnowBanner = document.getElementById('dontKnowBanner');
+  const approxCheck = document.getElementById('approxTimeCheck');
+  const tripSelector = document.getElementById('recentTripSelector');
+  const tripNotice = document.getElementById('tripSelectedNotice');
+  const tripNoticeText = document.getElementById('tripNoticeText');
+
+  // Helper to format Date into YYYY-MM-DDTHH:MM for datetime-local
+  function formatLocalDate(d) {
+    const pad = (n) => String(n).padStart(2, '0');
+    const year = d.getFullYear();
+    const month = pad(d.getMonth() + 1);
+    const day = pad(d.getDate());
+    const hours = pad(d.getHours());
+    const minutes = pad(d.getMinutes());
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
+
+  // Set default datetime to current time
+  if (dtInput && !dtInput.value) {
+    dtInput.value = formatLocalDate(new Date());
+  }
+
+  // Handle Dropdown Selection Changes
+  if (timeOption) {
+    timeOption.addEventListener('change', function() {
+      const val = this.value;
+      const now = new Date();
+
+      if (val === 'dont_know') {
+        dontKnowBanner.classList.remove('d-none');
+        customWrapper.classList.add('d-none');
+        approxCheck.value = 'true';
+        dtInput.value = formatLocalDate(now);
+      } else if (val === 'custom') {
+        dontKnowBanner.classList.add('d-none');
+        customWrapper.classList.remove('d-none');
+        approxCheck.value = 'false';
+        if (!dtInput.value) {
+          dtInput.value = formatLocalDate(now);
+        }
+      } else if (val === 'now') {
+        dontKnowBanner.classList.add('d-none');
+        customWrapper.classList.add('d-none');
+        approxCheck.value = 'false';
+        dtInput.value = formatLocalDate(now);
+      } else if (val === '1h') {
+        dontKnowBanner.classList.add('d-none');
+        customWrapper.classList.add('d-none');
+        approxCheck.value = 'true';
+        now.setHours(now.getHours() - 1);
+        dtInput.value = formatLocalDate(now);
+      } else if (val === 'today') {
+        dontKnowBanner.classList.add('d-none');
+        customWrapper.classList.add('d-none');
+        approxCheck.value = 'true';
+        now.setHours(Math.max(9, now.getHours() - 3));
+        dtInput.value = formatLocalDate(now);
+      } else if (val === 'yesterday') {
+        dontKnowBanner.classList.add('d-none');
+        customWrapper.classList.add('d-none');
+        approxCheck.value = 'true';
+        now.setDate(now.getDate() - 1);
+        dtInput.value = formatLocalDate(now);
+      } else if (val === 'this_week') {
+        dontKnowBanner.classList.add('d-none');
+        customWrapper.classList.add('d-none');
+        approxCheck.value = 'true';
+        now.setDate(now.getDate() - 3);
+        dtInput.value = formatLocalDate(now);
+      }
+    });
+  }
+
+  // Recent Trip Selector auto-fill handler (Required, Not Optional)
+  const manualWrapper = document.getElementById('manualTripIdWrapper');
+  const manualInput = document.getElementById('manualTripIdInput');
+
+  if (tripSelector) {
+    tripSelector.addEventListener('change', function() {
+      const selectedOption = this.options[this.selectedIndex];
+      if (this.value === '__MANUAL__') {
+        if (manualWrapper) manualWrapper.classList.remove('d-none');
+        if (manualInput) {
+          manualInput.setAttribute('required', 'required');
+          manualInput.setAttribute('name', 'trip_id');
+          manualInput.focus();
+        }
+        this.removeAttribute('name');
+        if (tripNotice) tripNotice.classList.add('d-none');
+      } else if (selectedOption && selectedOption.value) {
+        if (manualWrapper) manualWrapper.classList.add('d-none');
+        if (manualInput) {
+          manualInput.removeAttribute('required');
+          manualInput.removeAttribute('name');
+        }
+        this.setAttribute('name', 'trip_id');
+
+        const tripCode = selectedOption.getAttribute('data-trip-code');
+        const tripTime = selectedOption.getAttribute('data-time');
+        const driverName = selectedOption.getAttribute('data-driver');
+
+        if (dtInput && tripTime) {
+          dtInput.value = tripTime;
+          approxCheck.value = 'false';
+          // Switch dropdown to custom and show exact trip timestamp
+          if (timeOption) {
+            timeOption.value = 'custom';
+            if (customWrapper) customWrapper.classList.remove('d-none');
+            if (dontKnowBanner) dontKnowBanner.classList.add('d-none');
+          }
+        }
+
+        if (tripNotice && tripNoticeText) {
+          tripNotice.classList.remove('d-none');
+          tripNoticeText.textContent = `Auto-filled details for ${tripCode}${driverName ? ' (Driver: ' + driverName + ')' : ''}! Date & time set from trip log.`;
+        }
+      } else {
+        if (manualWrapper) manualWrapper.classList.add('d-none');
+        if (tripNotice) tripNotice.classList.add('d-none');
+      }
+    });
+  }
+});
+</script>
 {% endblock %}
 
 {% block floating_sos %}{% endblock %}

@@ -88,10 +88,15 @@ class Passenger(models.Model):
     password = models.CharField(max_length=255, db_column='password')
     created_at = models.DateTimeField(default=timezone.now, db_column='created_at')
 
-    # Single Emergency Contact for Safety Portal (Table 1 Specification)
+    # Primary Emergency Contact (Contact 1)
     emergency_contact_name = models.CharField(max_length=50, blank=True, null=True, db_column='emergency_contact_name')
     emergency_contact_phone = models.CharField(max_length=20, blank=True, null=True, db_column='emergency_contact_phone', validators=[PHONE_VALIDATOR])
     emergency_contact_relation = models.CharField(max_length=50, blank=True, null=True, default="Family", db_column='emergency_contact_relation')
+
+    # Secondary Emergency Contact (Contact 2 - Extra)
+    emergency_contact_2_name = models.CharField(max_length=50, blank=True, null=True, db_column='emergency_contact_2_name')
+    emergency_contact_2_phone = models.CharField(max_length=20, blank=True, null=True, db_column='emergency_contact_2_phone', validators=[PHONE_VALIDATOR])
+    emergency_contact_2_relation = models.CharField(max_length=50, blank=True, null=True, default="Friend", db_column='emergency_contact_2_relation')
 
     address = models.TextField(blank=True, null=True)
     profile_photo = models.ImageField(upload_to='avatars/', blank=True, null=True)
@@ -476,9 +481,14 @@ class Trip(models.Model):
     def destination_point(self):
         val = self.destination_address or self.end_location or self.drop_location_name
         if val and str(val).strip() and str(val).strip().lower() not in [
-            'destination point', 'destination drop point', 'destination', 'none', 'null'
+            'destination point', 'destination drop point', 'destination', 'none', 'null', '', 'open / metered', 'open / metered destination'
         ]:
             return str(val).strip()
+        # Fallback to recorded drop coordinates if available
+        lat = self.destination_latitude or self.drop_latitude or (self.current_latitude if self.status in ['Completed', 'COMPLETED'] else None)
+        lng = self.destination_longitude or self.drop_longitude or (self.current_longitude if self.status in ['Completed', 'COMPLETED'] else None)
+        if lat and lng:
+            return f"Drop Point ({round(float(lat), 4)}, {round(float(lng), 4)})"
         return None
 
     @staticmethod
@@ -512,10 +522,21 @@ class Trip(models.Model):
             BASE_FARE = Decimal('30.00')
             PER_KM_RATE = Decimal('15.00')
 
-        distance = self.haversine_distance(
+        # Calculate distance based on destination coordinates or live GPS coordinates
+        target_lat = self.destination_latitude or self.drop_latitude
+        target_lng = self.destination_longitude or self.drop_longitude
+
+        dest_dist = self.haversine_distance(
+            self.boarding_latitude, self.boarding_longitude,
+            target_lat, target_lng
+        ) if (target_lat and target_lng) else 0.0
+
+        live_dist = self.haversine_distance(
             self.boarding_latitude, self.boarding_longitude,
             self.current_latitude, self.current_longitude
         )
+
+        distance = max(dest_dist, live_dist)
         self.distance_km = Decimal(str(distance)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
         if self.distance_km <= BASE_DISTANCE:
@@ -572,9 +593,50 @@ class Trip(models.Model):
         self.fare_qr_code.save(filename, ContentFile(buffer.getvalue()), save=False)
         return self.fare_qr_code
 
-    def complete_trip(self):
+    def complete_trip(self, end_lat=None, end_lng=None, end_address=None):
         self.status = 'Completed'
         self.end_time = timezone.now()
+
+        # Update final drop coordinates if provided
+        if end_lat is not None and end_lng is not None:
+            try:
+                from decimal import Decimal
+                d_lat = Decimal(str(round(float(end_lat), 6)))
+                d_lng = Decimal(str(round(float(end_lng), 6)))
+                self.current_latitude = d_lat
+                self.current_longitude = d_lng
+                self.live_latitude = d_lat
+                self.live_longitude = d_lng
+                if not self.destination_latitude:
+                    self.destination_latitude = d_lat
+                if not self.destination_longitude:
+                    self.destination_longitude = d_lng
+                if not self.drop_latitude:
+                    self.drop_latitude = d_lat
+                if not self.drop_longitude:
+                    self.drop_longitude = d_lng
+            except (ValueError, TypeError):
+                pass
+
+        # Update destination address if captured at completion
+        if end_address and str(end_address).strip():
+            clean_addr = str(end_address).strip()
+            if not self.destination_address or str(self.destination_address).strip().lower() in [
+                'open / metered', 'open / metered destination', 'destination drop point', 'none', 'null', ''
+            ]:
+                self.destination_address = clean_addr
+            self.end_location = self.destination_address
+            self.drop_location_name = self.destination_address
+        elif not self.destination_address or str(self.destination_address).strip().lower() in [
+            'open / metered', 'open / metered destination', 'none', 'null', ''
+        ]:
+            lat = self.destination_latitude or self.drop_latitude or self.current_latitude
+            lng = self.destination_longitude or self.drop_longitude or self.current_longitude
+            if lat and lng:
+                drop_label = f"Drop Point ({round(float(lat), 4)}, {round(float(lng), 4)})"
+                self.destination_address = drop_label
+                self.end_location = drop_label
+                self.drop_location_name = drop_label
         self.calculate_distance_and_fare()
         try:
             self.generate_fare_qr_code()

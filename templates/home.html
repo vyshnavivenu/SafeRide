@@ -13,7 +13,7 @@
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
       <div class="d-flex align-items-center gap-3">
         <span class="p-3 rounded-circle bg-dark text-white">
-          <i class="fa-solid fa-shield-halved fs-3 text-cyan" style="color: #06B6D4;"></i>
+          <i class="fa-solid fa-shield-halved fs-3 text-warning"></i>
         </span>
         <div>
           <div class="d-flex align-items-center gap-2 mb-1">
@@ -21,7 +21,7 @@
             <span class="badge bg-success px-3 py-1 rounded-pill"><i class="fa-solid fa-circle-check me-1"></i> ACTIVE SYSTEM</span>
           </div>
           <h3 class="fw-bold mb-0 text-white">SafeRide Administrative Dashboard</h3>
-          <span class="small text-muted">Welcome back, <strong class="text-cyan" style="color: #06B6D4;">{{ user.get_full_name|default:user.username }}</strong>. Real-time oversight of driver verification, passenger security, and emergency telemetry.</span>
+          <span class="small text-muted">Welcome back, <strong class="text-warning">{{ user.get_full_name|default:user.username }}</strong>. Real-time oversight of driver verification, passenger security, and emergency telemetry.</span>
         </div>
       </div>
 
@@ -105,7 +105,7 @@
   <!-- Central Admin Feature Quick-Access Cards Grid with Live Summary Data -->
   <div class="card rounded-4 border-0 shadow-sm p-4 bg-white mb-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <h5 class="fw-bold text-white mb-0"><i class="fa-solid fa-layer-group me-2 text-cyan" style="color: #06B6D4;"></i> Administrative Operations & Quick Controls</h5>
+      <h5 class="fw-bold text-white mb-0"><i class="fa-solid fa-layer-group me-2 text-warning"></i> Administrative Operations & Quick Controls</h5>
       <span class="small text-muted">SafeRide Governance Workspace</span>
     </div>
 
@@ -138,7 +138,7 @@
       <div class="col-md-6 col-lg-3">
         <a href="{% url 'admin_passenger_list' %}" class="card p-3 rounded-4 text-decoration-none shadow-sm h-100 border-0 hover-lift" style="background: #0F172A; border: 1px solid #334155 !important;">
           <div class="d-flex align-items-center justify-content-between mb-2">
-            <span class="p-2 rounded-circle bg-info bg-opacity-10 text-cyan fs-5" style="color: #06B6D4;"><i class="fa-solid fa-users"></i></span>
+            <span class="p-2 rounded-circle bg-info bg-opacity-10 text-info fs-5"><i class="fa-solid fa-users"></i></span>
             <span class="badge bg-info text-dark">{{ total_passengers_count|default:TOTAL_PASSENGERS_COUNT|default:"0" }} Accounts</span>
           </div>
           <h6 class="fw-bold text-white mb-1">Manage Passengers</h6>
@@ -209,12 +209,12 @@
   <div class="container py-4">
     <div class="row align-items-center g-5">
       <div class="col-lg-7">
-        <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-white bg-opacity-10 border border-white border-opacity-10 text-cyan mb-3">
-          <i class="fa-solid fa-shield-halved text-cyan" style="color: #06B6D4;"></i>
+        <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-white bg-opacity-10 border border-white border-opacity-10 text-warning mb-3">
+          <i class="fa-solid fa-shield-halved text-warning"></i>
           <span class="small fw-semibold text-white">Driver Verification & Passenger Safety System</span>
         </div>
         <h1 class="display-4 fw-extrabold text-white mb-3">
-          Secure Transit. <br><span style="color: #06B6D4;">Verified Drivers. Safe Journeys.</span>
+          Secure Transit. <br><span style="color: #FF9800;">Verified Drivers. Safe Journeys.</span>
         </h1>
         <p class="lead text-light text-opacity-75 mb-4">
           SafeRide provides a centralized safety ecosystem for informal transport — ensuring rigorous administrative driver KYC verification, live GPS journey telemetry, 1-touch SOS emergency dispatch, and transparent rating feedback.
@@ -228,7 +228,7 @@
               <span class="p-2 rounded-circle bg-primary text-white fs-5"><i class="fa-solid fa-user"></i></span>
               <div>
                 <h5 class="fw-bold mb-0 text-white">Passenger Portal</h5>
-                <span class="small text-muted">Logged in as <strong class="text-cyan" style="color: #06B6D4;">{{ user.get_full_name|default:user.username }}</strong></span>
+                <span class="small text-muted">Logged in as <strong class="text-warning">{{ user.get_full_name|default:user.username }}</strong></span>
               </div>
             </div>
             <a href="{% url 'passenger_dashboard' %}" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold">
@@ -249,7 +249,7 @@
               <span class="p-2 rounded-circle bg-success text-white fs-5"><i class="fa-solid fa-id-card"></i></span>
               <div>
                 <h5 class="fw-bold mb-0 text-white">Driver Portal</h5>
-                <span class="small text-muted">Logged in as <strong class="text-cyan" style="color: #06B6D4;">{{ user.get_full_name|default:user.username }}</strong></span>
+                <span class="small text-muted">Logged in as <strong class="text-success">{{ user.get_full_name|default:user.username }}</strong></span>
               </div>
             </div>
             <a href="{% url 'driver_dashboard' %}" class="btn btn-success btn-sm rounded-pill px-3 fw-bold">
@@ -265,21 +265,21 @@
         <!-- Access Portals Grid (Logged Out / Guest) -->
         <div class="row g-3">
           <div class="col-sm-6">
-            <a href="{% url 'passenger_login' %}" class="card p-3 rounded-4 bg-white text-dark text-decoration-none shadow-sm h-100 border-0 hover-lift">
+            <a href="{% url 'verify_driver_search' %}" class="card p-3 rounded-4 text-decoration-none shadow-sm h-100 border-0 hover-lift" style="background: #111827; border: 1px solid #334155 !important;">
               <div class="d-flex align-items-center gap-2 mb-2">
-                <span class="p-2 rounded-circle bg-primary bg-opacity-10 text-primary"><i class="fa-solid fa-user"></i></span>
-                <strong class="small text-dark">Passenger Portal</strong>
+                <span class="p-2 rounded-circle bg-warning bg-opacity-15 text-warning"><i class="fa-solid fa-qrcode fs-5"></i></span>
+                <strong class="text-white">Verify Driver Badge</strong>
               </div>
-              <span class="small text-muted">Login & Start Safe Trips &rarr;</span>
+              <span class="small text-muted">Search vehicle plate or scan QR &rarr;</span>
             </a>
           </div>
           <div class="col-sm-6">
-            <a href="{% url 'driver_login' %}" class="card p-3 rounded-4 bg-white text-dark text-decoration-none shadow-sm h-100 border-0 hover-lift">
+            <a href="{% url 'passenger_register' %}" class="card p-3 rounded-4 text-decoration-none shadow-sm h-100 border-0 hover-lift" style="background: #111827; border: 1px solid #334155 !important;">
               <div class="d-flex align-items-center gap-2 mb-2">
-                <span class="p-2 rounded-circle bg-success bg-opacity-10 text-success"><i class="fa-solid fa-id-card"></i></span>
-                <strong class="small text-dark">Driver Portal</strong>
+                <span class="p-2 rounded-circle bg-primary bg-opacity-15 text-primary"><i class="fa-solid fa-user-shield fs-5"></i></span>
+                <strong class="text-white">Passenger Safety</strong>
               </div>
-              <span class="small text-muted">Portal & View QR Badge &rarr;</span>
+              <span class="small text-muted">Free account with SOS protection &rarr;</span>
             </a>
           </div>
         </div>
@@ -288,46 +288,41 @@
       </div>
 
       <div class="col-lg-5">
-        <!-- Interactive SafeRide System Highlights Card -->
-        <div class="card rounded-4 p-4 shadow-lg border text-white" style="background-color: #131C2E !important;">
+        <!-- 🛡️ Interactive Quick Driver Verification Card (Replaces Redundant Static List) -->
+        <div class="card rounded-4 p-4 shadow-lg border text-white" style="background-color: #131C2E !important; border: 1px solid #334155 !important;">
           <div class="d-flex align-items-center justify-content-between mb-3 border-bottom border-secondary pb-3">
             <div class="d-flex align-items-center gap-2">
-              <span class="p-2 rounded-circle bg-primary text-white"><i class="fa-solid fa-server"></i></span>
-              <span class="fw-bold text-white">CENTRAL SAFETY NETWORK</span>
+              <span class="p-2 rounded-circle text-white" style="background-color: #FF9800;"><i class="fa-solid fa-shield-halved"></i></span>
+              <span class="fw-bold text-white">VERIFY DRIVER NOW</span>
             </div>
-            <span class="badge bg-success px-3 py-1 rounded-pill"><i class="fa-solid fa-circle-check me-1"></i> ACTIVE</span>
+            <span class="badge bg-success px-3 py-1 rounded-pill"><i class="fa-solid fa-circle-check me-1"></i> INSTANT KYC</span>
           </div>
 
-          <div class="d-flex flex-column gap-3">
-            <div class="p-3 rounded-3" style="background: #0F172A; border: 1px solid #334155;">
-              <div class="d-flex align-items-center gap-3">
-                <span class="p-2 rounded-circle bg-primary text-white fs-5"><i class="fa-solid fa-user-check"></i></span>
-                <div>
-                  <h6 class="fw-bold mb-0 text-white">Admin Driver Verification</h6>
-                  <span class="small text-cyan" style="color: #06B6D4;">KYC, Driving Licence, RC & Police Clearance</span>
-                </div>
-              </div>
-            </div>
+          <p class="small text-muted mb-3">
+            Verify official police-approved KYC credentials, vehicle registration, and driver safety score before boarding.
+          </p>
 
-            <div class="p-3 rounded-3" style="background: #0F172A; border: 1px solid #334155;">
-              <div class="d-flex align-items-center gap-3">
-                <span class="p-2 rounded-circle bg-warning text-dark fs-5"><i class="fa-solid fa-qrcode"></i></span>
-                <div>
-                  <h6 class="fw-bold mb-0 text-white">Digital QR Badge Authentication</h6>
-                  <span class="small text-warning">Verified vehicle identity & reputation</span>
-                </div>
-              </div>
+          <!-- Quick Vehicle Search Form -->
+          <form action="{% url 'verify_driver_search' %}" method="GET" class="mb-3">
+            <label class="form-label fw-bold text-light small">
+              <i class="fa-solid fa-car-side text-warning me-1"></i> Vehicle Registration Number:
+            </label>
+            <div class="input-group mb-3 shadow-sm">
+              <span class="input-group-text border-end-0 text-white rounded-start-3" style="background-color: #0F172A; border-color: #334155;">
+                <i class="fa-solid fa-id-card text-warning"></i>
+              </span>
+              <input type="text" name="query" class="form-control text-uppercase fw-bold text-white rounded-end-3" style="background-color: #0F172A; border-color: #334155;" placeholder="e.g. KL 05 AT 4455" required>
             </div>
+            <button type="submit" class="btn btn-warning w-100 fw-bold py-2 rounded-3 text-white shadow-sm d-flex align-items-center justify-content-center gap-2" style="background-color: #FF9800; border-color: #FF9800;">
+              <i class="fa-solid fa-shield-halved"></i> Check Vehicle & Driver Safety
+            </button>
+          </form>
 
-            <div class="p-3 rounded-3" style="background: #0F172A; border: 1px solid #334155;">
-              <div class="d-flex align-items-center gap-3">
-                <span class="p-2 rounded-circle bg-danger text-white fs-5"><i class="fa-solid fa-tower-broadcast"></i></span>
-                <div>
-                  <h6 class="fw-bold mb-0 text-white">1-Touch SOS Emergency Dispatch</h6>
-                  <span class="small text-danger">Direct GPS broadcast to Police & Contacts</span>
-                </div>
-              </div>
-            </div>
+          <div class="p-2 rounded-3 text-center" style="background-color: #0F172A; border: 1px solid #1E293B;">
+            <small class="text-muted d-flex align-items-center justify-content-center gap-2">
+              <i class="fa-solid fa-qrcode text-warning"></i> Or scan vehicle QR badge:
+              <a href="{% url 'verify_driver_search' %}" class="fw-bold text-decoration-none" style="color: #FF9800;">Open QR Scanner &rarr;</a>
+            </small>
           </div>
         </div>
       </div>
@@ -388,7 +383,7 @@
     <div class="col-md-4">
       <div class="card h-100 p-4 rounded-4 saferide-card border-0 shadow-sm">
         <div class="stat-icon stat-icon-blue mb-3">
-          <i class="fa-solid fa-shield-check"></i>
+          <i class="fa-solid fa-user-shield"></i>
         </div>
         <h5 class="fw-bold text-white">Administrative Driver Verification</h5>
         <p class="text-muted small mb-0">System administrators inspect driving licences, vehicle RC books, and police clearance documents to approve verified drivers and generate security badges.</p>
@@ -417,22 +412,5 @@
   </div>
 </section>
 
-<!-- Quick Evaluator Access Bar (Only if not logged in) -->
-{% if not user.is_authenticated %}
-<section class="container my-5">
-  <div class="card p-4 rounded-4 bg-dark text-white border-0 shadow-sm">
-    <div class="row align-items-center g-3">
-      <div class="col-lg-6">
-        <h5 class="fw-bold mb-1 text-cyan" style="color: #06B6D4;"><i class="fa-solid fa-laptop-code me-2"></i> Project Evaluator & Quick Access</h5>
-        <p class="small text-muted mb-0">Pre-configured accounts ready for instant examination and interactive feature testing.</p>
-      </div>
-      <div class="col-lg-6 d-flex flex-wrap justify-content-lg-end gap-2">
-        <a href="{% url 'passenger_login' %}" class="btn btn-info btn-sm text-white rounded-pill fw-bold"><i class="fa-solid fa-user me-1"></i> Passenger (vyshnavi / passenger123)</a>
-        <a href="{% url 'driver_login' %}" class="btn btn-light btn-sm rounded-pill fw-bold"><i class="fa-solid fa-car me-1"></i> Driver (driver_rajesh / driver123)</a>
-      </div>
-    </div>
-  </div>
-</section>
-{% endif %}
 {% endif %}
 {% endblock %}

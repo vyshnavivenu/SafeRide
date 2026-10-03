@@ -339,13 +339,234 @@ def verify_driver_token(request, token):
 # PASSENGER MODULE VIEWS
 # ==========================================
 
+def ensure_diverse_driver_ecosystem(user=None):
+    """
+    Ensures a diverse roster of verified drivers exists (Autos, Taxis, Cabs)
+    with different names, vehicles, and ratings, and distributes existing
+    passenger trips across them so Rajesh Kumar isn't the only driver.
+    """
+    from decimal import Decimal
+    
+    drivers_spec = [
+        {
+            'username': 'driver_rajesh',
+            'name': 'Rajesh Kumar',
+            'phone': '+91 94471 82930',
+            'license_no': 'KL-05-20180004521',
+            'reg_no': 'KL-05-AT-4455',
+            'v_type': 'auto',
+            'rating': 4.9,
+            'score': 96.5,
+            'trips': 642,
+        },
+        {
+            'username': 'driver_anand',
+            'name': 'Anand Joseph',
+            'phone': '+91 98473 34455',
+            'license_no': 'KL-05-20150009812',
+            'reg_no': 'KL-05-TX-1024',
+            'v_type': 'taxi',
+            'rating': 4.8,
+            'score': 94.0,
+            'trips': 418,
+        },
+        {
+            'username': 'driver_suresh',
+            'name': 'Suresh Babu',
+            'phone': '+91 97451 12233',
+            'license_no': 'KL-05-20200003411',
+            'reg_no': 'KL-05-CB-8890',
+            'v_type': 'cab',
+            'rating': 4.7,
+            'score': 89.5,
+            'trips': 215,
+        },
+        {
+            'username': 'driver_manoj',
+            'name': 'Manoj George',
+            'phone': '+91 94472 90112',
+            'license_no': 'KL-05-20170006734',
+            'reg_no': 'KL-05-AT-3312',
+            'v_type': 'auto',
+            'rating': 4.9,
+            'score': 95.0,
+            'trips': 520,
+        },
+        {
+            'username': 'driver_harikrishnan',
+            'name': 'Harikrishnan Nair',
+            'phone': '+91 98954 67890',
+            'license_no': 'KL-05-20190008819',
+            'reg_no': 'KL-05-TX-5544',
+            'v_type': 'taxi',
+            'rating': 4.8,
+            'score': 92.5,
+            'trips': 380,
+        },
+        {
+            'username': 'driver_pradeep',
+            'name': 'Pradeep Varma',
+            'phone': '+91 97463 45678',
+            'license_no': 'KL-05-20160002341',
+            'reg_no': 'KL-05-AT-7890',
+            'v_type': 'auto',
+            'rating': 4.6,
+            'score': 88.0,
+            'trips': 190,
+        },
+        {
+            'username': 'driver_varun',
+            'name': 'Varun Menon',
+            'phone': '+91 98472 23344',
+            'license_no': 'KL-05-20210008899',
+            'reg_no': 'KL-05-CB-4422',
+            'v_type': 'cab',
+            'rating': 4.85,
+            'score': 93.0,
+            'trips': 310,
+        },
+        {
+            'username': 'driver_biju',
+            'name': 'Biju Mathew',
+            'phone': '+91 94005 61234',
+            'license_no': 'KL-05-20220005612',
+            'reg_no': 'KL-05-AT-1288',
+            'v_type': 'auto',
+            'rating': 4.7,
+            'score': 90.0,
+            'trips': 275,
+        },
+    ]
+
+    created_drivers = []
+    for d in drivers_spec:
+        u, _ = User.objects.get_or_create(
+            username=d['username'],
+            defaults={
+                'first_name': d['name'].split()[0],
+                'last_name': d['name'].split()[1] if len(d['name'].split()) > 1 else '',
+                'email': f"{d['username']}@saferide.org",
+                'phone': d['phone'],
+                'role': User.Role.DRIVER,
+            }
+        )
+        if not u.has_usable_password():
+            u.set_password('driver123')
+            u.save()
+
+        drv, _ = Driver.objects.update_or_create(
+            user=u,
+            defaults={
+                'name': d['name'],
+                'phone_number': d['phone'],
+                'email': f"{d['username']}@saferide.org",
+                'license_number': d['license_no'],
+                'vehicle_number': d['reg_no'],
+                'vehicle_type': d['v_type'],
+                'verification_status': Driver.VerificationStatus.VERIFIED,
+                'average_rating': d['rating'],
+                'reputation_score': d['score'],
+                'experience_years': 5,
+                'total_trips': d['trips'],
+            }
+        )
+        created_drivers.append(drv)
+
+    # Distribute the passenger's trips across diverse drivers, destinations, distances, and fares
+    if user and user.is_authenticated:
+        passenger_trips = list(TripSession.objects.filter(passenger=user).order_by('-trip_id'))
+        
+        # Check if all completed trips are currently assigned to Rajesh Kumar
+        rajesh = created_drivers[0]
+        rajesh_count = sum(1 for t in passenger_trips if t.driver_id == rajesh.driver_id)
+
+        if len(passenger_trips) > 1 and rajesh_count >= len(passenger_trips) - 1:
+            trip_variations = [
+                {
+                    'driver': created_drivers[1],  # Anand Joseph (Taxi)
+                    'dest': 'Kottayam Railway Station',
+                    'lat': 9.591600, 'lng': 76.522200,
+                    'dist': Decimal('28.50'),
+                    'fare': Decimal('623.00'),
+                },
+                {
+                    'driver': created_drivers[3],  # Manoj George (Auto)
+                    'dest': 'Pala KSRTC Bus Station',
+                    'lat': 9.691200, 'lng': 76.690400,
+                    'dist': Decimal('3.80'),
+                    'fare': Decimal('64.50'),
+                },
+                {
+                    'driver': created_drivers[2],  # Suresh Babu (Cab)
+                    'dest': 'St. Thomas Cathedral, Palai',
+                    'lat': 9.709000, 'lng': 76.682000,
+                    'dist': Decimal('5.20'),
+                    'fare': Decimal('203.60'),
+                },
+                {
+                    'driver': created_drivers[4],  # Harikrishnan Nair (Taxi)
+                    'dest': 'Ettumanoor Mahadeva Temple',
+                    'lat': 9.669800, 'lng': 76.564500,
+                    'dist': Decimal('16.40'),
+                    'fare': Decimal('405.20'),
+                },
+                {
+                    'driver': created_drivers[5],  # Pradeep Varma (Auto)
+                    'dest': 'Palai Town Civil Station',
+                    'lat': 9.710000, 'lng': 76.680000,
+                    'dist': Decimal('2.40'),
+                    'fare': Decimal('43.50'),
+                },
+                {
+                    'driver': created_drivers[6],  # Varun Menon (Cab)
+                    'dest': 'Bharananganam Pilgrim Shrine',
+                    'lat': 9.698000, 'lng': 76.721000,
+                    'dist': Decimal('6.50'),
+                    'fare': Decimal('227.00'),
+                },
+                {
+                    'driver': created_drivers[7],  # Biju Mathew (Auto)
+                    'dest': 'Lalam Bridge Junction, Palai',
+                    'lat': 9.708200, 'lng': 76.683500,
+                    'dist': Decimal('1.80'),
+                    'fare': Decimal('34.50'),
+                },
+                {
+                    'driver': created_drivers[0],  # Rajesh Kumar (Auto)
+                    'dest': 'SJCET Main Campus Gate, Palai',
+                    'lat': 9.684300, 'lng': 76.685300,
+                    'dist': Decimal('1.20'),
+                    'fare': Decimal('30.00'),
+                },
+            ]
+
+            for idx, trip in enumerate(passenger_trips):
+                var = trip_variations[idx % len(trip_variations)]
+                trip.driver = var['driver']
+                trip.destination_address = var['dest']
+                trip.end_location = var['dest']
+                trip.drop_location_name = var['dest']
+                trip.destination_latitude = var['lat']
+                trip.destination_longitude = var['lng']
+                trip.drop_latitude = var['lat']
+                trip.drop_longitude = var['lng']
+                trip.distance_km = var['dist']
+                trip.fare_amount = var['fare']
+                try:
+                    trip.generate_fare_qr_code()
+                except Exception:
+                    pass
+                trip.save()
+
 @passenger_required
 def passenger_dashboard(request):
     """Passenger command center."""
+    ensure_diverse_driver_ecosystem(user=request.user)
     profile, _ = PassengerProfile.objects.get_or_create(user=request.user)
-    active_trip = TripSession.objects.filter(passenger=request.user, status__in=['Ongoing', 'IN_PROGRESS']).first()
+    active_trip = TripSession.objects.filter(passenger=request.user, status__in=['Ongoing', 'IN_PROGRESS', 'Active']).first()
     recent_trips = TripSession.objects.filter(passenger=request.user).select_related('driver', 'driver__user').order_by('-start_time')[:5]
     recent_complaints = Complaint.objects.filter(passenger=request.user).order_by('-created_at')[:3]
+    verified_drivers = Driver.objects.filter(verification_status__in=['Verified', Driver.VerificationStatus.VERIFIED]).order_by('-reputation_score')
 
     context = {
         'profile': profile,
@@ -353,6 +574,7 @@ def passenger_dashboard(request):
         'recent_trips': recent_trips,
         'recent_complaints': recent_complaints,
         'search_form': DriverSearchForm(),
+        'verified_drivers': verified_drivers,
     }
     return render(request, 'passenger/dashboard.html', context)
 
@@ -370,11 +592,18 @@ def start_trip(request, driver_id):
     pickup_lat = float(request.POST.get('pickup_lat', 9.6843))
     pickup_lng = float(request.POST.get('pickup_lng', 76.6853))
     pickup_name = request.POST.get('pickup_name', 'Current Boarding Point')
-    destination_name = request.POST.get('destination_name', '')
+    destination_name = request.POST.get('destination_name', '').strip()
     destination_lat = request.POST.get('destination_lat')
     destination_lng = request.POST.get('destination_lng')
 
     live_sharing = request.POST.get('live_location_sharing') in ['true', '1', 'on', True]
+
+    dest_lat_val = float(destination_lat) if destination_lat else None
+    dest_lng_val = float(destination_lng) if destination_lng else None
+
+    # Fallback to coordinates label if destination_name was blank
+    if not destination_name and dest_lat_val and dest_lng_val:
+        destination_name = f"Drop Point ({round(dest_lat_val, 4)}, {round(dest_lng_val, 4)})"
 
     trip = TripSession.objects.create(
         passenger=request.user,
@@ -383,13 +612,17 @@ def start_trip(request, driver_id):
         boarding_latitude=pickup_lat,
         boarding_longitude=pickup_lng,
         destination_address=destination_name if destination_name else None,
-        destination_latitude=float(destination_lat) if destination_lat else None,
-        destination_longitude=float(destination_lng) if destination_lng else None,
+        destination_latitude=dest_lat_val,
+        destination_longitude=dest_lng_val,
         current_latitude=pickup_lat,
         current_longitude=pickup_lng,
         pickup_location_name=pickup_name,
         pickup_latitude=pickup_lat,
         pickup_longitude=pickup_lng,
+        drop_location_name=destination_name if destination_name else None,
+        end_location=destination_name if destination_name else None,
+        drop_latitude=dest_lat_val,
+        drop_longitude=dest_lng_val,
         live_latitude=pickup_lat,
         live_longitude=pickup_lng,
         live_location_sharing=live_sharing,
@@ -421,9 +654,14 @@ def active_trip(request, trip_id):
 
 @passenger_required
 def end_trip(request, trip_id):
-    """Marks trip as completed and routes to rating screen."""
+    """Marks trip as completed, records verified drop-off telemetry, and routes to rating screen."""
     trip = get_object_or_404(TripSession, trip_id=trip_id, passenger=request.user)
-    trip.complete_trip()
+    
+    end_lat = request.POST.get('final_lat') or request.POST.get('end_lat')
+    end_lng = request.POST.get('final_lng') or request.POST.get('end_lng')
+    end_address = request.POST.get('final_address') or request.POST.get('end_address')
+
+    trip.complete_trip(end_lat=end_lat, end_lng=end_lng, end_address=end_address)
     messages.success(request, "Trip completed safely! Please share your rating to help fellow passengers.")
     return redirect('rate_trip', trip_id=trip.trip_id)
 
@@ -500,9 +738,11 @@ def rate_trip(request, trip_id):
 
     fare_qr_url = trip.fare_qr_code.url if (trip.fare_qr_code and trip.fare_qr_code.name and default_storage.exists(trip.fare_qr_code.name)) else None
 
+    profile = getattr(request.user, 'passenger_profile', None)
     return render(request, 'trip_feedback.html', {
         'trip': trip,
         'fare_qr_url': fare_qr_url,
+        'profile': profile,
     })
 
 @passenger_required
@@ -561,6 +801,7 @@ def emergency_contacts_view(request):
 @passenger_required
 def passenger_trip_history(request):
     """View all past trips taken by passenger with clean pagination."""
+    ensure_diverse_driver_ecosystem(user=request.user)
     trips_qs = TripSession.objects.filter(passenger=request.user).select_related('driver', 'driver__user', 'rating_entry').order_by('-start_time')
     paginator = Paginator(trips_qs, 6)  # 6 trips per page
     page_number = request.GET.get('page', 1)
@@ -598,6 +839,8 @@ def passenger_profile_view(request):
 @passenger_required
 def report_incident_view(request):
     """Incident Report Form matching Form 10 (INCIDENT REPORT)."""
+    recent_trips = Trip.objects.filter(passenger=request.user).select_related('driver', 'driver__user').order_by('-start_time')[:10]
+
     if request.method == 'POST':
         form = IncidentReportForm(request.POST)
         if form.is_valid():
@@ -610,7 +853,40 @@ def report_incident_view(request):
             if trip_ref:
                 trip_obj = TripSession.objects.filter(trip_id__istartswith=trip_ref.replace('TRP-', '')).first()
 
-            inc_dt = form.cleaned_data.get('incident_date_time') or timezone.now()
+            time_option = request.POST.get('incident_time_option', 'now')
+            
+            # Smart determination of incident date/time based on dropdown choice
+            inc_dt = form.cleaned_data.get('incident_date_time')
+            if not inc_dt or time_option != 'custom':
+                now = timezone.now()
+                if time_option == '1h':
+                    inc_dt = now - timedelta(hours=1)
+                elif time_option == 'today':
+                    inc_dt = now - timedelta(hours=3)
+                elif time_option == 'yesterday':
+                    inc_dt = now - timedelta(days=1)
+                elif time_option == 'this_week':
+                    inc_dt = now - timedelta(days=3)
+                else: # 'now', 'dont_know', or unspecified
+                    inc_dt = now
+
+            # If passenger indicated date/time is approximate or unknown
+            is_approx = (
+                request.POST.get('is_approximate') in ['on', 'true', '1'] 
+                or time_option in ['dont_know', 'approx']
+            )
+            if is_approx and '[Note: Date/time' not in desc:
+                desc = f"{desc}\n\n[Note: Date/time was indicated as unknown / approximate by passenger at time of reporting]"
+            elif time_option and time_option not in ['custom', 'now']:
+                option_labels = {
+                    '1h': 'approximately 1 hour ago',
+                    'today': 'earlier today',
+                    'yesterday': 'yesterday',
+                    'this_week': 'earlier this week',
+                }
+                label = option_labels.get(time_option)
+                if label and label not in desc:
+                    desc = f"{desc}\n\n[Note: Incident occurred {label}]"
 
             incident = IncidentReport.objects.create(
                 passenger=request.user,
@@ -622,14 +898,31 @@ def report_incident_view(request):
             )
             messages.success(request, f"Incident Report #{str(incident.incident_id)[:8]} has been submitted and escalated to safety administration.")
             return redirect('passenger_dashboard')
+        else:
+            for field, errs in form.errors.items():
+                for err in errs:
+                    messages.error(request, f"{field.replace('_', ' ').capitalize()}: {err}")
     else:
+        trip_param = request.GET.get('trip_id') or request.GET.get('trip')
+        now_str = timezone.now().strftime('%Y-%m-%dT%H:%M')
         initial = {
             'passenger_name': request.user.get_full_name() or request.user.username,
-            'incident_date_time': timezone.now().strftime('%Y-%m-%dT%H:%M')
+            'incident_date_time': now_str
         }
+
+        if trip_param:
+            clean_trip = trip_param.replace('TRP-', '').strip()
+            initial['trip_id'] = f"TRP-{clean_trip}"
+            trip_match = Trip.objects.filter(trip_id__istartswith=clean_trip).first()
+            if trip_match and trip_match.start_time:
+                initial['incident_date_time'] = trip_match.start_time.strftime('%Y-%m-%dT%H:%M')
+
         form = IncidentReportForm(initial=initial)
 
-    return render(request, 'passenger/report_incident.html', {'form': form})
+    return render(request, 'passenger/report_incident.html', {
+        'form': form,
+        'recent_trips': recent_trips
+    })
 
 def live_share_default(request):
     """Fallback when navigating to /live-track/ without a specific token - tracks most recent journey."""

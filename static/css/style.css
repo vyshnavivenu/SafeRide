@@ -141,30 +141,113 @@ a:hover {
 .navbar-saferide {
   background-color: var(--color-dark-blue) !important;
   border-bottom: 2px solid var(--color-dark-border-light);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+  padding-top: 0.35rem !important;
+  padding-bottom: 0.35rem !important;
+  min-height: 56px;
+  z-index: 1040;
+}
+
+.navbar-saferide .container-fluid {
+  padding-left: clamp(12px, 1.8vw, 24px) !important;
+  padding-right: clamp(12px, 1.8vw, 24px) !important;
+}
+
+.navbar-saferide .navbar-brand {
+  margin-right: clamp(0.5rem, 1.2vw, 1.25rem) !important;
+  padding-top: 0.15rem;
+  padding-bottom: 0.15rem;
+  flex-shrink: 0;
 }
 
 .navbar-brand .brand-font {
+  font-size: clamp(1.15rem, 1.35vw, 1.4rem) !important;
   color: var(--color-white) !important;
 }
 
 .brand-badge {
   background-color: var(--color-amber);
   color: var(--color-dark-blue);
-  padding: 4px 10px;
-  border-radius: 8px;
+  padding: 3px 8px;
+  border-radius: 6px;
   font-weight: 800;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+}
+
+.navbar-saferide .navbar-nav {
+  display: flex;
+  align-items: center;
+  gap: clamp(2px, 0.4vw, 8px) !important;
+  flex-wrap: nowrap;
 }
 
 .nav-link {
   color: #F8FAFC !important;
-  font-weight: 600;
+  font-weight: 500;
+  font-size: clamp(0.82rem, 0.88vw, 0.92rem) !important;
+  padding: 0.35rem clamp(0.35rem, 0.55vw, 0.75rem) !important;
   white-space: nowrap !important;
-  transition: color 0.2s ease;
+  border-radius: 8px;
+  transition: all 0.18s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .nav-link:hover, .nav-link.active {
   color: var(--color-amber) !important;
+  background-color: rgba(255, 152, 0, 0.12) !important;
+}
+
+.navbar-user-section {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.35rem, 0.7vw, 0.85rem) !important;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.navbar-user-badge {
+  font-size: clamp(0.78rem, 0.82vw, 0.85rem);
+}
+
+/* ==========================================================================
+   DROPDOWN MENUS (DARK BLUE & AMBER THEME)
+   ========================================================================== */
+.dropdown-saferide,
+.dropdown-menu-dark,
+.dropdown-menu {
+  background-color: var(--color-dark-card) !important;
+  border: 1px solid var(--color-dark-border-light) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6) !important;
+  padding: 0.35rem 0.25rem !important;
+  min-width: 190px !important;
+}
+
+.dropdown-saferide .dropdown-item,
+.dropdown-item {
+  color: #FFFFFF !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  padding: 0.5rem 0.85rem !important;
+  transition: all 0.15s ease !important;
+  text-decoration: none !important;
+}
+
+.dropdown-saferide .dropdown-item:hover,
+.dropdown-saferide .dropdown-item:focus,
+.dropdown-item:hover,
+.dropdown-item:focus {
+  background-color: rgba(255, 152, 0, 0.15) !important;
+  color: var(--color-amber) !important;
+  text-decoration: none !important;
+}
+
+.dropdown-saferide .dropdown-divider,
+.dropdown-divider {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  margin: 0.25rem 0.4rem !important;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -1311,11 +1394,20 @@ button,
     padding: 16px 20px;
     margin-top: 12px;
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.65);
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
   }
   
+  .navbar-saferide .navbar-nav {
+    flex-wrap: wrap !important;
+    gap: 0 !important;
+    width: 100%;
+  }
+
   .navbar-nav .nav-item {
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     padding: 2px 0;
+    width: 100%;
   }
   
   .navbar-nav .nav-item:last-child {
@@ -1323,10 +1415,11 @@ button,
   }
   
   .navbar-nav .nav-link {
-    padding: 10px 12px !important;
-    font-size: 0.95rem;
-    display: flex;
+    padding: 10px 14px !important;
+    font-size: 0.95rem !important;
+    display: flex !important;
     align-items: center;
+    width: 100%;
     border-radius: 8px;
     transition: background 0.2s ease;
   }
@@ -1345,6 +1438,8 @@ button,
     justify-content: space-between;
     align-items: center;
     width: 100%;
+    flex-wrap: wrap;
+    gap: 8px !important;
   }
 }
 

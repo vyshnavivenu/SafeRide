@@ -95,10 +95,12 @@ class PassengerRegisterForm(UserCreationForm):
     
     class Meta:
         model = User
-        fields = ['username', 'first_name', 'last_name', 'email', 'phone']
-        widgets = {
-            'username': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Choose a Username'}),
-        }
+        fields = ['first_name', 'last_name', 'email', 'phone']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'username' in self.fields:
+            del self.fields['username']
 
     def clean_first_name(self):
         fn = self.cleaned_data.get('first_name', '').strip()
@@ -137,18 +139,22 @@ class PassengerRegisterForm(UserCreationForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        if not cleaned_data.get('username') and cleaned_data.get('email'):
-            base_user = cleaned_data.get('email').split('@')[0]
+        email = cleaned_data.get('email', '').strip().lower()
+        if email:
+            base_user = re.sub(r'[^a-zA-Z0-9._]', '', email.split('@')[0])[:25] or 'passenger'
             candidate = base_user
             idx = 1
-            while User.objects.filter(username=candidate).exists():
+            while User.objects.filter(username__iexact=candidate).exists():
                 candidate = f"{base_user}{idx}"
                 idx += 1
             cleaned_data['username'] = candidate
+            self.instance.username = candidate
         return cleaned_data
 
     def save(self, commit=True):
         user = super().save(commit=False)
+        if not user.username:
+            user.username = self.cleaned_data.get('username')
         user.role = User.Role.PASSENGER
         if commit:
             user.save()
@@ -167,13 +173,15 @@ class EmergencyContactForm(forms.ModelForm):
         model = Passenger
         fields = [
             'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relation',
-            'address'
+            'emergency_contact_2_name', 'emergency_contact_2_phone', 'emergency_contact_2_relation',
         ]
         widgets = {
-            'emergency_contact_name': forms.TextInput(attrs={'class': 'form-control', 'pattern': NAME_REGEX, 'placeholder': 'Contact Name'}),
+            'emergency_contact_name': forms.TextInput(attrs={'class': 'form-control', 'pattern': NAME_REGEX, 'placeholder': 'Primary Contact Name'}),
             'emergency_contact_phone': forms.TextInput(attrs={'class': 'form-control', 'type': 'tel', 'placeholder': '10-digit Phone'}),
             'emergency_contact_relation': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Father, Mother, Guardian'}),
-            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Residential / Campus Address'}),
+            'emergency_contact_2_name': forms.TextInput(attrs={'class': 'form-control', 'pattern': NAME_REGEX, 'placeholder': 'Secondary Contact Name (Optional)'}),
+            'emergency_contact_2_phone': forms.TextInput(attrs={'class': 'form-control', 'type': 'tel', 'placeholder': '10-digit Phone (Optional)'}),
+            'emergency_contact_2_relation': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Friend, Sibling, Relative'}),
         }
 
     def clean_emergency_contact_name(self):
@@ -190,6 +198,22 @@ class EmergencyContactForm(forms.ModelForm):
                 digits = digits[2:]
             if len(digits) != 10:
                 raise forms.ValidationError("Phone number must contain exactly 10 digits.")
+        return val
+
+    def clean_emergency_contact_2_name(self):
+        val = self.cleaned_data.get('emergency_contact_2_name', '').strip()
+        if val and not re.match(NAME_REGEX, val):
+            raise forms.ValidationError("Secondary contact name must contain only letters and spaces.")
+        return val
+
+    def clean_emergency_contact_2_phone(self):
+        val = self.cleaned_data.get('emergency_contact_2_phone', '').strip()
+        if val:
+            digits = re.sub(r'\D', '', val)
+            if len(digits) == 12 and digits.startswith('91'):
+                digits = digits[2:]
+            if len(digits) != 10:
+                raise forms.ValidationError("Secondary phone number must contain exactly 10 digits.")
         return val
 
 
@@ -436,16 +460,28 @@ class IncidentReportForm(forms.Form):
     )
     trip_id = forms.CharField(
         max_length=100, 
-        required=False, 
+        required=True, 
         label="Trip ID",
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. TRP-88231 (Optional)'})
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. TRP-88231'})
     )
     incident_type = forms.ChoiceField(
         choices=[
             ('ACCIDENT', 'Accident / Vehicle Collision'),
-            ('HARASSMENT', 'Harassment / Safety Threat'),
+            ('HARASSMENT', 'Harassment / Threat / Verbal Abuse'),
+            ('PHYSICAL_ASSAULT', 'Physical Assault / Violence / Safety Threat'),
+            ('RECKLESS_DRIVING', 'Unsafe Driving / Overspeeding / Reckless Maneuvers'),
             ('UNSAFE_DRIVING', 'Unsafe Driving / Speeding'),
-            ('OTHER', 'Other Emergency'),
+            ('INTOXICATED_DRIVER', 'Driver Suspected Impaired / Alcohol or Drug Use'),
+            ('MISCONDUCT', 'Driver Misconduct / Inappropriate Behavior'),
+            ('WRONG_VEHICLE', 'Driver or Vehicle Did Not Match Profile'),
+            ('ROUTE_DEVIATION', 'Unauthorized Route Deviation / Unknown Direction'),
+            ('REFUSED_DROP', 'Refusal to Complete Trip / Forced Drop-Off'),
+            ('UNAUTHORIZED_PERSON', 'Unauthorized Passenger or Co-Rider in Vehicle'),
+            ('OVERCHARGING', 'Overcharging / Fare Extortion / Meter Tampering'),
+            ('VEHICLE_BREAKDOWN', 'Vehicle Breakdown / Mechanical Failure / Flat Tire'),
+            ('THEFT_LOST_ITEM', 'Theft / Withheld Luggage / Property Dispute'),
+            ('MEDICAL_EMERGENCY', 'Medical Emergency During Journey'),
+            ('OTHER', 'Other Emergency Safety Incident'),
         ],
         label="Incident Type",
         widget=forms.Select(attrs={'class': 'form-select'})

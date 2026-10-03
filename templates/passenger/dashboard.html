@@ -110,12 +110,34 @@
                 <input type="text" name="query" class="form-control text-uppercase fw-bold text-white fs-5 rounded-end-3" style="background-color: #0F172A; border-color: #334155;" placeholder="e.g. KL 05 AT 4455" required autofocus>
               </div>
               <button type="submit" class="btn btn-primary btn-lg fw-bold px-3 px-sm-4 text-uppercase d-flex align-items-center justify-content-center text-nowrap rounded-3 shadow-sm flex-shrink-0">
-                <i class="fa-solid fa-shield-check me-2"></i> VERIFY & BOARD
+                <i class="fa-solid fa-shield-halved me-2"></i> VERIFY & BOARD
               </button>
             </div>
             <small class="text-white opacity-50 d-block mt-2">
               <i class="fa-solid fa-circle-info me-1"></i> Accepts all formats: <code>KL 05 AT 4455</code>, <code>KL05AT4455</code>, <code>KL-05-AT-4455</code>
             </small>
+
+            <div class="mt-3 pt-2 border-top border-secondary border-opacity-25 small">
+              <span class="text-white opacity-75 small fw-semibold d-block mb-2"><i class="fa-solid fa-users me-1 text-warning"></i> Select a Verified Driver to Board:</span>
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                {% for d in verified_drivers %}
+                <a href="{% url 'verify_driver_search' %}?query={{ d.vehicle_number }}" class="badge bg-dark border {% if d.vehicle_type == 'auto' %}text-warning{% elif d.vehicle_type == 'taxi' %}text-info{% else %}text-success{% endif %} text-decoration-none py-2 px-3 rounded-pill shadow-sm d-inline-flex align-items-center gap-1" title="Select {{ d.name }} ({{ d.vehicle_number }})">
+                  {% if d.vehicle_type == 'auto' %}
+                    <i class="fa-solid fa-motorcycle"></i>
+                  {% elif d.vehicle_type == 'taxi' %}
+                    <i class="fa-solid fa-taxi"></i>
+                  {% else %}
+                    <i class="fa-solid fa-car"></i>
+                  {% endif %}
+                  <span>{{ d.name }}</span>
+                  <span class="opacity-50">({{ d.vehicle_number }})</span>
+                  <span class="badge bg-warning text-dark ms-1 font-monospace" style="font-size: 0.65rem;">⭐ {{ d.average_rating|default:5.0|floatformat:1 }}</span>
+                </a>
+                {% empty %}
+                <span class="text-white-50">No verified drivers found.</span>
+                {% endfor %}
+              </div>
+            </div>
           </div>
         </form>
 
@@ -123,186 +145,9 @@
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- 3. QUICK ACTIONS GRID -->
-  <!-- ========================================== -->
-  <div class="row g-3 g-lg-4 mb-4">
-    
-    <!-- 3.1 Trip History -->
-    <div class="col-12 col-md-4">
-      <a href="{% url 'passenger_trip_history' %}" class="card rounded-4 border shadow-sm p-4 text-decoration-none h-100 hover-lift d-flex flex-column" style="background-color: #131C2E !important; border-color: #1E293B !important;">
-        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-          <div class="rounded-circle d-flex align-items-center justify-content-center text-primary flex-shrink-0" style="width: 48px; height: 48px; background: rgba(37, 99, 235, 0.15); border: 1px solid rgba(37, 99, 235, 0.3);">
-            <i class="fa-solid fa-clock-rotate-left fs-4"></i>
-          </div>
-          <span class="badge bg-primary bg-opacity-25 text-primary border border-primary rounded-pill small px-3 py-1 text-nowrap">Past Rides</span>
-        </div>
-        <h5 class="fw-bold text-white mb-2 text-nowrap">Trip History</h5>
-        <p class="text-white opacity-75 small mb-3 flex-grow-1">View all past rides, driver safety scores, post-trip feedback & reviews.</p>
-        <div class="mt-auto pt-2">
-          <span class="fw-bold small text-primary text-nowrap">View Records &rarr;</span>
-        </div>
-      </a>
-    </div>
 
-    <!-- 3.2 Profile & Emergency Contacts -->
-    <div class="col-12 col-md-4">
-      <a href="{% url 'emergency_contacts' %}" class="card rounded-4 border shadow-sm p-4 text-decoration-none h-100 hover-lift d-flex flex-column" style="background-color: #131C2E !important; border-color: #1E293B !important;">
-        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-          <div class="rounded-circle d-flex align-items-center justify-content-center text-danger flex-shrink-0" style="width: 48px; height: 48px; background: rgba(220, 38, 38, 0.15); border: 1px solid rgba(220, 38, 38, 0.3);">
-            <i class="fa-solid fa-shield-heart fs-4"></i>
-          </div>
-          <span class="badge bg-danger bg-opacity-25 text-danger border border-danger rounded-pill small px-3 py-1 text-nowrap">SOS Settings</span>
-        </div>
-        <h5 class="fw-bold text-white mb-2 text-nowrap">Emergency Contacts</h5>
-        <p class="text-white opacity-75 small mb-3 flex-grow-1">Manage trusted guardian phone numbers that receive immediate alerts during 1-Touch SOS.</p>
-        <div class="mt-auto pt-2">
-          <span class="fw-bold small text-danger text-nowrap">Manage Contacts &rarr;</span>
-        </div>
-      </a>
-    </div>
 
-    <!-- 3.3 Report an Issue -->
-    <div class="col-12 col-md-4">
-      <a href="{% url 'report_incident' %}" class="card rounded-4 border shadow-sm p-4 text-decoration-none h-100 hover-lift d-flex flex-column" style="background-color: #131C2E !important; border-color: #1E293B !important;">
-        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-          <div class="rounded-circle d-flex align-items-center justify-content-center text-warning flex-shrink-0" style="width: 48px; height: 48px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3);">
-            <i class="fa-solid fa-triangle-exclamation fs-4"></i>
-          </div>
-          <span class="badge bg-warning bg-opacity-25 text-warning border border-warning rounded-pill small px-3 py-1 text-nowrap">Safety Help</span>
-        </div>
-        <h5 class="fw-bold text-white mb-2 text-nowrap">Report an Issue</h5>
-        <p class="text-white opacity-75 small mb-3 flex-grow-1">Submit a formal safety complaint, report driver misconduct, or log an incident.</p>
-        <div class="mt-auto pt-2">
-          <span class="fw-bold small text-warning text-nowrap">File Report &rarr;</span>
-        </div>
-      </a>
-    </div>
 
-  </div>
-
-  <!-- ========================================== -->
-  <!-- 4. RECENT TRIPS SUMMARY (DESKTOP TABLE VS MOBILE CARDS) -->
-  <!-- ========================================== -->
-  {% if recent_trips %}
-  <div class="card rounded-4 border shadow-sm p-3 p-md-4 mb-4" style="background-color: #131C2E !important; border-color: #1E293B !important;">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h5 class="fw-bold text-white mb-0"><i class="fa-solid fa-route text-primary me-2"></i> Recent Commutes</h5>
-      <a href="{% url 'passenger_trip_history' %}" class="small text-decoration-none fw-semibold" style="color: #FF9800;">View Full History &rarr;</a>
-    </div>
-
-    <!-- 1. DESKTOP VIEW (≥ 768px): Full Responsive Table -->
-    <div class="d-none d-md-block">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead>
-            <tr>
-              <th>Driver & Vehicle</th>
-              <th>Boarding Point</th>
-              <th>Destination Point</th>
-              <th>Status</th>
-              <th>Date & Time</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for t in recent_trips %}
-            <tr>
-              <td class="text-white">
-                <strong class="text-white">{{ t.driver.name|default:t.driver.user.username }}</strong><br>
-                <span class="badge bg-dark border text-white font-monospace small">{{ t.driver.vehicle_number|default:t.driver.vehicle.registration_number }}</span>
-              </td>
-              <td class="small">
-                <span class="text-success fw-semibold"><i class="fa-solid fa-circle-dot me-1"></i> {{ t.boarding_point|default:t.pickup_location_name|truncatechars:28 }}</span>
-              </td>
-              <td class="small">
-                {% if t.destination_point %}
-                <span class="text-danger fw-semibold"><i class="fa-solid fa-location-dot me-1"></i> {{ t.destination_point|truncatechars:28 }}</span>
-                {% else %}
-                <span class="text-white opacity-50 fst-italic"><i class="fa-solid fa-route me-1 opacity-50"></i> Open / Metered</span>
-                {% endif %}
-              </td>
-              <td>
-                {% if t.status == 'Completed' or t.status == 'COMPLETED' %}
-                <span class="badge bg-success bg-opacity-25 text-success">Completed</span>
-                {% elif t.status == 'Ongoing' or t.status == 'IN_PROGRESS' %}
-                <span class="badge bg-primary">In Progress</span>
-                {% elif t.status == 'SOS_Triggered' %}
-                <span class="badge bg-danger">SOS Triggered</span>
-                {% else %}
-                <span class="badge bg-secondary">{{ t.get_status_display }}</span>
-                {% endif %}
-              </td>
-              <td class="small text-white opacity-75">{{ t.start_time|date:"M d, H:i" }}</td>
-              <td>
-                {% if t.status == 'Ongoing' or t.status == 'IN_PROGRESS' %}
-                <a href="{% url 'active_trip' t.trip_id %}" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold">Live Track</a>
-                {% else %}
-                <a href="{% url 'rate_trip' t.trip_id %}" class="btn btn-sm btn-outline-light rounded-pill px-3">Rate & Review</a>
-                {% endif %}
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- 2. MOBILE VIEW (< 768px): Touch-Friendly Stacked Cards -->
-    <div class="d-block d-md-none">
-      <div class="d-flex flex-column gap-3">
-        {% for t in recent_trips %}
-        <div class="mobile-data-card shadow-sm">
-          <div class="d-flex justify-content-between align-items-start mb-2">
-            <div>
-              <div class="data-label">Driver & Vehicle</div>
-              <strong class="text-white fs-6">{{ t.driver.name|default:t.driver.user.username }}</strong>
-              <div class="badge bg-dark border text-warning font-monospace small mt-1 d-inline-block">
-                {{ t.driver.vehicle_number|default:t.driver.vehicle.registration_number }}
-              </div>
-            </div>
-            <div>
-              {% if t.status == 'Completed' or t.status == 'COMPLETED' %}
-              <span class="badge bg-success bg-opacity-25 text-success">Completed</span>
-              {% elif t.status == 'Ongoing' or t.status == 'IN_PROGRESS' %}
-              <span class="badge bg-primary">In Progress</span>
-              {% elif t.status == 'SOS_Triggered' %}
-              <span class="badge bg-danger">SOS Triggered</span>
-              {% else %}
-              <span class="badge bg-secondary">{{ t.get_status_display }}</span>
-              {% endif %}
-            </div>
-          </div>
-
-          <div class="py-2 border-top border-bottom my-2" style="border-color: #1E293B !important;">
-            <div class="small text-success mb-1">
-              <i class="fa-solid fa-circle-dot me-1"></i> <span class="text-white opacity-75">From:</span> <strong>{{ t.boarding_point|default:t.pickup_location_name|truncatechars:32 }}</strong>
-            </div>
-            <div class="small">
-              <i class="fa-solid fa-location-dot me-1"></i> <span class="text-white opacity-75">To:</span> 
-              {% if t.destination_point %}
-              <strong class="text-danger">{{ t.destination_point|truncatechars:32 }}</strong>
-              {% else %}
-              <span class="text-white opacity-50 fst-italic">Open / Metered</span>
-              {% endif %}
-            </div>
-          </div>
-
-          <div class="d-flex justify-content-between align-items-center pt-1">
-            <span class="small text-white opacity-50 font-monospace">{{ t.start_time|date:"M d, H:i" }}</span>
-            {% if t.status == 'Ongoing' or t.status == 'IN_PROGRESS' %}
-            <a href="{% url 'active_trip' t.trip_id %}" class="btn btn-sm btn-primary rounded-pill px-4 fw-bold">Live Track</a>
-            {% else %}
-            <a href="{% url 'rate_trip' t.trip_id %}" class="btn btn-sm btn-outline-light rounded-pill px-3">Rate & Review</a>
-            {% endif %}
-          </div>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-
-  </div>
-  {% endif %}
 
 </div>
 

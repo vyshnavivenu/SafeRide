@@ -38,6 +38,18 @@
       </div>
     </div>
 
+    <!-- Safe Arrival Confirmation Banner for Emergency Contact -->
+    <div id="safe-arrival-banner" class="alert alert-success bg-success bg-opacity-25 border-success text-white rounded-3 py-3 px-4 mb-4 d-flex align-items-center justify-content-between {% if trip.status != 'Completed' %}d-none{% endif %}" role="alert">
+      <div class="d-flex align-items-center gap-3">
+        <i class="fa-solid fa-circle-check fs-2 text-success"></i>
+        <div>
+          <h6 class="fw-bold mb-0 text-uppercase">PASSENGER HAS ARRIVED SAFELY</h6>
+          <p class="small mb-0 text-white-75">{{ trip.passenger.get_full_name|default:trip.passenger.username }} has reached their destination safely. This monitored transit is completed.</p>
+        </div>
+      </div>
+      <span class="badge bg-success px-3 py-2 rounded-pill fw-bold"><i class="fa-solid fa-shield-halved me-1"></i> TRIP SAFELY ENDED</span>
+    </div>
+
     <!-- Emergency SOS Alert Banner if triggered -->
     {% if trip.status == 'SOS_Triggered' %}
     <div class="alert alert-danger bg-danger bg-opacity-25 border-danger text-white rounded-3 py-3 px-4 mb-4 d-flex align-items-center justify-content-between" role="alert">
@@ -235,6 +247,16 @@
     fetch("{% url 'api_trip_location' trip.trip_id %}")
       .then(res => res.json())
       .then(data => {
+        if (data && data.status === 'Completed') {
+          const statusElem = document.getElementById('telemetry-status');
+          if (statusElem) {
+            statusElem.innerHTML = '<span class="text-success"><i class="fa-solid fa-circle-check me-1"></i> Completed Safely</span>';
+          }
+          const banner = document.getElementById('safe-arrival-banner');
+          if (banner) {
+            banner.classList.remove('d-none');
+          }
+        }
         if (data && data.latitude && data.longitude) {
           currentLat = parseFloat(data.latitude);
           currentLng = parseFloat(data.longitude);
