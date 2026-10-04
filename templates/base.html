@@ -36,7 +36,7 @@
   <!-- Top Navigation Bar (🔵 Dark Blue) -->
   {% block navbar %}
   <nav class="navbar navbar-expand-lg navbar-dark navbar-saferide sticky-top py-2">
-    <div class="container-fluid px-3 px-xl-4">
+    <div class="container-fluid px-3 px-lg-4">
       <!-- SafeRide Brand Logo (Navigates to Dashboard when logged in) -->
       {% if user.is_authenticated %}
         {% if user.is_passenger_user %}
@@ -73,6 +73,14 @@
           <!-- 2. LOGGED IN PASSENGER NAVIGATION -->
           <!-- ========================================== -->
           {% elif user.is_passenger_user %}
+          {% if ACTIVE_TRIP_ID %}
+          <li class="nav-item">
+            <a class="nav-link text-warning fw-bold text-nowrap d-inline-flex align-items-center {% if request.resolver_match.url_name == 'active_trip' %}active{% endif %}" href="{% url 'active_trip' ACTIVE_TRIP_ID %}" title="Track your ongoing journey live with real-time GPS">
+              <i class="fa-solid fa-satellite-dish fa-spin text-success me-1"></i> Live Tracker
+              <span class="badge bg-success rounded-pill ms-1 live-pulse-badge">LIVE</span>
+            </a>
+          </li>
+          {% endif %}
           <li class="nav-item">
             <a class="nav-link text-white text-nowrap {% if request.resolver_match.url_name == 'passenger_trip_history' %}active{% endif %}" href="{% url 'passenger_trip_history' %}"><i class="fa-solid fa-route me-1 text-warning"></i> Trip History</a>
           </li>
@@ -90,9 +98,7 @@
           <!-- 3. LOGGED IN DRIVER NAVIGATION -->
           <!-- ========================================== -->
           {% elif user.is_driver_user %}
-          <li class="nav-item">
-            <a class="nav-link text-white text-nowrap {% if request.resolver_match.url_name == 'driver_dashboard' %}active{% endif %}" href="{% url 'driver_dashboard' %}"><i class="fa-solid fa-id-card me-1 text-success"></i> Driver Portal</a>
-          </li>
+
           <li class="nav-item">
             <a class="nav-link text-white text-nowrap {% if request.resolver_match.url_name == 'driver_id_badge' %}active{% endif %}" href="{% url 'driver_id_badge' %}"><i class="fa-solid fa-qrcode me-1 text-warning"></i> My QR Code</a>
           </li>
@@ -104,9 +110,7 @@
           <!-- 4. LOGGED IN ADMIN NAVIGATION -->
           <!-- ========================================== -->
           {% elif user.is_admin_user %}
-          <li class="nav-item">
-            <a class="nav-link text-white fw-bold text-nowrap {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}" href="{% url 'admin_dashboard' %}"><i class="fa-solid fa-shield-heart me-1 text-warning"></i> Dashboard</a>
-          </li>
+
           <li class="nav-item">
             <a class="nav-link text-white text-nowrap {% if request.resolver_match.url_name == 'admin_driver_list' %}active{% endif %}" href="{% url 'admin_driver_list' %}"><i class="fa-solid fa-user-check me-1 text-success"></i> Driver KYC</a>
           </li>
@@ -191,83 +195,71 @@
   <div class="mobile-bottom-appbar d-md-none">
     {% if user.is_authenticated %}
       {% if user.is_passenger_user %}
-        <a href="{% url 'home' %}" class="nav-tab">
+        <a href="{% url 'home' %}" class="nav-tab {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
           <i class="fa-solid fa-house"></i>
           <span>Home</span>
         </a>
-        <a href="{% url 'passenger_dashboard' %}" class="nav-tab">
+        <a href="{% url 'passenger_dashboard' %}" class="nav-tab {% if request.resolver_match.url_name == 'passenger_dashboard' %}active{% endif %}">
           <i class="fa-solid fa-qrcode text-warning"></i>
           <span>Verify</span>
         </a>
-        <a href="{% url 'passenger_trip_history' %}" class="nav-tab">
+        {% if ACTIVE_TRIP_ID %}
+        <a href="{% url 'active_trip' ACTIVE_TRIP_ID %}" class="nav-tab active-tracker {% if request.resolver_match.url_name == 'active_trip' %}active{% endif %}">
+          <i class="fa-solid fa-satellite-dish text-success fa-spin"></i>
+          <span>Live Track</span>
+        </a>
+        {% endif %}
+        <a href="{% url 'passenger_trip_history' %}" class="nav-tab {% if request.resolver_match.url_name == 'passenger_trip_history' %}active{% endif %}">
           <i class="fa-solid fa-route"></i>
           <span>Trips</span>
         </a>
-        <a href="{% url 'passenger_profile' %}" class="nav-tab">
+        <a href="{% url 'passenger_profile' %}" class="nav-tab {% if request.resolver_match.url_name == 'passenger_profile' %}active{% endif %}">
           <i class="fa-solid fa-user-pen"></i>
           <span>Profile</span>
         </a>
-        <a href="{% url 'logout' %}" class="nav-tab">
-          <i class="fa-solid fa-right-from-bracket"></i>
-          <span>Logout</span>
-        </a>
       {% elif user.is_driver_user %}
-        <a href="{% url 'home' %}" class="nav-tab">
+        <a href="{% url 'home' %}" class="nav-tab {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
           <i class="fa-solid fa-house"></i>
           <span>Home</span>
         </a>
-        <a href="{% url 'driver_dashboard' %}" class="nav-tab">
-          <i class="fa-solid fa-id-card text-success"></i>
-          <span>Portal</span>
-        </a>
-        <a href="{% url 'driver_id_badge' %}" class="nav-tab">
+
+        <a href="{% url 'driver_id_badge' %}" class="nav-tab {% if request.resolver_match.url_name == 'driver_id_badge' %}active{% endif %}">
           <i class="fa-solid fa-qrcode text-warning"></i>
           <span>QR Code</span>
         </a>
-        <a href="{% url 'driver_profile' %}" class="nav-tab">
+        <a href="{% url 'driver_profile' %}" class="nav-tab {% if request.resolver_match.url_name == 'driver_profile' %}active{% endif %}">
           <i class="fa-solid fa-user-pen"></i>
           <span>Profile</span>
         </a>
-        <a href="{% url 'logout' %}" class="nav-tab">
-          <i class="fa-solid fa-right-from-bracket"></i>
-          <span>Logout</span>
-        </a>
       {% elif user.is_admin_user %}
-        <a href="{% url 'admin_dashboard' %}" class="nav-tab">
-          <i class="fa-solid fa-shield-heart text-warning"></i>
-          <span>Dashboard</span>
-        </a>
-        <a href="{% url 'admin_driver_list' %}" class="nav-tab">
-          <i class="fa-solid fa-user-check"></i>
-          <span>KYC</span>
-        </a>
-        <a href="{% url 'admin_passenger_list' %}" class="nav-tab">
-          <i class="fa-solid fa-users"></i>
-          <span>Passengers</span>
-        </a>
-        <a href="{% url 'admin_sos_monitoring' %}" class="nav-tab">
+
+        <a href="{% url 'admin_sos_monitoring' %}" class="nav-tab {% if request.resolver_match.url_name == 'admin_sos_monitoring' %}active{% endif %}">
           <i class="fa-solid fa-triangle-exclamation text-danger"></i>
           <span>SOS</span>
         </a>
-        <a href="{% url 'logout' %}" class="nav-tab">
-          <i class="fa-solid fa-right-from-bracket"></i>
-          <span>Logout</span>
+        <a href="{% url 'admin_driver_list' %}" class="nav-tab {% if request.resolver_match.url_name == 'admin_driver_list' %}active{% endif %}">
+          <i class="fa-solid fa-user-check"></i>
+          <span>KYC</span>
+        </a>
+        <a href="{% url 'admin_passenger_list' %}" class="nav-tab {% if request.resolver_match.url_name == 'admin_passenger_list' %}active{% endif %}">
+          <i class="fa-solid fa-users"></i>
+          <span>Users</span>
         </a>
       {% endif %}
     {% else %}
-      <a href="{% url 'home' %}" class="nav-tab">
+      <a href="{% url 'home' %}" class="nav-tab {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
         <i class="fa-solid fa-house"></i>
         <span>Home</span>
       </a>
-      <a href="{% url 'verify_driver_search' %}" class="nav-tab">
+      <a href="{% url 'verify_driver_search' %}" class="nav-tab {% if request.resolver_match.url_name == 'verify_driver_search' %}active{% endif %}">
         <i class="fa-solid fa-qrcode text-warning"></i>
         <span>Verify</span>
       </a>
-      <a href="{% url 'passenger_login' %}" class="nav-tab">
+      <a href="{% url 'passenger_login' %}" class="nav-tab {% if request.resolver_match.url_name == 'passenger_login' %}active{% endif %}">
         <i class="fa-solid fa-user text-primary"></i>
         <span>Passenger</span>
       </a>
-      <a href="{% url 'driver_login' %}" class="nav-tab">
+      <a href="{% url 'driver_login' %}" class="nav-tab {% if request.resolver_match.url_name == 'driver_login' %}active{% endif %}">
         <i class="fa-solid fa-car text-success"></i>
         <span>Driver</span>
       </a>
@@ -396,7 +388,9 @@
   <!-- jsQR Precision QR Code Decoder -->
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
   <!-- Google Maps JavaScript API (Maps & Location Services) -->
-  <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY|default:'' }}&libraries=places,geometry"></script>
+  {% if GOOGLE_MAPS_API_KEY %}
+  <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&libraries=places,geometry"></script>
+  {% endif %}
   <script src="/static/js/app.js?v=6.0"></script>
   <script>
     function triggerHeaderSOS() {

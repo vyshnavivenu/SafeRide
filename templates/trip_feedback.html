@@ -65,14 +65,6 @@
                 <i class="fa-brands fa-whatsapp fs-5 me-1"></i> WhatsApp Contact 2
               </button>
               {% endif %}
-              <button type="button" class="btn btn-outline-info btn-sm rounded-pill fw-bold px-3 py-2 shadow-sm" onclick="sendSafeArrivalSMS(1)">
-                <i class="fa-solid fa-comment-sms me-1"></i> SMS Contact 1
-              </button>
-              {% if profile.emergency_contact_2_phone or request.user.passenger_profile.emergency_contact_2_phone %}
-              <button type="button" class="btn btn-outline-info btn-sm rounded-pill fw-bold px-3 py-2 shadow-sm" onclick="sendSafeArrivalSMS(2)">
-                <i class="fa-solid fa-comment-sms me-1"></i> SMS Contact 2
-              </button>
-              {% endif %}
             </div>
           </div>
 

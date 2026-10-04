@@ -96,13 +96,19 @@
                   <i class="fa-solid fa-circle-check me-1"></i> Completed Safely
                 </span>
               {% elif t.status == 'Active' or t.status == 'IN_PROGRESS' or t.status == 'Ongoing' %}
-                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-3 py-1">
+                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-3 py-1 mb-1 d-inline-block">
                   <i class="fa-solid fa-spinner fa-spin me-1"></i> Active
                 </span>
+                <a href="{% url 'live_share' t.share_token %}" target="_blank" class="btn btn-sm btn-outline-info rounded-pill px-2 py-0 d-inline-block" style="font-size: 0.72rem;">
+                  <i class="fa-solid fa-satellite-dish me-1"></i> Track Live
+                </a>
               {% elif t.status == 'SOS_Triggered' %}
-                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-3 py-1">
-                  <i class="fa-solid fa-triangle-exclamation me-1"></i> SOS Triggered
+                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-3 py-1 mb-1 d-inline-block">
+                  <i class="fa-solid fa-triangle-exclamation me-1 fa-shake"></i> SOS Active
                 </span>
+                <a href="{% url 'live_share' t.share_token %}" target="_blank" class="btn btn-sm btn-danger rounded-pill px-2 py-0 d-inline-block fw-bold" style="font-size: 0.72rem;">
+                  <i class="fa-solid fa-tower-broadcast me-1"></i> SOS Track
+                </a>
               {% else %}
                 <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 rounded-pill px-3 py-1">
                   {{ t.status }}

@@ -201,8 +201,8 @@
     const map = L.map('admin-sos-map').setView(defaultCenter, 14);
     activeMapInstance = map;
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors | Google Maps Fallback',
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, USGS, DeLorme, TomTom',
       maxZoom: 19
     }).addTo(map);
 

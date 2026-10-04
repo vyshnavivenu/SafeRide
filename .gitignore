@@ -2,6 +2,8 @@
 .env
 .env.local
 *.env
+.tunnel_url
+cloudflared.exe
 
 # Python
 __pycache__/

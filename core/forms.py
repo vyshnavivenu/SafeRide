@@ -185,13 +185,13 @@ class EmergencyContactForm(forms.ModelForm):
         }
 
     def clean_emergency_contact_name(self):
-        val = self.cleaned_data.get('emergency_contact_name', '').strip()
+        val = (self.cleaned_data.get('emergency_contact_name') or '').strip()
         if val and not re.match(NAME_REGEX, val):
             raise forms.ValidationError("Contact name must contain only letters and spaces.")
         return val
 
     def clean_emergency_contact_phone(self):
-        val = self.cleaned_data.get('emergency_contact_phone', '').strip()
+        val = (self.cleaned_data.get('emergency_contact_phone') or '').strip()
         if val:
             digits = re.sub(r'\D', '', val)
             if len(digits) == 12 and digits.startswith('91'):
@@ -201,13 +201,13 @@ class EmergencyContactForm(forms.ModelForm):
         return val
 
     def clean_emergency_contact_2_name(self):
-        val = self.cleaned_data.get('emergency_contact_2_name', '').strip()
+        val = (self.cleaned_data.get('emergency_contact_2_name') or '').strip()
         if val and not re.match(NAME_REGEX, val):
             raise forms.ValidationError("Secondary contact name must contain only letters and spaces.")
         return val
 
     def clean_emergency_contact_2_phone(self):
-        val = self.cleaned_data.get('emergency_contact_2_phone', '').strip()
+        val = (self.cleaned_data.get('emergency_contact_2_phone') or '').strip()
         if val:
             digits = re.sub(r'\D', '', val)
             if len(digits) == 12 and digits.startswith('91'):

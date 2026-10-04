@@ -117,28 +117,92 @@ class TripLocationAPIView(APIView):
     DRF Endpoint: Live GPS Telemetry for ongoing passenger transit session.
     GET/POST /api/v1/trips/<str:trip_id>/location/
     """
+    def _find_trip(self, trip_id):
+        cleaned_id = str(trip_id).replace('TRP-', '').replace('trp-', '').replace('#', '').strip()
+        trip = None
+        if cleaned_id.isdigit():
+            trip = Trip.objects.select_related('driver', 'driver__user', 'passenger').filter(trip_id=int(cleaned_id)).first()
+        if not trip:
+            try:
+                import uuid as _uuid
+                val_uuid = _uuid.UUID(str(trip_id).strip())
+                trip = Trip.objects.select_related('driver', 'driver__user', 'passenger').filter(
+                    Q(trip_uuid=val_uuid) | Q(share_token=val_uuid)
+                ).first()
+            except (ValueError, TypeError, AttributeError):
+                pass
+        return trip
+
     def get(self, request, trip_id):
-        trip = get_object_or_404(Trip, trip_id=trip_id)
+        trip = self._find_trip(trip_id)
+        if not trip:
+            return Response({'error': 'Trip session not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        dest_lat = float(trip.destination_latitude) if trip.destination_latitude else (float(trip.drop_latitude) if trip.drop_latitude else None)
+        dest_lng = float(trip.destination_longitude) if trip.destination_longitude else (float(trip.drop_longitude) if trip.drop_longitude else None)
+        dest_addr = trip.destination_address or trip.end_location or trip.drop_location_name or "Destination Drop Point"
+
+        board_lat = float(trip.boarding_latitude) if trip.boarding_latitude else (float(trip.pickup_latitude) if trip.pickup_latitude else None)
+        board_lng = float(trip.boarding_longitude) if trip.boarding_longitude else (float(trip.pickup_longitude) if trip.pickup_longitude else None)
+        board_addr = trip.boarding_address or trip.start_location or trip.pickup_location_name or "Boarding Point"
+
+        curr_lat = float(trip.live_latitude or trip.current_latitude or board_lat or 9.684300)
+        curr_lng = float(trip.live_longitude or trip.current_longitude or board_lng or 76.685300)
+
+        driver_name = trip.driver.user.get_full_name() or trip.driver.name or trip.driver.user.username if trip.driver else 'Driver'
+        veh_num = getattr(trip.driver, 'vehicle_number', '') if trip.driver else ''
+
         return Response({
             'trip_id': trip.trip_id,
+            'share_token': str(trip.share_token),
             'status': trip.status,
-            'latitude': trip.live_latitude,
-            'longitude': trip.live_longitude,
-            'updated_at': trip.live_updated_at
+            'latitude': curr_lat,
+            'longitude': curr_lng,
+            'boarding_latitude': board_lat,
+            'boarding_longitude': board_lng,
+            'boarding_address': board_addr,
+            'destination_latitude': dest_lat,
+            'destination_longitude': dest_lng,
+            'destination_address': dest_addr,
+            'distance_km': float(trip.distance_km or 0),
+            'fare_amount': float(trip.fare_amount or 30),
+            'driver_name': driver_name,
+            'vehicle_number': veh_num,
+            'updated_at': trip.live_updated_at.isoformat() if trip.live_updated_at else timezone.now().isoformat()
         }, status=status.HTTP_200_OK)
 
     def post(self, request, trip_id):
-        trip = get_object_or_404(Trip, trip_id=trip_id)
+        trip = self._find_trip(trip_id)
+        if not trip:
+            return Response({'error': 'Trip session not found'}, status=status.HTTP_404_NOT_FOUND)
+
         lat = request.data.get('latitude')
         lng = request.data.get('longitude')
         if lat is not None and lng is not None:
-            trip.live_latitude = float(lat)
-            trip.live_longitude = float(lng)
-            trip.current_latitude = float(lat)
-            trip.current_longitude = float(lng)
+            lat_f = float(lat)
+            lng_f = float(lng)
+            trip.live_latitude = lat_f
+            trip.live_longitude = lng_f
+            trip.current_latitude = lat_f
+            trip.current_longitude = lng_f
             trip.live_updated_at = timezone.now()
-            trip.save(update_fields=['live_latitude', 'live_longitude', 'current_latitude', 'current_longitude', 'live_updated_at'])
-            return Response({'success': True, 'trip_id': trip.trip_id}, status=status.HTTP_200_OK)
+
+            trip.calculate_distance_and_fare()
+            trip.save(update_fields=[
+                'live_latitude', 'live_longitude',
+                'current_latitude', 'current_longitude',
+                'live_updated_at', 'distance_km', 'fare_amount'
+            ])
+            return Response({
+                'success': True,
+                'trip_id': trip.trip_id,
+                'latitude': lat_f,
+                'longitude': lng_f,
+                'distance_km': float(trip.distance_km),
+                'fare_amount': float(trip.fare_amount),
+                'status': trip.status,
+                'updated_at': trip.live_updated_at.isoformat()
+            }, status=status.HTTP_200_OK)
         return Response({'error': 'latitude and longitude are required'}, status=status.HTTP_400_BAD_REQUEST)
 
 

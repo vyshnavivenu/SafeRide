@@ -29,7 +29,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-# CSRF Trusted Origins for development
+# CSRF Trusted Origins for development & public mobile tunnels
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8000',
@@ -42,6 +42,11 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost',
     'http://127.0.0.1',
     'http://0.0.0.0:8000',
+    'https://*.trycloudflare.com',
+    'https://book-attempted-classifieds-kissing.trycloudflare.com',
+    'https://*.loca.lt',
+    'https://*.lhr.life',
+    'https://*.serveo.net',
 ]
 
 # Development CSRF & Session Cookie Settings

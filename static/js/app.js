@@ -153,18 +153,52 @@ function triggerSOSEmergency(tripId = null) {
     .then(data => {
       if (data.success) {
         playSOSAudioBeep();
+
+        // 🚨 Automatically open WhatsApp distress message to Contact 1
+        if (data.wa_url_1) {
+          try {
+            window.open(data.wa_url_1, '_blank');
+          } catch (e) {
+            console.warn("Popup blocked for WhatsApp:", e);
+          }
+        }
+
         if (statusDiv) {
+          let waContact1Html = '';
+          if (data.wa_url_1) {
+            waContact1Html = `
+              <div class="alert alert-success p-2 mb-2 d-flex align-items-center gap-2 text-start">
+                <i class="fa-brands fa-whatsapp fs-3 text-success"></i>
+                <div class="small">
+                  <strong>WhatsApp SOS Opened:</strong><br>
+                  Dispatched to ${data.contact1_name || 'Contact 1'} (${data.contact1_phone || ''})
+                </div>
+              </div>
+            `;
+          }
+
+          let waContact2Html = '';
+          if (data.wa_url_2) {
+            waContact2Html = `
+              <a href="${data.wa_url_2}" target="_blank" class="btn btn-success btn-sm w-100 fw-bold mb-2 text-white">
+                <i class="fa-brands fa-whatsapp me-1 fs-6"></i> Send WhatsApp SOS to ${data.contact2_name || 'Contact 2'}
+              </a>
+            `;
+          }
+
           statusDiv.innerHTML = `
-            <div class="alert alert-danger p-3 mb-0">
-              <h5 class="fw-bold mb-1">🚨 EMERGENCY SOS BROADCAST ACTIVE</h5>
-              <p class="small mb-2">Distress Beacon dispatched to Central Control Center & Police (112).</p>
-              <div class="p-2 bg-white rounded text-dark small">
-                <strong>Alert ID:</strong> #${data.alert_id.substring(0, 8)}<br>
+            <div class="alert alert-danger p-3 mb-0 text-center">
+              <h5 class="fw-bold mb-1 text-danger">🚨 EMERGENCY SOS BROADCAST ACTIVE</h5>
+              <p class="small text-white opacity-90 mb-2">Live GPS distress beacon dispatched to Central Control & Police (112).</p>
+              ${waContact1Html}
+              ${waContact2Html}
+              <div class="p-2 bg-dark rounded text-white small text-start border border-secondary mb-3">
+                <strong>Alert ID:</strong> #${String(data.alert_id).substring(0, 8)}<br>
                 <strong>Timestamp:</strong> ${data.timestamp}<br>
                 <strong>GPS Coordinates:</strong> ${currentLat.toFixed(4)}, ${currentLng.toFixed(4)}
               </div>
-              <div class="mt-3">
-                <a href="tel:112" class="btn btn-dark btn-sm w-100 fw-bold"><i class="fa-solid fa-phone me-1"></i> Call Police Control (112)</a>
+              <div>
+                <a href="tel:112" class="btn btn-danger btn-sm w-100 fw-bold mb-1"><i class="fa-solid fa-phone me-1"></i> Call Police Control (112)</a>
               </div>
             </div>
           `;

@@ -148,9 +148,11 @@ a:hover {
   z-index: 1040;
 }
 
+.navbar-saferide .container,
 .navbar-saferide .container-fluid {
-  padding-left: clamp(12px, 1.8vw, 24px) !important;
-  padding-right: clamp(12px, 1.8vw, 24px) !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .navbar-saferide .navbar-brand {
@@ -302,9 +304,7 @@ img, svg, canvas, iframe, video {
 }
 
 .row {
-  max-width: 100% !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
+  max-width: 100%;
 }
 
 /* ⚫ Cards & Sections (Dark Background - 100% Solid) */
@@ -1497,6 +1497,30 @@ button,
     bottom: 78px !important;
   }
 }
+
+/* ==========================================================================
+   📡 LIVE TRACKER BADGE STYLES (PASSENGER ONLY)
+   ========================================================================== */
+.live-pulse-badge {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  vertical-align: middle;
+  padding: 2px 6px !important;
+  line-height: 1.1;
+  animation: liveBadgePulse 1.8s infinite;
+}
+
+@keyframes liveBadgePulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8); }
+  70% { transform: scale(1.05); box-shadow: 0 0 0 5px rgba(16, 185, 129, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.mobile-bottom-appbar .nav-tab.active-tracker i {
+  color: #10B981;
+}
+
 
 
 
