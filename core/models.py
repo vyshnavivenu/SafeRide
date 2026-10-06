@@ -213,7 +213,23 @@ class Driver(models.Model):
             if val.startswith('http://') or val.startswith('https://') or val.startswith('/'):
                 return val
             return f"/media/{val}"
-        return f"https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=http://127.0.0.1:8000/verify/{self.verification_token}/"
+            
+        # Fallback to dynamic QR generation using public tunnel if available
+        base_url = "http://127.0.0.1:8000"
+        try:
+            from django.conf import settings
+            tunnel_file = settings.BASE_DIR / '.tunnel_url'
+            if tunnel_file.exists():
+                with open(tunnel_file, 'r', encoding='utf-8') as f:
+                    saved_url = f.read().strip()
+                    if saved_url.startswith('http'):
+                        base_url = saved_url.rstrip('/')
+        except Exception:
+            pass
+            
+        import urllib.parse
+        encoded_url = urllib.parse.quote(f"{base_url}/verify/{self.verification_token}/")
+        return f"https://api.qrserver.com/v1/create-qr-code/?size=240x240&data={encoded_url}"
 
     def is_verified(self):
         return self.verification_status in [self.VerificationStatus.VERIFIED, 'VERIFIED', 'Verified']
@@ -222,6 +238,18 @@ class Driver(models.Model):
         """Generates and saves a QR code encoding the driver's public verification URL."""
         from django.core.files.storage import default_storage
         
+        # Always enforce public tunnel URL if available to prevent localhost scanning failures
+        try:
+            from django.conf import settings
+            tunnel_file = settings.BASE_DIR / '.tunnel_url'
+            if tunnel_file.exists():
+                with open(tunnel_file, 'r', encoding='utf-8') as f:
+                    saved_url = f.read().strip()
+                    if saved_url.startswith('http'):
+                        base_url = saved_url.rstrip('/')
+        except Exception:
+            pass
+            
         verify_url = f"{base_url}/verify/{self.verification_token}/"
         qr = qrcode.QRCode(
             version=1,
@@ -244,7 +272,9 @@ class Driver(models.Model):
             except Exception:
                 pass
 
-        filename = f"qr_{self.license_number.replace(' ', '_')}_{self.driver_id or self.pk or 'tmp'}.png"
+        import time
+        timestamp = int(time.time())
+        filename = f"qr_{self.license_number.replace(' ', '_')}_{self.driver_id or self.pk or 'tmp'}_{timestamp}.png"
         target_path = f"driver_qrcodes/{filename}"
         
         # Remove any existing file with target name to prevent Django appending random hashes
@@ -553,6 +583,18 @@ class Trip(models.Model):
         from io import BytesIO
         from django.core.files.base import ContentFile
         from django.core.files.storage import default_storage
+
+        # Always enforce public tunnel URL if available to prevent localhost scanning failures
+        try:
+            from django.conf import settings
+            tunnel_file = settings.BASE_DIR / '.tunnel_url'
+            if tunnel_file.exists():
+                with open(tunnel_file, 'r', encoding='utf-8') as f:
+                    saved_url = f.read().strip()
+                    if saved_url.startswith('http'):
+                        base_url = saved_url.rstrip('/')
+        except Exception:
+            pass
 
         # Formatted digital receipt & UPI payment string
         upi_pay_str = f"upi://pay?pa=saferide@upi&pn={self.driver.name or 'SafeRide Driver'}&am={self.fare_amount}&cu=INR&tn=SafeRide_TRP_{self.trip_id}"

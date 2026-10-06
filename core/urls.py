@@ -58,8 +58,10 @@ urlpatterns = [
 
     # AJAX & Location Endpoints
     path('api/sos/trigger/', views.trigger_sos_alert, name='trigger_sos_alert'),
+    path('api/sos/cancel/', views.cancel_sos_alert, name='cancel_sos_alert'),
     path('api/trip/<str:trip_id>/update-location/', views.update_trip_location, name='update_trip_location'),
     path('api/trip/<str:trip_id>/location/', views.update_trip_location, name='update_trip_location_alias'),
+    path('api/trip/<str:trip_id>/live-location/', views.get_live_location, name='get_live_location'),
     path('api/trip/<str:trip_id>/qr-fallback/', views.serve_trip_fare_qr, name='serve_trip_fare_qr'),
     path('api/admin/sos/active/', views.check_active_sos_alerts, name='check_active_sos_alerts'),
     path('track/<str:token>/', views.live_share_view, name='live_share_trip_track_alias'),

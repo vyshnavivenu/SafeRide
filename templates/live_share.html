@@ -1,732 +1,281 @@
-{% extends 'base.html' %}
-
-{% block title %}Live Journey Tracker - {{ APP_NAME|default:'SafeRide' }}{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<style>
-  .leaflet-container {
-    background: #0b1120 !important;
-    border-radius: 16px;
-    font-family: inherit;
-  }
-  .leaflet-popup-content-wrapper, .leaflet-popup-tip {
-    background: #131C2E !important;
-    color: #FFFFFF !important;
-    border: 1px solid #3B82F6 !important;
-    border-radius: 12px !important;
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6) !important;
-  }
-  .leaflet-popup-content {
-    margin: 12px 14px !important;
-    line-height: 1.5 !important;
-  }
-  .leaflet-container a.leaflet-popup-close-button {
-    color: #94A3B8 !important;
-  }
-
-  /* Radar pulse animation around active vehicle */
-  .vehicle-radar-pulse {
-    position: relative;
-    width: 44px;
-    height: 44px;
-  }
-  .vehicle-radar-pulse::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 48px;
-    height: 48px;
-    margin-top: -24px;
-    margin-left: -24px;
-    border-radius: 50%;
-    background: rgba(59, 130, 246, 0.35);
-    animation: radarRipple 2s ease-out infinite;
-    pointer-events: none;
-  }
-  .vehicle-radar-pulse.sos::before {
-    background: rgba(239, 68, 68, 0.45);
-    animation: radarRipple 1.2s ease-out infinite;
-  }
-  @keyframes radarRipple {
-    0% { transform: scale(0.6); opacity: 1; }
-    100% { transform: scale(2.2); opacity: 0; }
-  }
-
-  /* Pulsing live badge */
-  .badge-live-stream {
-    background-color: rgba(16, 185, 129, 0.15);
-    color: #10B981;
-    border: 1px solid rgba(16, 185, 129, 0.35);
-    animation: liveBadgeGlow 2.5s infinite;
-  }
-  @keyframes liveBadgeGlow {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-    50% { box-shadow: 0 0 12px 2px rgba(16, 185, 129, 0.6); }
-  }
-
-  /* Map overlay controls */
-  .map-overlay-badge {
-    position: absolute;
-    z-index: 1000;
-    backdrop-filter: blur(10px);
-    background: rgba(15, 23, 42, 0.85);
-    border: 1px solid rgba(51, 65, 85, 0.8);
-    border-radius: 30px;
-    padding: 6px 14px;
-    font-size: 0.8rem;
-    color: #F8FAFC;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-  }
-  .map-overlay-badge.top-left { top: 14px; left: 14px; }
-  .map-overlay-badge.top-right { top: 14px; right: 14px; }
-  .map-overlay-badge.bottom-center { bottom: 16px; left: 50%; transform: translateX(-50%); }
-
-  .telemetry-card {
-    background-color: #131C2E;
-    border: 1px solid #1E293B;
-    border-radius: 14px;
-    padding: 14px 18px;
-    transition: transform 0.2s ease, border-color 0.2s ease;
-  }
-  .telemetry-card:hover {
-    border-color: #3B82F6;
-    transform: translateY(-2px);
-  }
-</style>
-{% endblock %}
-
-{% block content %}
-<div class="container py-4">
-  
-  <!-- Outer Wrapper Card -->
-  <div class="card rounded-4 border shadow-lg p-3 p-md-4 p-lg-5 mb-4" style="background-color: #0F172A; border-color: #1E293B !important;">
-    
-    <!-- Header with Live Satellite Animation & Safety Meta -->
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4 border-bottom border-secondary border-opacity-25 pb-3">
-      <div class="d-flex align-items-center gap-3">
-        <span class="p-3 rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center shadow" style="width: 56px; height: 56px; border: 1px solid rgba(59, 130, 246, 0.3);">
-          <i class="fa-solid fa-satellite-dish fs-3 fa-spin text-warning"></i>
-        </span>
-        <div>
-          <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
-            <span class="badge badge-live-stream px-3 py-1 rounded-pill small" id="gps-stream-badge">
-              <i class="fa-solid fa-circle-dot fa-fade me-1 text-success"></i> LIVE SATELLITE GPS ACTIVE
-            </span>
-            <span class="badge bg-secondary bg-opacity-25 text-white-50 border border-secondary border-opacity-25 small font-monospace">
-              #TRP-{{ trip.trip_id }}
-            </span>
-          </div>
-          <h4 class="fw-bold text-white mb-0">
-            {{ trip.passenger.get_full_name|default:trip.passenger.username }}'s Monitored Transit
-          </h4>
-          <span class="small text-white-50">
-            Driver: <strong class="text-white">{{ driver.user.get_full_name|default:driver.name|default:driver.user.username }}</strong> &bull; 
-            Vehicle: <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 font-monospace fw-bold">{{ vehicle.registration_number|default:driver.vehicle_number }}</span> &bull; 
-            Safety Score: <strong class="text-warning"><i class="fa-solid fa-shield-halved me-1"></i>{{ driver.reputation_score|default:95 }}/100</strong>
-          </span>
-        </div>
-      </div>
-      
-      <!-- Action Buttons (Emergency Call, WhatsApp Share, Copy Link, QR Code) -->
-      <div class="d-flex align-items-center flex-wrap gap-2">
-        <button type="button" class="btn btn-outline-warning btn-sm rounded-pill px-3 shadow-sm" onclick="copyShareLink()" id="copy-link-btn" title="Copy tracking link to clipboard">
-          <i class="fa-solid fa-link me-1"></i> <span id="copy-link-text">Copy Link</span>
-        </button>
-        <a href="https://api.whatsapp.com/send?text={{ share_url|urlencode }}" target="_blank" class="btn btn-success btn-sm rounded-pill px-3 fw-semibold shadow-sm">
-          <i class="fa-brands fa-whatsapp me-1"></i> WhatsApp
-        </a>
-        <a href="tel:112" class="btn btn-danger btn-sm rounded-pill px-3 fw-bold shadow-sm">
-          <i class="fa-solid fa-phone me-1"></i> Police 112
-        </a>
-      </div>
-    </div>
-
-    <!-- Safe Arrival Confirmation Banner for Emergency Contact -->
-    <div id="safe-arrival-banner" class="alert alert-success bg-success bg-opacity-25 border-success text-white rounded-4 py-3 px-4 mb-4 d-flex align-items-center justify-content-between {% if trip.status != 'Completed' %}d-none{% endif %}" role="alert">
-      <div class="d-flex align-items-center gap-3">
-        <i class="fa-solid fa-circle-check fs-1 text-success"></i>
-        <div>
-          <h6 class="fw-bold mb-1 text-uppercase text-white">PASSENGER HAS ARRIVED SAFELY</h6>
-          <p class="small mb-0 text-white opacity-90">{{ trip.passenger.get_full_name|default:trip.passenger.username }} has reached their destination safely. This monitored transit session is now concluded.</p>
-        </div>
-      </div>
-      <span class="badge bg-success px-3 py-2 rounded-pill fw-bold fs-6"><i class="fa-solid fa-shield-halved me-1"></i> TRIP SAFELY ENDED</span>
-    </div>
-
-    <!-- Emergency SOS Alert Banner if triggered -->
-    <div id="distress-active-banner" class="alert alert-danger bg-danger bg-opacity-25 border-danger text-white rounded-4 py-3 px-4 mb-4 d-flex align-items-center justify-content-between {% if trip.status != 'SOS_Triggered' %}d-none{% endif %}" role="alert">
-      <div class="d-flex align-items-center gap-3">
-        <i class="fa-solid fa-triangle-exclamation fs-1 text-danger fa-beat"></i>
-        <div>
-          <h6 class="fw-bold mb-1 text-uppercase text-warning">EMERGENCY DISTRESS BEACON ACTIVE!</h6>
-          <p class="small mb-0 text-white opacity-90">An emergency SOS distress alert was dispatched during this trip. SafeRide Police Patrol & Safety Command Center have been notified.</p>
-        </div>
-      </div>
-      <a href="tel:112" class="btn btn-danger rounded-pill fw-bold px-4 py-2 text-uppercase shadow-lg">
-        <i class="fa-solid fa-phone me-1"></i> CALL POLICE 112
-      </a>
-    </div>
-
-    <!-- Live Map Container with Overlay Controls -->
-    <div class="position-relative mb-4">
-      <div id="public-live-map" class="rounded-4 border" style="height: 500px; border-color: #334155 !important; overflow: hidden; position: relative;"></div>
-      
-      <!-- Top Left Overlay: Live Stream Status -->
-      <div class="map-overlay-badge top-left d-flex align-items-center gap-2">
-        <span class="spinner-grow spinner-grow-sm text-success" role="status" style="width: 10px; height: 10px;"></span>
-        <span id="overlay-stream-text">Streaming Live GPS</span>
-        <span class="text-white-50 font-monospace small" id="overlay-gps-coords">({{ trip.live_latitude|default:trip.current_latitude|floatformat:4 }}, {{ trip.live_longitude|default:trip.current_longitude|floatformat:4 }})</span>
-      </div>
-
-      <!-- Top Right Overlay: Follow Vehicle & Map Controls -->
-      <div class="map-overlay-badge top-right d-flex align-items-center gap-2">
-        <button type="button" class="btn btn-link btn-sm text-decoration-none p-0 me-2" onclick="toggleAutoFollow()" id="btn-toggle-follow" style="color: #38BDF8;" title="Toggle automatic camera tracking">
-          <i class="fa-solid fa-location-crosshairs me-1"></i> <span id="follow-status-text">Follow: ON</span>
-        </button>
-        <span class="text-white-50">|</span>
-        <button type="button" class="btn btn-link btn-sm text-white text-decoration-none p-0 me-2 ms-1" onclick="recenterVehicle()" id="btn-recenter" title="Center map on vehicle">
-          <i class="fa-solid fa-crosshairs text-info me-1"></i> Center
-        </button>
-        <span class="text-white-50">|</span>
-        <button type="button" class="btn btn-link btn-sm text-white text-decoration-none p-0 ms-1" onclick="fitRouteBounds()" id="btn-fit-route" title="View full route">
-          <i class="fa-solid fa-expand text-warning me-1"></i> Full Route
-        </button>
-      </div>
-
-      <!-- Bottom Center Overlay: Simulation / Test Drive Controller -->
-      {% if trip.status != 'Completed' %}
-      <div class="map-overlay-badge bottom-center d-flex align-items-center gap-2">
-        <button type="button" class="btn btn-warning btn-sm rounded-pill fw-bold text-dark px-3 py-1 shadow-sm" id="btn-simulate-movement" onclick="toggleTrackingSimulation()">
-          <i class="fa-solid fa-play me-1" id="sim-icon"></i> <span id="sim-text">Test Live Movement</span>
-        </button>
-        <span class="small text-white-50 d-none d-sm-inline" id="sim-info">Simulate live transit telemetry</span>
-      </div>
-      {% endif %}
-    </div>
-
-    <!-- Journey Telemetry & Route Summary Cards -->
-    <div class="row g-3">
-      <div class="col-6 col-md-3">
-        <div class="telemetry-card h-100">
-          <span class="text-muted small d-block mb-1">
-            <i class="fa-solid fa-circle-notch text-primary me-1"></i> Ride Status
-          </span>
-          <strong class="text-success fs-6" id="telemetry-status">
-            {% if trip.status == 'Completed' %}
-              <i class="fa-solid fa-circle-check me-1"></i> Completed Safely
-            {% elif trip.status == 'SOS_Triggered' %}
-              <span class="text-danger"><i class="fa-solid fa-triangle-exclamation me-1 fa-shake"></i> SOS Active</span>
-            {% else %}
-              <i class="fa-solid fa-circle-dot text-success me-1 fa-fade"></i> Live En-Route
-            {% endif %}
-          </strong>
-          <span class="d-block text-white-50 small mt-1 font-monospace" id="last-ping-time" style="font-size: 0.75rem;">
-            Updated: just now
-          </span>
-        </div>
-      </div>
-
-      <div class="col-6 col-md-3">
-        <div class="telemetry-card h-100">
-          <span class="text-muted small d-block mb-1">
-            <i class="fa-solid fa-location-dot text-success me-1"></i> 🟢 Boarding Point
-          </span>
-          <strong class="text-white small d-block text-truncate" title="{{ trip.boarding_address|default:trip.pickup_location_name }}">
-            {{ trip.boarding_address|default:trip.pickup_location_name|default:"Boarding Point" }}
-          </strong>
-          <span class="text-white-50 small font-monospace" style="font-size: 0.72rem;">
-            Pickup verified
-          </span>
-        </div>
-      </div>
-
-      <div class="col-6 col-md-3">
-        <div class="telemetry-card h-100">
-          <span class="text-muted small d-block mb-1">
-            <i class="fa-solid fa-flag-checkered text-danger me-1"></i> 🔴 Destination Point
-          </span>
-          <strong class="text-white small d-block text-truncate" title="{{ trip.destination_address|default:trip.drop_location_name|default:'Target Drop Point' }}">
-            {{ trip.destination_address|default:trip.drop_location_name|default:"Target Drop Point" }}
-          </strong>
-          <span class="text-white-50 small font-monospace" id="telemetry-distance-label" style="font-size: 0.72rem;">
-            Dist: {{ trip.distance_km|default:"0.00" }} km
-          </span>
-        </div>
-      </div>
-
-      <div class="col-6 col-md-3">
-        <div class="telemetry-card h-100">
-          <span class="text-muted small d-block mb-1">
-            <i class="fa-solid fa-gauge-high text-info me-1"></i> Live Metrics
-          </span>
-          <strong class="text-warning fs-6">
-            ₹{{ trip.fare_amount|default:"30.00" }}
-          </strong>
-          <span class="d-block text-info small mt-1 font-monospace" id="telemetry-speed" style="font-size: 0.75rem;">
-            Speed: ~28 km/h (GPS)
-          </span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Prominent Clickable Public Live Tracking URL Card -->
-    <div class="mt-4 p-4 rounded-4 border" style="background-color: #0b1120; border-color: #1E293B !important;">
-      <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
-        <div class="d-flex align-items-center gap-2">
-          <span class="badge bg-primary bg-opacity-25 text-primary border border-primary px-3 py-1 rounded-pill small fw-bold">
-            <i class="fa-solid fa-earth-americas me-1"></i> PUBLIC LIVE TRACKING LINK
-          </span>
-          <span class="text-white-50 small">&bull; Clickable & works on any mobile or desktop device without login</span>
-        </div>
-        <div class="d-flex gap-2">
-          <button class="btn btn-outline-warning btn-sm rounded-pill px-3 shadow-sm" type="button" onclick="copyShareLink()">
-            <i class="fa-solid fa-copy me-1"></i> Copy Link
-          </button>
-          <a href="https://api.whatsapp.com/send?text={{ share_url|urlencode }}" target="_blank" class="btn btn-success btn-sm rounded-pill px-3 shadow-sm">
-            <i class="fa-brands fa-whatsapp me-1"></i> WhatsApp
-          </a>
-        </div>
-      </div>
-
-      <!-- Main Clickable Public Link (Opens in New Tab) -->
-      <div class="p-3 rounded-3 border mb-2 d-flex align-items-center justify-content-between flex-wrap gap-2" style="background-color: #131C2E; border-color: #334155 !important;">
-        <div class="flex-grow-1">
-          <span class="text-white-50 small d-block mb-1">
-            <i class="fa-solid fa-link text-info me-1"></i> Clickable Public URL:
-          </span>
-          <a href="{{ share_url }}" target="_blank" class="text-info fw-bold font-monospace fs-6 text-decoration-underline text-break" id="clickable-public-link" title="Click to open live tracker directly">
-            {{ share_url }} <i class="fa-solid fa-arrow-up-right-from-square small ms-1"></i>
-          </a>
-        </div>
-        <a href="{{ share_url }}" target="_blank" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold shadow-sm">
-          <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Open Tracker
-        </a>
-      </div>
-
-      <!-- Cross-Device / Mobile Wi-Fi Network URL -->
-      {% if network_share_url and network_share_url != share_url %}
-      <div class="p-3 rounded-3 border d-flex align-items-center justify-content-between flex-wrap gap-2" style="background-color: #131C2E; border-color: #334155 !important;">
-        <div class="flex-grow-1">
-          <span class="text-warning small d-block mb-1">
-            <i class="fa-solid fa-mobile-screen-button text-warning me-1"></i> Mobile / Other Devices on Same Wi-Fi Network:
-          </span>
-          <a href="{{ network_share_url }}" target="_blank" class="text-warning fw-bold font-monospace small text-decoration-underline text-break" title="Click to open or share to phone">
-            {{ network_share_url }} <i class="fa-solid fa-arrow-up-right-from-square small ms-1"></i>
-          </a>
-        </div>
-        <button class="btn btn-outline-warning btn-sm rounded-pill px-3" onclick="navigator.clipboard.writeText('{{ network_share_url }}'); alert('✅ Mobile network URL copied!');">
-          <i class="fa-solid fa-copy me-1"></i> Copy Mobile URL
-        </button>
-      </div>
-      {% endif %}
-    </div>
-
-  </div>
-</div>
-
-<!-- Audio Sirens / Alert (synthetic audio) -->
-<script>
-  function playAlertBeep(isEmergency = false) {
-    try {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = isEmergency ? 'sawtooth' : 'sine';
-      osc.frequency.setValueAtTime(isEmergency ? 880 : 587.33, audioCtx.currentTime);
-      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.45);
-    } catch (e) {}
-  }
-</script>
-{% endblock %}
-
-{% block extra_js %}
-<!-- Google Maps Platform (Only loaded when a valid API key is present) -->
-{% if GOOGLE_MAPS_API_KEY %}
-<script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&libraries=places,geometry"></script>
-{% endif %}
-
-<!-- Leaflet.js (Always ready for zero-dependency robust OpenStreetMap rendering) -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<script>
-  // Global Telemetry & Map Variables
-  let leafletMap = null;
-  let vehicleMarker = null;
-  let startMarker = null;
-  let destMarker = null;
-  let routePolyline = null;
-  let plannedPolyline = null;
-  let gMap = null;
-  let gVehicleMarker = null;
-
-  let currentLat = Number("{{ trip.live_latitude|default:trip.current_latitude|default:'9.684300' }}");
-  let currentLng = Number("{{ trip.live_longitude|default:trip.current_longitude|default:'76.685300' }}");
-  
-  let boardLat = {% if trip.boarding_latitude %}{{ trip.boarding_latitude }}{% elif trip.pickup_latitude %}{{ trip.pickup_latitude }}{% else %}null{% endif %};
-  let boardLng = {% if trip.boarding_longitude %}{{ trip.boarding_longitude }}{% elif trip.pickup_longitude %}{{ trip.pickup_longitude }}{% else %}null{% endif %};
-  let boardName = "{{ trip.boarding_address|default:trip.pickup_location_name|default:'Boarding Point'|escapejs }}";
-
-  let destLat = {% if trip.destination_latitude %}{{ trip.destination_latitude }}{% elif trip.drop_latitude %}{{ trip.drop_latitude }}{% else %}null{% endif %};
-  let destLng = {% if trip.destination_longitude %}{{ trip.destination_longitude }}{% elif trip.drop_longitude %}{{ trip.drop_longitude }}{% else %}null{% endif %};
-  let destName = "{{ trip.destination_address|default:trip.drop_location_name|default:'Target Drop Point'|escapejs }}";
-
-  let tripStatus = "{{ trip.status }}";
-  let hasEmergencySOS = tripStatus === 'SOS_Triggered';
-  let historyPoints = [[currentLat, currentLng]];
-  let lastSyncTimestamp = Date.now();
-  let simulationTimer = null;
-  let isSimulating = false;
-
-  // 1. Copy Live Tracking Link
-  function copyShareLink() {
-    const input = document.getElementById('public-share-url-box');
-    const url = (input && input.value) ? input.value : window.location.href;
-    navigator.clipboard.writeText(url).then(() => {
-      const copyText = document.getElementById('copy-link-text');
-      if (copyText) copyText.innerText = 'Copied!';
-      const btn = document.getElementById('copy-link-btn');
-      if (btn) {
-        btn.classList.remove('btn-outline-warning');
-        btn.classList.add('btn-success');
-        setTimeout(() => {
-          btn.classList.remove('btn-success');
-          btn.classList.add('btn-outline-warning');
-          if (copyText) copyText.innerText = 'Copy Link';
-        }, 2200);
-      }
-    });
-  }
-
-  // 2. Leaflet Map Initialization
-  function initLeafletMap() {
-    const mapElement = document.getElementById('public-live-map');
-    if (!mapElement) return;
-    mapElement.innerHTML = '';
-
-    leafletMap = L.map('public-live-map', {
-      zoomControl: true,
-      attributionControl: true
-    }).setView([currentLat, currentLng], 15);
-
-    // High performance Esri World Street Map tiles (No API key, zero watermarks, no rate-limits)
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, USGS, DeLorme, TomTom',
-      maxZoom: 19
-    }).addTo(leafletMap);
-
-    // Animated Car Icon with radar pulse
-    const carIconHtml = `
-      <div class="vehicle-radar-pulse ${hasEmergencySOS ? 'sos' : ''}">
-        <div style="background: ${hasEmergencySOS ? '#DC2626' : '#2563EB'}; width: 42px; height: 42px; border-radius: 50%; border: 3px solid #FFFFFF; display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-size: 18px; box-shadow: 0 0 16px ${hasEmergencySOS ? 'rgba(220, 38, 38, 0.9)' : 'rgba(37, 99, 235, 0.9)'};">
-          <i class="fa-solid fa-car-side"></i>
-        </div>
-      </div>
-    `;
-
-    const carDivIcon = L.divIcon({
-      className: 'custom-car-div-icon',
-      html: carIconHtml,
-      iconSize: [44, 44],
-      iconAnchor: [22, 22]
-    });
-
-    vehicleMarker = L.marker([currentLat, currentLng], { icon: carDivIcon }).addTo(leafletMap);
-    vehicleMarker.bindPopup(`
-      <div style="font-family: 'Inter', sans-serif; padding: 4px; color: #FFFFFF;">
-        <h6 style="margin: 0 0 4px 0; font-weight: 700; color: #60A5FA;">{{ vehicle.registration_number|default:driver.vehicle_number }}</h6>
-        <p style="margin: 0 0 4px 0; font-size: 13px; color: #E2E8F0;"><b>Driver:</b> {{ driver.user.get_full_name|default:driver.name|default:driver.user.username }}</p>
-        <span style="display: inline-block; background: ${hasEmergencySOS ? '#DC2626' : '#065F46'}; color: #FFF; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 700;">
-          ${hasEmergencySOS ? '🚨 SOS EMERGENCY SIGNAL' : 'SafeRide Live Satellite GPS'}
-        </span>
-      </div>
-    `);
-
-    // Boarding Point Marker (Green Flag)
-    if (boardLat && boardLng) {
-      const startIcon = L.divIcon({
-        className: 'custom-start-marker',
-        html: `<div style="background: #10B981; width: 32px; height: 32px; border-radius: 50%; border: 3px solid #FFFFFF; display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-size: 14px; box-shadow: 0 0 10px rgba(16, 185, 129, 0.7);"><i class="fa-solid fa-circle-dot"></i></div>`,
-        iconSize: [32, 32],
-        iconAnchor: [16, 16]
-      });
-      startMarker = L.marker([boardLat, boardLng], { icon: startIcon }).addTo(leafletMap);
-      startMarker.bindPopup(`<b>Boarding Point:</b><br>${boardName}`);
-      historyPoints.unshift([boardLat, boardLng]);
-    }
-
-    // Destination Marker (Checkered Flag)
-    if (destLat && destLng) {
-      const finishIcon = L.divIcon({
-        className: 'custom-finish-marker',
-        html: `<div style="background: #EF4444; width: 32px; height: 32px; border-radius: 50%; border: 3px solid #FFFFFF; display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-size: 14px; box-shadow: 0 0 10px rgba(239, 68, 68, 0.7);"><i class="fa-solid fa-flag-checkered"></i></div>`,
-        iconSize: [32, 32],
-        iconAnchor: [16, 16]
-      });
-      destMarker = L.marker([destLat, destLng], { icon: finishIcon }).addTo(leafletMap);
-      destMarker.bindPopup(`<b>Destination Point:</b><br>${destName}`);
-
-      // Planned path dashed line
-      plannedPolyline = L.polyline([[currentLat, currentLng], [destLat, destLng]], {
-        color: '#64748B',
-        weight: 3,
-        dashArray: '6, 8',
-        opacity: 0.6
-      }).addTo(leafletMap);
-    }
-
-    // Actual Traveled GPS Trail (Cyan Glowing Polyline)
-    routePolyline = L.polyline(historyPoints, {
-      color: '#38BDF8',
-      weight: 5,
-      opacity: 0.85,
-      lineJoin: 'round'
-    }).addTo(leafletMap);
-
-    fitRouteBounds();
-  }
-
-  let autoFollow = true;
-  let prevLat = currentLat;
-  let prevLng = currentLng;
-  let prevTimestamp = Date.now();
-
-  // 3. Center Vehicle on Map
-  function recenterVehicle() {
-    if (leafletMap && vehicleMarker) {
-      leafletMap.panTo([currentLat, currentLng], { animate: true, duration: 0.8 });
-    }
-  }
-
-  // 3b. Toggle Auto-Follow Camera
-  function toggleAutoFollow() {
-    autoFollow = !autoFollow;
-    const textEl = document.getElementById('follow-status-text');
-    const btnEl = document.getElementById('btn-toggle-follow');
-    if (textEl && btnEl) {
-      textEl.innerText = autoFollow ? 'Follow: ON' : 'Follow: OFF';
-      btnEl.style.color = autoFollow ? '#38BDF8' : '#94A3B8';
-    }
-    if (autoFollow) {
-      recenterVehicle();
-    }
-  }
-
-  // 4. Fit All Route Bounds
-  function fitRouteBounds() {
-    if (!leafletMap) return;
-    autoFollow = false;
-    const textEl = document.getElementById('follow-status-text');
-    const btnEl = document.getElementById('btn-toggle-follow');
-    if (textEl && btnEl) {
-      textEl.innerText = 'Follow: OFF';
-      btnEl.style.color = '#94A3B8';
-    }
-
-    const markersToFit = [];
-    if (vehicleMarker) markersToFit.push(vehicleMarker);
-    if (startMarker) markersToFit.push(startMarker);
-    if (destMarker) markersToFit.push(destMarker);
-    if (markersToFit.length > 1) {
-      const group = L.featureGroup(markersToFit);
-      leafletMap.fitBounds(group.getBounds().pad(0.2));
-    } else {
-      leafletMap.setView([currentLat, currentLng], 15);
-    }
-  }
-
-  // Haversine Speed Calculator
-  function calculateGPSVelocity(pLat, pLng, nLat, nLng, deltaSec) {
-    if (!pLat || !deltaSec || deltaSec < 0.5) return null;
-    const R = 6371e3;
-    const rad1 = pLat * Math.PI / 180;
-    const rad2 = nLat * Math.PI / 180;
-    const dRad = (nLat - pLat) * Math.PI / 180;
-    const dLng = (nLng - pLng) * Math.PI / 180;
-    const a = Math.sin(dRad / 2) * Math.sin(dRad / 2) +
-              Math.cos(rad1) * Math.cos(rad2) *
-              Math.sin(dLng / 2) * Math.sin(dLng / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distM = R * c;
-    return (distM / deltaSec) * 3.6; // km/h
-  }
-
-  // 5. Update Coordinates & Refresh Map (Real-time without page reload)
-  function updateTelemetryCoordinates(lat, lng, distKm, fareVal, status) {
-    const coordsChanged = (Math.abs(currentLat - lat) > 0.00005 || Math.abs(currentLng - lng) > 0.00005);
-    
-    // Dynamic Speed Calculation
-    const timeDelta = (Date.now() - prevTimestamp) / 1000;
-    if (coordsChanged && timeDelta >= 1.2) {
-      const spd = calculateGPSVelocity(prevLat, prevLng, lat, lng, timeDelta);
-      if (spd !== null && spd > 2 && spd < 120) {
-        const speedEl = document.getElementById('telemetry-speed');
-        if (speedEl) speedEl.innerText = `Speed: ~${Math.round(spd)} km/h`;
-      }
-      prevLat = lat;
-      prevLng = lng;
-      prevTimestamp = Date.now();
-    }
-
-    currentLat = lat;
-    currentLng = lng;
-    lastSyncTimestamp = Date.now();
-
-    // Update overlay coordinates badge
-    const coordsEl = document.getElementById('overlay-gps-coords');
-    if (coordsEl) coordsEl.innerText = `(${lat.toFixed(4)}, ${lng.toFixed(4)})`;
-
-    // Heartbeat ping counter
-    const lastPingEl = document.getElementById('last-ping-time');
-    if (lastPingEl) lastPingEl.innerText = 'Updated: just now';
-
-    // Flash the live stream badge green on update
-    const streamBadge = document.getElementById('gps-stream-badge');
-    if (streamBadge) {
-      streamBadge.style.transition = 'background-color 0.3s ease';
-      streamBadge.style.backgroundColor = 'rgba(16, 185, 129, 0.35)';
-      setTimeout(() => { streamBadge.style.backgroundColor = 'rgba(16, 185, 129, 0.15)'; }, 600);
-    }
-
-    if (distKm !== undefined) {
-      const distEl = document.getElementById('telemetry-distance-label');
-      if (distEl) distEl.innerText = `Dist: ${parseFloat(distKm).toFixed(2)} km`;
-    }
-
-    if (fareVal !== undefined) {
-      const fareEl = document.querySelector('.telemetry-card strong.text-warning');
-      if (fareEl) fareEl.innerText = `₹${parseFloat(fareVal).toFixed(2)}`;
-    }
-
-    // Update vehicle marker on Leaflet map in real-time
-    if (vehicleMarker) {
-      vehicleMarker.setLatLng([lat, lng]);
-
-      if (coordsChanged) {
-        historyPoints.push([lat, lng]);
-        if (routePolyline) {
-          routePolyline.setLatLngs(historyPoints);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Live Tracking - SafeRide</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            background-color: #f8fafc;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
-      }
-      if (plannedPolyline && destLat && destLng) {
-        plannedPolyline.setLatLngs([[lat, lng], [destLat, destLng]]);
-      }
-
-      // Smooth auto-follow camera glide
-      if (autoFollow && leafletMap) {
-        leafletMap.panTo([lat, lng], { animate: true, duration: 1.0 });
-      }
-    }
-
-    // Dynamic state transitions without reload
-    if (status && status !== tripStatus) {
-      tripStatus = status;
-      const statusElem = document.getElementById('telemetry-status');
-      if (status === 'Completed') {
-        if (statusElem) statusElem.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i> Completed Safely';
-        const banner = document.getElementById('safe-arrival-banner');
-        if (banner) banner.classList.remove('d-none');
-        playAlertBeep(false);
-      } else if (status === 'SOS_Triggered') {
-        if (statusElem) statusElem.innerHTML = '<span class="text-danger"><i class="fa-solid fa-triangle-exclamation me-1 fa-shake"></i> SOS Active</span>';
-        const sosBanner = document.getElementById('distress-active-banner');
-        if (sosBanner) sosBanner.classList.remove('d-none');
-        playAlertBeep(true);
-      }
-    }
-  }
-
-  // 6. Live GPS Polling from SafeRide Backend API (Every 2 seconds for real-time response)
-  function pollLiveTripCoordinates() {
-    if (tripStatus === 'Completed') return;
-
-    fetch("{% url 'api_trip_location' trip.trip_id %}")
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.latitude && data.longitude) {
-          const lat = parseFloat(data.latitude);
-          const lng = parseFloat(data.longitude);
-          updateTelemetryCoordinates(lat, lng, data.distance_km, data.fare_amount, data.status);
+        
+        #map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1;
         }
-      })
-      .catch(err => console.log("Live telemetry ping:", err));
-  }
 
-  // 7. Interactive Test / Demo Simulation (Simulates Vehicle Driving Live on Map)
-  function toggleTrackingSimulation() {
-    if (isSimulating) {
-      clearInterval(simulationTimer);
-      isSimulating = false;
-      document.getElementById('sim-icon').className = 'fa-solid fa-play me-1';
-      document.getElementById('sim-text').innerText = 'Test Live Movement';
-      document.getElementById('btn-simulate-movement').className = 'btn btn-warning btn-sm rounded-pill fw-bold text-dark px-3 py-1 shadow-sm';
-      return;
-    }
-
-    isSimulating = true;
-    autoFollow = true;
-    document.getElementById('sim-icon').className = 'fa-solid fa-pause me-1';
-    document.getElementById('sim-text').innerText = 'Pause Movement';
-    document.getElementById('btn-simulate-movement').className = 'btn btn-success btn-sm rounded-pill fw-bold text-white px-3 py-1 shadow-sm';
-
-    let targetLat = destLat || (currentLat + 0.015);
-    let targetLng = destLng || (currentLng + 0.015);
-
-    simulationTimer = setInterval(() => {
-      const stepFactor = 0.07;
-      currentLat += (targetLat - currentLat) * stepFactor + (Math.random() - 0.5) * 0.0003;
-      currentLng += (targetLng - currentLng) * stepFactor + (Math.random() - 0.5) * 0.0003;
-
-      updateTelemetryCoordinates(currentLat, currentLng);
-
-      // Push to backend endpoint without requiring page refresh
-      fetch('/api/trip/{{ trip.trip_id }}/update-location/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': '{{ csrf_token }}'
-        },
-        body: JSON.stringify({
-          latitude: currentLat,
-          longitude: currentLng
-        })
-      }).catch(() => {});
-    }, 2000);
-  }
-
-  // Update "time ago" counter every second
-  setInterval(() => {
-    const elapsed = Math.round((Date.now() - lastSyncTimestamp) / 1000);
-    const lastPingEl = document.getElementById('last-ping-time');
-    if (lastPingEl) {
-      if (elapsed < 3) lastPingEl.innerText = 'Updated: just now';
-      else lastPingEl.innerText = `Updated: ${elapsed}s ago`;
-    }
-  }, 1000);
-
-  document.addEventListener('DOMContentLoaded', function() {
-    initLeafletMap();
-    if (leafletMap) {
-      leafletMap.on('dragstart', function() {
-        if (autoFollow) {
-          autoFollow = false;
-          const textEl = document.getElementById('follow-status-text');
-          const btnEl = document.getElementById('btn-toggle-follow');
-          if (textEl && btnEl) {
-            textEl.innerText = 'Follow: OFF';
-            btnEl.style.color = '#94A3B8';
-          }
+        .leaflet-container {
+            background: #f8fafc !important;
         }
-      });
-    }
-    // Real-time polling every 2 seconds without page refresh
-    setInterval(pollLiveTripCoordinates, 2000);
-  });
-</script>
-{% endblock %}
+
+        /* Bottom Sheet UI */
+        .bottom-sheet {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border-top-left-radius: 24px;
+            border-top-right-radius: 24px;
+            padding: 24px;
+            z-index: 1000;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+            transition: transform 0.3s ease-out;
+        }
+
+        .driver-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #64748b;
+            flex-shrink: 0;
+        }
+
+        .status-badge {
+            position: absolute;
+            top: -16px;
+            right: 24px;
+            background: #10b981;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+            z-index: 1001;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .status-badge.completed { background: #3b82f6; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2); }
+        .status-badge.sos { background: #ef4444; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2); animation: pulse 1s infinite alternate; }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.05); }
+        }
+
+        /* Top Bar */
+        .top-bar {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .top-pill {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #1e293b;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+
+        .car-marker {
+            width: 40px;
+            height: 40px;
+            background: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            border: 2px solid #3b82f6;
+            color: #3b82f6;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Map Container -->
+    <div id="map"></div>
+
+    <!-- Top Bar Overlay -->
+    <div class="top-bar">
+        <div class="top-pill">
+            <span class="live-dot"></span> Live Tracking
+        </div>
+        <a href="https://www.google.com/maps/search/?api=1&query={{ trip.live_latitude|default:trip.current_latitude|default:0 }},{{ trip.live_longitude|default:trip.current_longitude|default:0 }}" id="open-maps-btn" class="btn btn-primary rounded-pill fw-bold shadow pointer-events-auto" target="_blank" style="pointer-events: auto;">
+            <i class="fa-solid fa-map-location-dot me-1"></i> Open Maps
+        </a>
+    </div>
+
+    <!-- Bottom Sheet Details -->
+    <div class="bottom-sheet">
+        {% if trip.status == 'Completed' %}
+            <div class="status-badge completed"><i class="fa-solid fa-check"></i> Trip Completed</div>
+        {% elif trip.status == 'SOS_Triggered' %}
+            <div class="status-badge sos"><i class="fa-solid fa-triangle-exclamation"></i> SOS Active</div>
+        {% else %}
+            <div class="status-badge"><i class="fa-solid fa-location-dot"></i> En Route</div>
+        {% endif %}
+
+        <div class="d-flex align-items-center mb-4">
+            <div class="driver-avatar shadow-sm">
+                <i class="fa-solid fa-user-tie"></i>
+            </div>
+            <div class="ms-3">
+                <h5 class="mb-0 fw-bold text-dark">{{ driver.name|default:driver.user.get_full_name|default:driver.user.username|default:"Assigned Driver" }}</h5>
+                <div class="text-muted small d-flex align-items-center mt-1">
+                    <i class="fa-solid fa-star text-warning me-1"></i> 4.9 &bull; <i class="fa-solid fa-shield-check text-success ms-1 me-1"></i> Verified Partner
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-6">
+                <div class="p-3 bg-light rounded-4 border h-100">
+                    <div class="small text-muted mb-1"><i class="fa-solid fa-car text-primary me-1"></i> Vehicle</div>
+                    <div class="fw-bold text-dark text-truncate">{{ vehicle.make|default:"Sedan" }} {{ vehicle.model|default:"" }}</div>
+                    <div class="badge bg-secondary mt-1">{{ vehicle.registration_number|default:driver.vehicle_number|default:"XX-00-0000" }}</div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="p-3 bg-light rounded-4 border h-100">
+                    <div class="small text-muted mb-1"><i class="fa-solid fa-compass text-danger me-1"></i> Current Coordinates</div>
+                    <div class="fw-bold text-dark font-monospace small" id="text-coords">
+                        {{ trip.live_latitude|default:trip.current_latitude|floatformat:4 }}, {{ trip.live_longitude|default:trip.current_longitude|floatformat:4 }}
+                    </div>
+                    <div class="small text-muted mt-1" id="last-updated">Updated just now</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-light p-3 rounded-4 border mb-3">
+            <div class="d-flex align-items-start">
+                <div class="me-3 mt-1 text-primary"><i class="fa-regular fa-circle-dot"></i></div>
+                <div>
+                    <div class="small text-muted">Destination</div>
+                    <div class="fw-bold text-dark text-truncate">{{ trip.destination_address|default:trip.drop_location_name|default:"Ongoing Journey" }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-2">
+            <div class="col-6">
+                <a href="tel:{{ driver.phone_number|default:driver.user.phone|default:'' }}" class="btn btn-primary w-100 rounded-pill fw-bold">
+                    <i class="fa-solid fa-phone me-1"></i> Call Driver
+                </a>
+            </div>
+            <div class="col-6">
+                <a href="tel:{{ trip.passenger.phone|default:'' }}" class="btn btn-outline-primary w-100 rounded-pill fw-bold">
+                    <i class="fa-solid fa-phone me-1"></i> Call Passenger
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Init Map
+        const initialLat = parseFloat("{{ trip.live_latitude|default:trip.current_latitude|default:12.9716 }}");
+        const initialLng = parseFloat("{{ trip.live_longitude|default:trip.current_longitude|default:77.5946 }}");
+        
+        const map = L.map('map', {
+            zoomControl: false,
+            attributionControl: false
+        }).setView([initialLat, initialLng], 16);
+
+        // High performance Esri World Street Map tiles (No API key, zero watermarks)
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 19
+        }).addTo(map);
+
+        // Custom Car Marker
+        const carIcon = L.divIcon({
+            html: '<div class="car-marker"><i class="fa-solid fa-car-side"></i></div>',
+            className: 'dummy-class',
+            iconSize: [40, 40],
+            iconAnchor: [20, 20]
+        });
+
+        let carMarker = L.marker([initialLat, initialLng], {icon: carIcon}).addTo(map);
+        
+        // Polling Logic
+        function pollLiveLocation() {
+            fetch('/api/trip/{{ trip.trip_id }}/live-location/')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success' && data.location) {
+                        const lat = data.location.lat;
+                        const lng = data.location.lng;
+                        
+                        // Update Map
+                        carMarker.setLatLng([lat, lng]);
+                        map.setView([lat, lng]);
+                        
+                        // Update UI Text
+                        document.getElementById('text-coords').innerText = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                        document.getElementById('last-updated').innerText = 'Updated just now';
+                        
+                        // Update Google Maps button link
+                        document.getElementById('open-maps-btn').href = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+                    }
+                })
+                .catch(err => console.error("Error polling location:", err));
+        }
+
+        // Poll every 2.5 seconds
+        {% if trip.status != 'Completed' %}
+            setInterval(pollLiveLocation, 2500);
+        {% endif %}
+    </script>
+</body>
+</html>

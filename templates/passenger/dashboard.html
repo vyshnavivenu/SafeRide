@@ -59,6 +59,11 @@
       </div>
 
       <div class="d-flex flex-wrap gap-2 align-items-center">
+        {% if active_trip.status == 'SOS_Triggered' %}
+        <button type="button" class="btn btn-danger rounded-pill fw-bold px-3 shadow" onclick="cancelSOSDispatch('{{ active_trip.trip_id }}')">
+          <i class="fa-solid fa-xmark me-2"></i> Cancel SOS
+        </button>
+        {% endif %}
         <a href="{% url 'active_trip' active_trip.trip_id %}" class="btn btn-warning rounded-pill fw-bold px-3 px-sm-4 shadow text-dark" style="background-color: #FF9800; border: none;">
           <i class="fa-solid fa-map-location-dot me-2"></i> Live Map & SOS &rarr;
         </a>
@@ -194,6 +199,29 @@ function triggerDashboardSOS() {
     }
   }
 }
+</script>
+<script>
+  function cancelSOSDispatch(tripId) {
+    if (!confirm('Are you sure you want to cancel the SOS emergency alert?')) return;
+    
+    fetch('/api/sos/cancel/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: JSON.stringify({ trip_id: tripId })
+    })
+    .then(response => response.json())
+    .then(data => {
+      alert(data.message);
+      location.reload();
+    })
+    .catch(err => {
+      console.error("SOS Cancel Error:", err);
+      alert('Error cancelling SOS alert.');
+    });
+  }
 </script>
 {% endblock %}
 

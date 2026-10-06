@@ -76,15 +76,7 @@ def _get_public_share_base_url(request=None):
     3. Check local network Wi-Fi IP (_get_network_base_url).
     4. Fallback to request host.
     """
-    if request:
-        try:
-            host = request.get_host()
-            if not ('127.0.0.1' in host or 'localhost' in host):
-                return request.build_absolute_uri('/')[:-1]
-        except Exception:
-            pass
-
-    # Check for active public tunnel URL file or environment variable
+    # 1. Check for active public tunnel URL file or environment variable first!
     try:
         tunnel_file = settings.BASE_DIR / '.tunnel_url'
         if tunnel_file.exists():
@@ -94,6 +86,16 @@ def _get_public_share_base_url(request=None):
                     return saved_url.rstrip('/')
     except Exception:
         pass
+
+    if request:
+        try:
+            host = request.get_host()
+            if not ('127.0.0.1' in host or 'localhost' in host):
+                return request.build_absolute_uri('/')[:-1]
+        except Exception:
+            pass
+
+
 
     import os
     env_tunnel = os.getenv('PUBLIC_TUNNEL_URL', '').strip()
@@ -144,13 +146,13 @@ def global_context_processor(request):
                 active_trip_id = active_trip.trip_id
                 try:
                     public_base = _get_public_share_base_url(request)
-                    active_trip_share_url = f"{public_base}/live-track/{active_trip.share_token}/"
+                    active_trip_share_url = f"{public_base}/live-track/{active_trip.trip_id}/"
                 except Exception:
-                    active_trip_share_url = request.build_absolute_uri(f"/live-track/{active_trip.share_token}/")
+                    active_trip_share_url = request.build_absolute_uri(f"/live-track/{active_trip.trip_id}/")
 
                 try:
                     net_base = _get_network_base_url(request)
-                    active_trip_network_url = f"{net_base}/live-track/{active_trip.share_token}/"
+                    active_trip_network_url = f"{net_base}/live-track/{active_trip.trip_id}/"
                 except Exception:
                     active_trip_network_url = active_trip_share_url
             else:
@@ -180,12 +182,12 @@ def global_context_processor(request):
                     active_trip_id = active_trip.trip_id
                     try:
                         public_base = _get_public_share_base_url(request)
-                        active_trip_share_url = f"{public_base}/live-track/{active_trip.share_token}/"
+                        active_trip_share_url = f"{public_base}/live-track/{active_trip.trip_id}/"
                     except Exception:
-                        active_trip_share_url = request.build_absolute_uri(f"/live-track/{active_trip.share_token}/")
+                        active_trip_share_url = request.build_absolute_uri(f"/live-track/{active_trip.trip_id}/")
                     try:
                         net_base = _get_network_base_url(request)
-                        active_trip_network_url = f"{net_base}/live-track/{active_trip.share_token}/"
+                        active_trip_network_url = f"{net_base}/live-track/{active_trip.trip_id}/"
                     except Exception:
                         active_trip_network_url = active_trip_share_url
 
@@ -678,7 +680,7 @@ def passenger_dashboard(request):
     """Passenger command center."""
     ensure_diverse_driver_ecosystem(user=request.user)
     profile, _ = PassengerProfile.objects.get_or_create(user=request.user)
-    active_trip = TripSession.objects.filter(passenger=request.user, status__in=['Ongoing', 'IN_PROGRESS', 'Active']).first()
+    active_trip = TripSession.objects.filter(passenger=request.user, status__in=['Ongoing', 'IN_PROGRESS', 'Active', 'SOS_Triggered']).first()
     recent_trips = TripSession.objects.filter(passenger=request.user).select_related('driver', 'driver__user').order_by('-start_time')[:5]
     recent_complaints = Complaint.objects.filter(passenger=request.user).order_by('-created_at')[:3]
     verified_drivers = Driver.objects.filter(verification_status__in=['Verified', Driver.VerificationStatus.VERIFIED]).order_by('-reputation_score')
@@ -775,8 +777,8 @@ def active_trip(request, trip_id):
     
     public_base = _get_public_share_base_url(request)
     network_base = _get_network_base_url(request)
-    share_url = f"{public_base}/live-track/{trip.share_token}/"
-    network_share_url = f"{network_base}/live-track/{trip.share_token}/"
+    share_url = f"{public_base}/live-track/{trip.trip_id}/"
+    network_share_url = f"{network_base}/live-track/{trip.trip_id}/"
 
     context = {
         'trip': trip,
@@ -1089,7 +1091,7 @@ def live_share_default(request):
     if not trip:
         trip = TripSession.objects.select_related('passenger', 'driver', 'driver__user').order_by('-start_time').first()
     if trip:
-        return redirect('live_share', token=str(trip.share_token))
+        return redirect('live_share', token=str(trip.trip_id))
     messages.info(request, "No monitored journeys are currently streaming GPS telemetry.")
     return redirect('home')
 
@@ -1138,8 +1140,8 @@ def live_share_view(request, token):
 
     public_base = _get_public_share_base_url(request)
     network_base = _get_network_base_url(request)
-    share_url = f"{public_base}/live-track/{trip.share_token}/"
-    network_share_url = f"{network_base}/live-track/{trip.share_token}/"
+    share_url = f"{public_base}/live-track/{trip.trip_id}/"
+    network_share_url = f"{network_base}/live-track/{trip.trip_id}/"
     driver = trip.driver
     vehicle = getattr(driver, 'vehicle', None)
 
@@ -1149,7 +1151,7 @@ def live_share_view(request, token):
         'vehicle': vehicle,
         'share_url': share_url,
         'network_share_url': network_share_url,
-        'token': str(trip.share_token),
+        'token': str(trip.trip_id),
     })
 
 # ==========================================
@@ -1196,9 +1198,9 @@ def driver_dashboard(request):
     recent_trips = TripSession.objects.filter(driver=driver).order_by('-start_time')[:5]
     completed_trips_count = TripSession.objects.filter(driver=driver, status__in=['Completed', 'COMPLETED']).count()
     
-    # Ensure QR code exists if verified
-    if driver.is_verified() and not driver.qr_code:
-        driver.generate_qr_code(request.build_absolute_uri('/')[:-1])
+    # Ensure QR code exists and uses active public tunnel URL instead of localhost
+    if driver.is_verified():
+        driver.generate_qr_code(_get_public_share_base_url(request))
         driver.save()
 
     context = {
@@ -1218,8 +1220,8 @@ def driver_id_badge(request):
         messages.error(request, "No driver profile found.")
         return redirect('home')
 
-    if driver.is_verified() and not driver.qr_code:
-        driver.generate_qr_code(request.build_absolute_uri('/')[:-1])
+    if driver.is_verified():
+        driver.generate_qr_code(_get_public_share_base_url(request))
         driver.save()
 
     return render(request, 'driver/id_badge.html', {
@@ -1312,7 +1314,7 @@ def admin_dashboard(request):
     total_trips = TripSession.objects.count()
     active_sos = SOSAlert.objects.filter(status=SOSAlert.Status.ACTIVE).select_related('passenger', 'driver', 'driver__user')
     recent_complaints = Complaint.objects.filter(status=Complaint.Status.OPEN).select_related('passenger', 'driver', 'driver__user')[:5]
-    recent_drivers = DriverProfile.objects.select_related('user').order_by('-driver_id')[:5]
+    recent_drivers = DriverProfile.objects.filter(verification_status=DriverProfile.VerificationStatus.PENDING).select_related('user').order_by('-driver_id')[:5]
 
     context = {
         'total_drivers': total_drivers,
@@ -1403,7 +1405,7 @@ def admin_driver_register(request):
             )
 
             if auto_approve:
-                driver.generate_qr_code(request.build_absolute_uri('/')[:-1])
+                driver.generate_qr_code(_get_public_share_base_url(request))
                 driver.save()
                 driver.recalculate_reputation()
                 messages.success(request, f"Driver {user.get_full_name()} registered & verified successfully! QR Code generated.")
@@ -1433,7 +1435,7 @@ def admin_driver_kyc(request, driver_id):
             driver = form.save()
             if driver.verification_status in ['Verified', Driver.VerificationStatus.VERIFIED]:
                 driver.verified_at = timezone.now()
-                driver.generate_qr_code(request.build_absolute_uri('/')[:-1])
+                driver.generate_qr_code(_get_public_share_base_url(request))
                 driver.recalculate_reputation()
                 messages.success(request, f"Driver {driver.name} has been successfully VERIFIED. QR Code updated!")
             elif driver.verification_status in ['Rejected', Driver.VerificationStatus.SUSPENDED]:
@@ -1595,6 +1597,32 @@ def update_trip_location(request, trip_id):
         'timestamp': trip.live_updated_at.isoformat()
     })
 
+def get_live_location(request, trip_id):
+    """
+    Returns the current live location of the trip for public tracking.
+    """
+    cleaned_id = str(trip_id).replace('TRP-', '').replace('trp-', '').replace('#', '').strip()
+    trip = None
+    if cleaned_id.isdigit():
+        trip = Trip.objects.filter(trip_id=int(cleaned_id)).first()
+    if not trip:
+        try:
+            import uuid
+            val_uuid = uuid.UUID(str(trip_id).strip())
+            trip = Trip.objects.filter(Q(trip_uuid=val_uuid) | Q(share_token=val_uuid)).first()
+        except Exception:
+            pass
+
+    if not trip:
+        return JsonResponse({'status': 'error', 'message': 'Trip not found.'}, status=404)
+
+    return JsonResponse({
+        'status': 'success',
+        'location': {
+            'lat': float(trip.live_latitude or trip.current_latitude or 0.0),
+            'lng': float(trip.live_longitude or trip.current_longitude or 0.0)
+        }
+    })
 
 @login_required
 def trigger_sos_alert(request):
@@ -1698,7 +1726,7 @@ def trigger_sos_alert(request):
     contact2_phone = getattr(profile, 'emergency_contact_2_phone', '') if profile else ''
 
     public_base = _get_public_share_base_url(request)
-    share_url = f"{public_base}/live-track/{trip.share_token}/" if (trip and getattr(trip, 'share_token', None)) else f"{public_base}/"
+    share_url = f"{public_base}/live-track/{trip.trip_id}/" if (trip and getattr(trip, 'share_token', None)) else f"{public_base}/"
     driver_name = driver.name if driver else (driver.user.get_full_name() if (driver and getattr(driver, 'user', None)) else 'SafeRide Driver')
     vehicle_num = driver.vehicle_number if driver else 'N/A'
     passenger_name = passenger.get_full_name() or passenger.username
@@ -1745,6 +1773,56 @@ def trigger_sos_alert(request):
         'contact2_phone': contact2_phone,
         'wa_url_2': wa_url_2,
     })
+
+@login_required
+def cancel_sos_alert(request):
+    """
+    Cancels an active SOS alert.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'POST request required.'}, status=405)
+
+    passenger = request.user
+    
+    # Try to get trip id from payload
+    trip_id = None
+    try:
+        if request.content_type == 'application/json' and request.body:
+            data = json.loads(request.body)
+            trip_id = data.get('trip_id')
+    except Exception:
+        pass
+
+    # Find the active SOS alert for the passenger
+    active_sos = SOSAlert.objects.filter(
+        passenger=passenger,
+        status=SOSAlert.Status.ACTIVE
+    ).first()
+    
+    if active_sos:
+        active_sos.status = SOSAlert.Status.RESOLVED
+        active_sos.resolved_notes = 'Cancelled by Passenger'
+        active_sos.resolved_at = timezone.now()
+        active_sos.save()
+
+    # Update trip status if provided
+    if trip_id:
+        cleaned_id = str(trip_id).replace('TRP-', '').replace('trp-', '').replace('#', '').strip()
+        trip = None
+        if cleaned_id.isdigit():
+            trip = Trip.objects.filter(trip_id=int(cleaned_id)).first()
+        if not trip:
+            try:
+                val_uuid = uuid.UUID(str(trip_id).strip())
+                trip = Trip.objects.filter(Q(trip_uuid=val_uuid) | Q(share_token=val_uuid)).first()
+            except Exception:
+                pass
+                
+        if trip and trip.status == Trip.Status.SOS_TRIGGERED:
+            trip.status = Trip.Status.ACTIVE
+            trip.save(update_fields=['status'])
+            
+    return JsonResponse({'status': 'success', 'message': 'SOS Alert Cancelled successfully.'})
 
 
 @login_required

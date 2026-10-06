@@ -59,11 +59,16 @@
         
         <!-- Red SOS Emergency Button with Pulse Animation -->
         {% if trip.status == 'SOS_Triggered' %}
-        <button type="button" class="btn btn-danger btn-lg rounded-pill fw-bold px-4 shadow text-uppercase disabled" id="header-sos-btn" style="opacity: 0.85;">
-          <i class="fa-solid fa-tower-broadcast fa-fade me-1"></i> DISTRESS ACTIVE
-        </button>
+        <div class="d-flex align-items-center gap-2" id="header-sos-container">
+          <button type="button" class="btn btn-danger btn-lg rounded-pill fw-bold px-4 shadow text-uppercase disabled" id="header-sos-btn" style="opacity: 0.85;">
+            <i class="fa-solid fa-tower-broadcast fa-fade me-1"></i> DISTRESS ACTIVE
+          </button>
+          <button type="button" class="btn btn-outline-light btn-lg rounded-pill fw-bold px-3 shadow" onclick="cancelSOSDispatch()" title="Cancel SOS">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
         {% else %}
-        <button type="button" class="btn btn-danger btn-lg rounded-pill fw-bold px-4 shadow text-uppercase sos-pulse-btn" id="header-sos-btn" data-bs-toggle="modal" data-bs-target="#sosEmergencyModal">
+        <button type="button" class="btn btn-danger btn-lg rounded-pill fw-bold px-4 shadow text-uppercase sos-pulse-btn" id="header-sos-btn" onclick="executeSOSDispatch(1)">
           <i class="fa-solid fa-triangle-exclamation me-1 fa-shake"></i> SOS EMERGENCY
         </button>
         {% endif %}
@@ -191,11 +196,16 @@
         </div>
 
         {% if trip.status == 'SOS_Triggered' %}
-        <button type="button" class="btn btn-danger btn-lg w-100 fw-bold rounded-pill shadow-lg py-3 text-uppercase disabled" id="panel-sos-btn" style="opacity: 0.85;">
-          <i class="fa-solid fa-tower-broadcast fa-fade me-2"></i> DISTRESS SIGNAL ACTIVE
-        </button>
+        <div id="panel-sos-container">
+          <button type="button" class="btn btn-danger btn-lg w-100 fw-bold rounded-pill shadow-lg py-3 text-uppercase disabled mb-2" id="panel-sos-btn" style="opacity: 0.85;">
+            <i class="fa-solid fa-tower-broadcast fa-fade me-2"></i> DISTRESS SIGNAL ACTIVE
+          </button>
+          <button type="button" class="btn btn-outline-light btn-lg w-100 fw-bold rounded-pill shadow-lg py-3 text-uppercase" onclick="cancelSOSDispatch()">
+            <i class="fa-solid fa-xmark me-2"></i> CANCEL SOS
+          </button>
+        </div>
         {% else %}
-        <button type="button" class="btn btn-danger btn-lg w-100 fw-bold rounded-pill shadow-lg py-3 text-uppercase sos-pulse-btn" id="panel-sos-btn" data-bs-toggle="modal" data-bs-target="#sosEmergencyModal">
+        <button type="button" class="btn btn-danger btn-lg w-100 fw-bold rounded-pill shadow-lg py-3 text-uppercase sos-pulse-btn" id="panel-sos-btn" onclick="executeSOSDispatch(1)">
           <i class="fa-solid fa-bell me-2 fa-shake"></i> TRIGGER 1-TOUCH SOS EMERGENCY
         </button>
         {% endif %}
@@ -239,53 +249,9 @@
           </div>
         </div>
 
-        <!-- Emergency Contacts Preview -->
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <h6 class="fw-bold text-white text-uppercase small mb-0"><i class="fa-solid fa-phone-volume text-danger me-2"></i> Emergency Contacts</h6>
-          <a href="{% url 'emergency_contacts' %}" class="small text-warning text-decoration-none"><i class="fa-solid fa-pen-to-square me-1"></i> Manage</a>
-        </div>
-
-        <!-- Contact 1 Card -->
-        <div class="p-3 rounded-3 small mb-2 border text-white" style="background-color: #0F172A; border-color: #334155 !important;">
-          <div class="d-flex justify-content-between align-items-center mb-1">
-            <span class="fw-bold text-warning"><i class="fa-solid fa-user-shield me-1"></i> {{ profile.emergency_contact_name|default:profile.emergency_contact_1_name|default:"Primary Contact" }}</span>
-            <span class="badge bg-warning bg-opacity-25 text-warning border border-warning small">{{ profile.emergency_contact_relation|default:profile.emergency_contact_1_relation|default:"Family" }}</span>
-          </div>
-          <div class="text-white-50 font-monospace mb-2">{{ profile.emergency_contact_phone|default:profile.emergency_contact_1_phone|default:"+91 94470 12345" }}</div>
-          
-          <div>
-            <button type="button" class="btn btn-success btn-sm rounded-pill fw-bold w-100 shadow-sm py-1" onclick="sendWhatsAppToContact(1)">
-              <i class="fa-brands fa-whatsapp fs-6 me-1"></i> WhatsApp
-            </button>
-          </div>
-        </div>
-
-        <!-- Contact 2 Card (if configured) -->
-        {% if profile.emergency_contact_2_phone %}
-        <div class="p-3 rounded-3 small mb-2 border text-white" style="background-color: #0F172A; border-color: #334155 !important;">
-          <div class="d-flex justify-content-between align-items-center mb-1">
-            <span class="fw-bold text-info"><i class="fa-solid fa-user-plus me-1"></i> {{ profile.emergency_contact_2_name|default:"Contact 2" }}</span>
-            <span class="badge bg-info bg-opacity-25 text-info border border-info small">{{ profile.emergency_contact_2_relation|default:"Friend" }}</span>
-          </div>
-          <div class="text-white-50 font-monospace mb-2">{{ profile.emergency_contact_2_phone }}</div>
-          
-          <div>
-            <button type="button" class="btn btn-success btn-sm rounded-pill fw-bold w-100 shadow-sm py-1" onclick="sendWhatsAppToContact(2)">
-              <i class="fa-brands fa-whatsapp fs-6 me-1"></i> WhatsApp
-            </button>
-          </div>
-        </div>
-        {% else %}
-        <div class="mb-2 text-center">
-          <a href="{% url 'emergency_contacts' %}" class="small text-info text-decoration-none">
-            <i class="fa-solid fa-plus-circle me-1"></i> + Add 2nd Emergency Contact
-          </a>
-        </div>
-        {% endif %}
-
-        <div class="d-grid mb-3">
-          <button type="button" class="btn btn-link btn-sm text-white-50 text-decoration-none py-1" data-bs-toggle="modal" data-bs-target="#shareLocationModal">
-            <i class="fa-solid fa-link me-1 text-warning"></i> Copy Link / Other Options
+        <div class="d-grid mb-3 mt-4">
+          <button type="button" class="btn btn-outline-warning fw-bold rounded-pill shadow-sm py-2" data-bs-toggle="modal" data-bs-target="#shareLocationModal">
+            <i class="fa-solid fa-share-nodes me-2"></i> SHARE LIVE TRACKING
           </button>
         </div>
 
@@ -430,10 +396,6 @@
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body p-4 text-white">
-        
-        <p class="small text-white-50 mb-3">
-          SafeRide streams your moving GPS position live. Anyone opening your tracking link can watch your route in real-time until you tap <b>Arrived Safely</b>.
-        </p>
 
         <!-- Emergency Contact 1 Box -->
         <div class="p-3 rounded-3 mb-2 border" style="background-color: #0F172A; border-color: #334155 !important;">
@@ -444,9 +406,9 @@
           <div class="fw-bold text-white fs-6 mb-1">{{ profile.emergency_contact_name|default:"Emergency Contact" }}</div>
           <div class="font-monospace text-warning small mb-2">{{ profile.emergency_contact_phone|default:"No phone configured" }}</div>
 
-          <div>
+          <div class="d-flex gap-2">
             <button type="button" class="btn btn-success fw-bold rounded-pill py-2 w-100 shadow-sm" onclick="sendWhatsAppToContact(1)">
-              <i class="fa-brands fa-whatsapp fs-5 me-1"></i> Share via WhatsApp
+              <i class="fa-brands fa-whatsapp fs-5 me-1"></i> WhatsApp
             </button>
           </div>
         </div>
@@ -461,9 +423,9 @@
           <div class="fw-bold text-white fs-6 mb-1">{{ profile.emergency_contact_2_name|default:"Secondary Contact" }}</div>
           <div class="font-monospace text-info small mb-2">{{ profile.emergency_contact_2_phone }}</div>
 
-          <div>
+          <div class="d-flex gap-2">
             <button type="button" class="btn btn-success fw-bold rounded-pill py-2 w-100 shadow-sm" onclick="sendWhatsAppToContact(2)">
-              <i class="fa-brands fa-whatsapp fs-5 me-1"></i> Share via WhatsApp
+              <i class="fa-brands fa-whatsapp fs-5 me-1"></i> WhatsApp
             </button>
           </div>
         </div>
@@ -486,19 +448,6 @@
             </a>
           </div>
         </div>
-
-        {% if network_share_url and network_share_url != share_url %}
-        <div class="p-2 px-3 rounded-3 border mb-2" style="background-color: #0b1120; border-color: #334155 !important;">
-          <span class="text-warning small d-block mb-1">
-            <i class="fa-solid fa-mobile-screen-button me-1"></i> Mobile / Other Devices on Same Wi-Fi:
-          </span>
-          <a href="{{ network_share_url }}" target="_blank" class="text-warning fw-bold font-monospace small text-decoration-underline text-break">
-            {{ network_share_url }} <i class="fa-solid fa-arrow-up-right-from-square small ms-1"></i>
-          </a>
-        </div>
-        {% endif %}
-
-        <small class="text-white-50 d-block mb-3">No login or app install required. Anyone with this link can watch your transit in real-time.</small>
 
         {% if not profile.emergency_contact_phone and not profile.emergency_contact_1_phone %}
         <div class="alert alert-warning py-2 px-3 small rounded-3 mb-0">
@@ -812,6 +761,7 @@
       if (gCircle) gCircle.setCenter(pos);
       gMap.panTo(pos);
       reverseGeocodePosition(lat, lng);
+    }
     if (lMap && lMarker) {
       lMarker.setLatLng([lat, lng]);
       lMap.panTo([lat, lng]);
@@ -1024,16 +974,41 @@
     }
   }
 
+  function cancelSOSDispatch() {
+    if (!confirm('Are you sure you want to cancel the SOS emergency alert?')) return;
+    
+    fetch('/api/sos/cancel/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: JSON.stringify({ trip_id: '{{ trip.trip_id }}' })
+    })
+    .then(response => response.json())
+    .then(data => {
+      alert(data.message);
+      location.reload();
+    })
+    .catch(err => {
+      console.error("SOS Cancel Error:", err);
+      alert('Error cancelling SOS alert.');
+    });
+  }
+
   // 6. Share Live Location & WhatsApp Utilities
   function getResolvedShareUrl() {
     let url = "{{ share_url|default:'' }}";
+    
+    // If testing on absolute localhost and no tunnel is active, try to grab the network IP
     if (!url || url.includes('127.0.0.1') || url.includes('localhost')) {
       {% if network_share_url %}
         url = "{{ network_share_url }}";
       {% endif %}
     }
+    
     if (!url) {
-      url = window.location.origin + "/live-track/{{ trip.share_token }}/";
+      url = window.location.origin + "/live-track/{{ trip.trip_id }}/";
     }
     return url;
   }
@@ -1053,17 +1028,24 @@
     const phone = getCleanContactPhone(num);
     const shareUrl = getResolvedShareUrl();
     const driverName = "{{ driver.name|default:driver.user.get_full_name|default:driver.user.username|escapejs }}";
-    const vehicleNum = "{{ vehicle.registration_number|default:driver.vehicle_number|default:'SafeRide Vehicle'|escapejs }}";
-    const contactName = (num === 2)
-      ? "{{ profile.emergency_contact_2_name|default:''|escapejs }}"
-      : "{{ profile.emergency_contact_name|default:''|escapejs }}";
+    const passengerName = "{{ request.user.get_full_name|default:request.user.username|escapejs }}";
     
-    let greeting = contactName ? `Hi ${contactName}, ` : '';
-    const text = `🚨 *SafeRide Live Journey Tracking:*\n${greeting}I am en-route with driver ${driverName} (Vehicle: ${vehicleNum}).\n\nTrack my real-time GPS location live on the map here:\n${shareUrl}\n\n(No app download needed. Works directly in your browser)`;
+    if (!phone) {
+      alert("Emergency contact number is not configured.");
+      return;
+    }
+    if (!shareUrl) {
+      alert("Live tracking URL is currently unavailable.");
+      return;
+    }
+
+    const text = `*SafeRide Live Location Alert 🚨*\n${passengerName} is currently travelling with driver ${driverName}.\n📍 Track the live trip here: *${shareUrl}*\nThe location will update in real time while the trip is active.`;
     const msg = encodeURIComponent(text);
-    const waUrl = phone ? `https://wa.me/${phone}?text=${msg}` : `https://api.whatsapp.com/send?text=${msg}`;
+    const waUrl = `https://wa.me/${phone}?text=${msg}`;
     window.open(waUrl, '_blank');
   }
+
+
 
   function getWhatsAppSOSUrl(num = 1) {
     const phone = getCleanContactPhone(num);
@@ -1078,7 +1060,7 @@
     let greeting = contactName ? `Hi ${contactName}, ` : '';
     const text = `🚨 *EMERGENCY SOS ALERT!* 🚨\n\n${greeting}I need immediate assistance! I have triggered an emergency distress beacon on my SafeRide journey.\n\n👤 *Passenger:* {{ request.user.get_full_name|default:request.user.username|escapejs }}\n🚖 *Driver:* ${driverName}\n🔢 *Vehicle:* ${vehicleNum}\n📍 *Current Location:* ${locationStr}\n\n🔴 *Live GPS Satellite Tracking URL:*\n${shareUrl}\n\nPlease check my location or contact Police 112 immediately!`;
     const msg = encodeURIComponent(text);
-    return phone ? `https://wa.me/${phone}?text=${msg}` : `https://api.whatsapp.com/send?text=${msg}`;
+    return phone ? `https://wa.me/${phone}?text=${msg}` : `https://wa.me/?text=${msg}`;
   }
 
   function sendWhatsAppSOS(num = 1) {

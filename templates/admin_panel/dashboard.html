@@ -40,7 +40,7 @@
 
   <!-- Dynamic Real-Time SOS Alert Banner (Updated every 5 seconds by AJAX Poller) -->
   <div id="admin-live-sos-container" class="mb-4 {% if not active_sos %}d-none{% endif %}">
-    <div class="card p-4 border-0 shadow-lg text-white admin-flashing-sos-banner" style="background: linear-gradient(135deg, #7F1D1D, #DC2626); border-left: 6px solid #FEF08A !important;">
+    <div class="card p-4 border-0 shadow-lg text-white admin-flashing-sos-banner" style="background: linear-gradient(135deg, #7F1D1D, #DC2626);">
       <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
         <div class="d-flex align-items-center gap-3">
           <div class="rounded-circle p-3 bg-dark bg-opacity-50 border border-warning text-warning fs-3">
@@ -75,114 +75,8 @@
     </div>
   </div>
 
-  <!-- KPI Cards Grid (Mobile 1-Col, Tablet 2-Col, Desktop 4-Col) -->
-  <div class="row g-3 mb-4">
-    <div class="col-12 col-md-6 col-lg-3">
-      <div class="stat-kpi-card shadow-sm">
-        <div class="stat-icon stat-icon-green">
-          <i class="fa-solid fa-id-badge"></i>
-        </div>
-        <div>
-          <h3 class="fw-bold mb-0 text-success">{{ verified_drivers }} / {{ total_drivers }}</h3>
-          <span class="text-muted small">Verified Drivers</span>
-        </div>
-      </div>
-    </div>
 
-    <div class="col-12 col-md-6 col-lg-3">
-      <div class="stat-kpi-card shadow-sm">
-        <div class="stat-icon stat-icon-amber">
-          <i class="fa-solid fa-hourglass-half"></i>
-        </div>
-        <div>
-          <h3 class="fw-bold mb-0 text-warning">{{ pending_kyc }}</h3>
-          <span class="text-muted small">Pending KYC Approvals</span>
-        </div>
-      </div>
-    </div>
 
-    <div class="col-12 col-md-6 col-lg-3">
-      <div class="stat-kpi-card shadow-sm">
-        <div class="stat-icon stat-icon-blue">
-          <i class="fa-solid fa-users"></i>
-        </div>
-        <div>
-          <h3 class="fw-bold mb-0 text-primary">{{ total_passengers }}</h3>
-          <span class="text-muted small">Registered Passengers</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-12 col-md-6 col-lg-3">
-      <div class="stat-kpi-card shadow-sm">
-        <div class="stat-icon stat-icon-red">
-          <i class="fa-solid fa-file-shield"></i>
-        </div>
-        <div>
-          <h3 class="fw-bold mb-0 text-danger">{{ recent_complaints.count }}</h3>
-          <span class="text-muted small">Open Complaints</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Central Admin Feature Quick-Access Cards Grid with Live Summary Data -->
-  <div class="card rounded-4 border shadow-sm p-4 mb-4" style="background-color: #131C2E !important;">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h5 class="fw-bold text-white mb-0"><i class="fa-solid fa-layer-group me-2" style="color: #06B6D4;"></i> Administrative Operations & Quick Controls</h5>
-      <span class="small text-white opacity-75">Core Safety & Governance Workspace</span>
-    </div>
-
-    <div class="row g-3">
-      <!-- 1. Driver KYC -->
-      <div class="col-md-6 col-lg-3">
-        <a href="{% url 'admin_driver_list' %}" class="card p-3 rounded-4 text-decoration-none shadow-sm h-100 border-0 hover-lift" style="background: #0F172A; border: 1px solid #334155 !important;">
-          <div class="d-flex align-items-center justify-content-between mb-2">
-            <span class="p-2 rounded-circle bg-success bg-opacity-10 text-success fs-5"><i class="fa-solid fa-user-check"></i></span>
-            <span class="badge bg-warning text-dark">{{ pending_kyc }} Pending</span>
-          </div>
-          <h6 class="fw-bold text-white mb-1">Driver KYC</h6>
-          <span class="small text-muted">Inspect licences, RC books & police clearances &rarr;</span>
-        </a>
-      </div>
-
-      <!-- 2. Driver Registration -->
-      <div class="col-md-6 col-lg-3">
-        <a href="{% url 'admin_driver_register' %}" class="card p-3 rounded-4 text-decoration-none shadow-sm h-100 border-0 hover-lift" style="background: #0F172A; border: 1px solid #334155 !important;">
-          <div class="d-flex align-items-center justify-content-between mb-2">
-            <span class="p-2 rounded-circle bg-primary bg-opacity-10 text-primary fs-5"><i class="fa-solid fa-user-plus"></i></span>
-            <span class="badge bg-primary">Enrollment</span>
-          </div>
-          <h6 class="fw-bold text-white mb-1">Driver Registration</h6>
-          <span class="small text-muted">Register and onboard new fleet drivers & vehicles &rarr;</span>
-        </a>
-      </div>
-
-      <!-- 3. Manage Passengers -->
-      <div class="col-md-6 col-lg-3">
-        <a href="{% url 'admin_passenger_list' %}" class="card p-3 rounded-4 text-decoration-none shadow-sm h-100 border-0 hover-lift" style="background: #0F172A; border: 1px solid #334155 !important;">
-          <div class="d-flex align-items-center justify-content-between mb-2">
-            <span class="p-2 rounded-circle bg-info bg-opacity-10 text-cyan fs-5" style="color: #06B6D4;"><i class="fa-solid fa-users"></i></span>
-            <span class="badge bg-info text-dark">{{ total_passengers }} Accounts</span>
-          </div>
-          <h6 class="fw-bold text-white mb-1">Manage Passengers</h6>
-          <span class="small text-muted">Manage passenger profiles, contacts & trip history &rarr;</span>
-        </a>
-      </div>
-
-      <!-- 4. Complaints & Feedback -->
-      <div class="col-md-6 col-lg-3">
-        <a href="{% url 'admin_complaints_list' %}" class="card p-3 rounded-4 text-decoration-none shadow-sm h-100 border-0 hover-lift" style="background: #0F172A; border: 1px solid #334155 !important;">
-          <div class="d-flex align-items-center justify-content-between mb-2">
-            <span class="p-2 rounded-circle bg-danger bg-opacity-10 text-danger fs-5"><i class="fa-solid fa-file-circle-exclamation"></i></span>
-            <span class="badge bg-danger">{{ recent_complaints.count }} Open</span>
-          </div>
-          <h6 class="fw-bold text-white mb-1">Complaints & Feedback</h6>
-          <span class="small text-muted">Redress passenger grievances and apply penalties &rarr;</span>
-        </a>
-      </div>
-    </div>
-  </div>
 
   <div class="row g-4">
     <!-- Left Column: Pending / Recent Driver Registrations (col-12 on phone, col-lg-7 on desktop) -->
@@ -201,8 +95,6 @@
                 <tr>
                   <th>Driver Name</th>
                   <th>Vehicle & Type</th>
-                  <th>Status</th>
-                  <th>Reputation</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -217,16 +109,6 @@
                     <strong class="text-white">{{ d.vehicle_number|default:d.vehicle.registration_number|default:"No Vehicle" }}</strong><br>
                     <span class="small text-white opacity-75">{{ d.get_vehicle_type_display }}</span>
                   </td>
-                  <td>
-                    {% if d.verification_status == 'VERIFIED' or d.verification_status == 'Verified' %}
-                    <span class="badge bg-success bg-opacity-25 text-success">Verified</span>
-                    {% elif d.verification_status == 'PENDING' or d.verification_status == 'Pending' %}
-                    <span class="badge bg-warning text-dark">Pending KYC</span>
-                    {% else %}
-                    <span class="badge bg-danger">{{ d.get_verification_status_display }}</span>
-                    {% endif %}
-                  </td>
-                  <td><strong class="text-success">{{ d.reputation_score }}</strong></td>
                   <td>
                     <a href="{% url 'admin_driver_kyc' d.id %}" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold">
                       <i class="fa-solid fa-user-check me-1"></i> Verify Driver
@@ -249,20 +131,10 @@
                   <strong class="text-white fs-6">{{ d.name|default:d.user.username }}</strong>
                   <div class="small text-white opacity-75 font-monospace">{{ d.license_number }}</div>
                 </div>
-                <div>
-                  {% if d.verification_status == 'VERIFIED' or d.verification_status == 'Verified' %}
-                  <span class="badge bg-success bg-opacity-25 text-success">Verified</span>
-                  {% elif d.verification_status == 'PENDING' or d.verification_status == 'Pending' %}
-                  <span class="badge bg-warning text-dark">Pending KYC</span>
-                  {% else %}
-                  <span class="badge bg-danger">{{ d.get_verification_status_display }}</span>
-                  {% endif %}
-                </div>
               </div>
 
-              <div class="d-flex justify-content-between align-items-center py-2 border-top border-bottom my-2" style="border-color: #1E293B !important;">
+              <div class="py-2 border-top border-bottom my-2" style="border-color: #1E293B !important;">
                 <span class="badge bg-dark border text-warning font-monospace">{{ d.vehicle_number|default:d.vehicle.registration_number|default:"No Vehicle" }} ({{ d.get_vehicle_type_display }})</span>
-                <span class="small text-white">Score: <strong class="text-success">{{ d.reputation_score }}/100</strong></span>
               </div>
 
               <a href="{% url 'admin_driver_kyc' d.id %}" class="btn btn-sm btn-primary w-100 rounded-pill fw-bold py-2">
@@ -318,11 +190,9 @@
 @keyframes adminAlertFlash {
   0% {
     box-shadow: 0 0 15px rgba(239, 68, 68, 0.6), inset 0 0 10px rgba(254, 240, 138, 0.3);
-    border-left-color: #FEF08A !important;
   }
   100% {
     box-shadow: 0 0 35px rgba(239, 68, 68, 0.95), inset 0 0 20px rgba(239, 68, 68, 0.5);
-    border-left-color: #EF4444 !important;
   }
 }
 </style>

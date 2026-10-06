@@ -303,6 +303,16 @@ img, svg, canvas, iframe, video {
   height: auto;
 }
 
+/* Leaflet Map Specific Media Shield Override */
+.leaflet-container img, 
+.leaflet-container svg, 
+.leaflet-container canvas, 
+.leaflet-container iframe, 
+.leaflet-container video {
+  max-width: none !important;
+  height: auto;
+}
+
 .row {
   max-width: 100%;
 }

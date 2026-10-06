@@ -381,28 +381,42 @@
     const pickupInput = document.getElementById('pickup_name');
     const destInput = document.getElementById('destination_name');
 
+    // Helper to fetch details and set location
+    async function handlePlaceSelection(selected, isDestination) {
+      let lat = selected.lat;
+      let lng = selected.lng;
+      
+      if (!lat || !lng) {
+        if (selected.placeId && typeof google !== 'undefined' && google.maps.importLibrary) {
+          const { Place } = await google.maps.importLibrary("places");
+          const place = new Place({ id: selected.placeId });
+          await place.fetchFields({ fields: ['location'] });
+          if (place.location) {
+            lat = place.location.lat();
+            lng = place.location.lng();
+          }
+        }
+      }
+      
+      if (lat && lng) {
+        if (isDestination) setDestinationLocation(lat, lng, selected.fullName);
+        else setBoardingLocation(lat, lng, selected.fullName);
+      }
+    }
+
     // 1a. Setup real-time auto-caption suggestions for Destination
     setupLivePlaceSearch('destination_name', 'dest-suggestions-dropdown', function (selected) {
-      setDestinationLocation(selected.lat, selected.lng, selected.fullName);
+      handlePlaceSelection(selected, true);
     });
 
     // 1b. Setup real-time auto-caption suggestions for Boarding / Pickup
     setupLivePlaceSearch('pickup_name', 'pickup-suggestions-dropdown', function (selected) {
-      setBoardingLocation(selected.lat, selected.lng, selected.fullName);
+      handlePlaceSelection(selected, false);
     });
 
     // 1c. Also hook Google Places Autocomplete if available
     if (typeof google !== 'undefined' && google.maps && google.maps.places) {
       try {
-        if (destInput) {
-          const destAuto = new google.maps.places.Autocomplete(destInput, { types: ['geocode', 'establishment'] });
-          destAuto.addListener('place_changed', function () {
-            const place = destAuto.getPlace();
-            if (place.geometry && place.geometry.location) {
-              setDestinationLocation(place.geometry.location.lat(), place.geometry.location.lng(), place.formatted_address || place.name);
-            }
-          });
-        }
         if (pickupInput) {
           const pickupAuto = new google.maps.places.Autocomplete(pickupInput, { types: ['geocode', 'establishment'] });
           pickupAuto.addListener('place_changed', function () {
@@ -505,9 +519,36 @@
     });
   }
 
-  function fetchPlaceSuggestions(query, callback) {
+  async function fetchPlaceSuggestions(query, callback) {
     const pickupLat = parseFloat(document.getElementById('pickup_lat')?.value) || 9.6843;
     const pickupLng = parseFloat(document.getElementById('pickup_lng')?.value) || 76.6853;
+
+    if (typeof google !== 'undefined' && google.maps && google.maps.importLibrary) {
+      try {
+        const { AutocompleteSuggestion } = await google.maps.importLibrary("places");
+        if (AutocompleteSuggestion) {
+          const request = { input: query, includedPrimaryTypes: ["geocode", "establishment"] };
+          const suggestions = await AutocompleteSuggestion.fetchAutocompleteSuggestions(request);
+          if (suggestions && suggestions.length > 0) {
+            const results = suggestions.map(suggestion => {
+              const text = suggestion.placePrediction.text;
+              return {
+                name: text.mainText,
+                subtitle: text.secondaryText || '',
+                fullName: text.text,
+                placeId: suggestion.placePrediction.placeId,
+                lat: null, // Will fetch when selected
+                lng: null
+              };
+            });
+            callback(results);
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn("Google Places Autocomplete API failed, falling back...", e);
+      }
+    }
 
     // High-speed, free Photon geocoding with local proximity bias
     const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=6&lat=${pickupLat}&lon=${pickupLng}`;

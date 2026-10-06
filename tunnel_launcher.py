@@ -46,14 +46,38 @@ def main():
     print("=" * 65)
     print("\n[*] Initializing secure public tunnel for port 8000...")
 
-    if CLOUDFLARED_EXE.exists():
+    print("\nAvailable Tunnel Engines:")
+    print("  1. Localhost.run (Recommended, Highly Stable SSH)")
+    print("  2. Pinggy.io (Fast alternative SSH tunnel)")
+    print("  3. Cloudflare (Prone to Error 1033 without account)")
+    print("  4. Serveo (Basic fallback)")
+    
+    # Check if user provided an argument
+    if len(sys.argv) > 1:
+        choice = sys.argv[1].strip()
+    else:
+        try:
+            choice = input("\nSelect a tunnel engine [1-4] (default 1): ").strip()
+        except EOFError:
+            choice = '1'
+
+    if choice == '3' and CLOUDFLARED_EXE.exists():
         cmd = [str(CLOUDFLARED_EXE), "tunnel", "--url", "http://127.0.0.1:8000"]
         pattern = r'https://[a-zA-Z0-9_\-\.]+\.trycloudflare\.com'
-        print("[*] Engine: Cloudflare High-Speed Tunnel (bom11 edge)")
-    else:
+        print("\n[*] Engine: Cloudflare High-Speed Tunnel")
+    elif choice == '4':
         cmd = ["ssh", "-o", "StrictHostKeyChecking=no", "-R", "80:127.0.0.1:8000", "serveo.net"]
         pattern = r'https://[a-zA-Z0-9_\-\.]+\.serveousercontent\.com'
-        print("[*] Engine: OpenSSH / Serveo fallback")
+        print("\n[*] Engine: OpenSSH / Serveo fallback")
+    elif choice == '2':
+        cmd = ["ssh", "-p", "443", "-R0:127.0.0.1:8000", "-o", "StrictHostKeyChecking=no", "a.pinggy.io"]
+        pattern = r'https://[a-zA-Z0-9_\-\.]+\.free\.pinggy\.link'
+        print("\n[*] Engine: Pinggy.io SSH Tunnel")
+    else:
+        # Default to localhost.run
+        cmd = ["ssh", "-o", "StrictHostKeyChecking=no", "-R", "80:127.0.0.1:8000", "nokey@localhost.run"]
+        pattern = r'https://[a-zA-Z0-9_\-\.]+\.lhr\.life'
+        print("\n[*] Engine: Localhost.run SSH Tunnel")
 
     try:
         proc = subprocess.Popen(

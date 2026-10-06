@@ -336,7 +336,9 @@
   function sendSafeArrivalWhatsApp(num = 1) {
     const phone = getCleanEmergencyPhone(num);
     const msg = encodeURIComponent(getSafeArrivalMessage(num));
-    const waUrl = phone ? `https://wa.me/${phone}?text=${msg}` : `https://api.whatsapp.com/send?text=${msg}`;
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const baseUrl = isMobile ? 'whatsapp://send' : 'https://web.whatsapp.com/send';
+    const waUrl = phone ? `${baseUrl}?phone=${phone}&text=${msg}` : `${baseUrl}?text=${msg}`;
     window.open(waUrl, '_blank');
   }
 
