@@ -348,6 +348,14 @@ def run_seed():
         )
     print("[+] Created SOS Alert in tbl_sos_alert")
 
+    print("\n[*] Regenerating QR codes for completed trips to apply UPI payment fix...")
+    completed_trips = Trip.objects.filter(status='Completed')
+    for trip in completed_trips:
+        if trip.fare_qr_code:
+            trip.generate_fare_qr_code("http://127.0.0.1:8000")
+            trip.save(update_fields=['fare_qr_code'])
+    print(f"[+] Successfully generated valid UPI QR codes for {completed_trips.count()} trips.")
+
     print("\n[SUCCESS] SafeRide Database Tables (tbl_*) seeded successfully!")
 
 if __name__ == '__main__':

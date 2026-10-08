@@ -56,5 +56,5 @@ echo [*] Starting SafeRide Server at http://127.0.0.1:8000 ...
 echo [!] View all MySQL tables in phpMyAdmin at http://localhost/phpmyadmin
 echo.
 
-"%PYTHON_EXE%" manage.py runserver 0.0.0.0:8000
+"%PYTHON_EXE%" -m waitress --port=8000 saferide_project.wsgi:application
 pause

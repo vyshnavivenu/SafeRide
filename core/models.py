@@ -617,7 +617,8 @@ class Trip(models.Model):
             box_size=8,
             border=2,
         )
-        qr.add_data(receipt_text)
+        # To launch payment apps correctly, the QR payload must strictly be the UPI URI, not plain text.
+        qr.add_data(upi_pay_str)
         qr.make(fit=True)
         img = qr.make_image(fill_color="#0F172A", back_color="white")
 

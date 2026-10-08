@@ -40,10 +40,24 @@
             background: #ffffff;
             border-top-left-radius: 24px;
             border-top-right-radius: 24px;
-            padding: 24px;
+            padding: 24px 24px 0 24px;
             z-index: 1000;
             box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
             transition: transform 0.3s ease-out;
+            max-height: calc(100vh - 100px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sheet-content {
+            overflow-y: auto;
+            padding-bottom: 24px;
+            padding-top: 8px;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .sheet-content::-webkit-scrollbar {
+            display: none;
         }
 
         .driver-avatar {
@@ -139,6 +153,54 @@
             font-size: 18px;
             transition: all 0.3s ease;
         }
+
+        /* Desktop Responsive Layout */
+        @media (min-width: 768px) {
+            .bottom-sheet {
+                top: auto;
+                bottom: 24px;
+                left: 24px;
+                right: auto;
+                width: 420px;
+                border-radius: 24px;
+                max-height: calc(100vh - 120px);
+                box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            }
+
+            .status-badge {
+                right: -10px;
+                box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            }
+        }
+        /* Map Controls */
+        .leaflet-control-zoom {
+            margin-top: 80px !important;
+            margin-right: 20px !important;
+            border: none !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+        }
+        .leaflet-control-zoom a {
+            color: #1e293b !important;
+        }
+        
+        #recenter-map-btn {
+            margin-top: 10px !important;
+            margin-right: 20px !important;
+            display: none;
+            border-radius: 30px;
+            padding: 8px 16px;
+            background: white;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-weight: 600;
+            color: #3b82f6;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        #recenter-map-btn:hover {
+            background: #f8fafc;
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body>
@@ -149,7 +211,15 @@
     <!-- Top Bar Overlay -->
     <div class="top-bar">
         <div class="top-pill">
-            <span class="live-dot"></span> Live Tracking
+            {% if trip.status == 'Completed' %}
+                <i class="fa-solid fa-check text-primary"></i> Trip Completed
+            {% elif trip.status == 'Cancelled' %}
+                <i class="fa-solid fa-xmark text-danger"></i> Trip Cancelled
+            {% elif trip.status == 'SOS_Triggered' %}
+                <span class="live-dot" style="background-color: #ef4444;"></span> SOS Active
+            {% else %}
+                <span class="live-dot"></span> Live Tracking
+            {% endif %}
         </div>
         <a href="https://www.google.com/maps/search/?api=1&query={{ trip.live_latitude|default:trip.current_latitude|default:0 }},{{ trip.live_longitude|default:trip.current_longitude|default:0 }}" id="open-maps-btn" class="btn btn-primary rounded-pill fw-bold shadow pointer-events-auto" target="_blank" style="pointer-events: auto;">
             <i class="fa-solid fa-map-location-dot me-1"></i> Open Maps
@@ -160,63 +230,67 @@
     <div class="bottom-sheet">
         {% if trip.status == 'Completed' %}
             <div class="status-badge completed"><i class="fa-solid fa-check"></i> Trip Completed</div>
+        {% elif trip.status == 'Cancelled' %}
+            <div class="status-badge sos"><i class="fa-solid fa-xmark"></i> Cancelled</div>
         {% elif trip.status == 'SOS_Triggered' %}
             <div class="status-badge sos"><i class="fa-solid fa-triangle-exclamation"></i> SOS Active</div>
         {% else %}
             <div class="status-badge"><i class="fa-solid fa-location-dot"></i> En Route</div>
         {% endif %}
 
-        <div class="d-flex align-items-center mb-4">
-            <div class="driver-avatar shadow-sm">
-                <i class="fa-solid fa-user-tie"></i>
-            </div>
-            <div class="ms-3">
-                <h5 class="mb-0 fw-bold text-dark">{{ driver.name|default:driver.user.get_full_name|default:driver.user.username|default:"Assigned Driver" }}</h5>
-                <div class="text-muted small d-flex align-items-center mt-1">
-                    <i class="fa-solid fa-star text-warning me-1"></i> 4.9 &bull; <i class="fa-solid fa-shield-check text-success ms-1 me-1"></i> Verified Partner
+        <div class="sheet-content">
+            <div class="d-flex align-items-center mb-4">
+                <div class="driver-avatar shadow-sm">
+                    <i class="fa-solid fa-user-tie"></i>
                 </div>
-            </div>
-        </div>
-
-        <div class="row g-3 mb-3">
-            <div class="col-6">
-                <div class="p-3 bg-light rounded-4 border h-100">
-                    <div class="small text-muted mb-1"><i class="fa-solid fa-car text-primary me-1"></i> Vehicle</div>
-                    <div class="fw-bold text-dark text-truncate">{{ vehicle.make|default:"Sedan" }} {{ vehicle.model|default:"" }}</div>
-                    <div class="badge bg-secondary mt-1">{{ vehicle.registration_number|default:driver.vehicle_number|default:"XX-00-0000" }}</div>
-                </div>
-            </div>
-            <div class="col-6">
-                <div class="p-3 bg-light rounded-4 border h-100">
-                    <div class="small text-muted mb-1"><i class="fa-solid fa-compass text-danger me-1"></i> Current Coordinates</div>
-                    <div class="fw-bold text-dark font-monospace small" id="text-coords">
-                        {{ trip.live_latitude|default:trip.current_latitude|floatformat:4 }}, {{ trip.live_longitude|default:trip.current_longitude|floatformat:4 }}
+                <div class="ms-3">
+                    <h5 class="mb-0 fw-bold text-dark">{{ driver.name|default:driver.user.get_full_name|default:driver.user.username|default:"Assigned Driver" }}</h5>
+                    <div class="text-muted small d-flex align-items-center mt-1">
+                        <i class="fa-solid fa-star text-warning me-1"></i> 4.9 &bull; <i class="fa-solid fa-shield-check text-success ms-1 me-1"></i> Verified Partner
                     </div>
-                    <div class="small text-muted mt-1" id="last-updated">Updated just now</div>
                 </div>
             </div>
-        </div>
-        
-        <div class="bg-light p-3 rounded-4 border mb-3">
-            <div class="d-flex align-items-start">
-                <div class="me-3 mt-1 text-primary"><i class="fa-regular fa-circle-dot"></i></div>
-                <div>
-                    <div class="small text-muted">Destination</div>
-                    <div class="fw-bold text-dark text-truncate">{{ trip.destination_address|default:trip.drop_location_name|default:"Ongoing Journey" }}</div>
-                </div>
-            </div>
-        </div>
 
-        <div class="row g-2">
-            <div class="col-6">
-                <a href="tel:{{ driver.phone_number|default:driver.user.phone|default:'' }}" class="btn btn-primary w-100 rounded-pill fw-bold">
-                    <i class="fa-solid fa-phone me-1"></i> Call Driver
-                </a>
+            <div class="row g-3 mb-3">
+                <div class="col-6">
+                    <div class="p-3 bg-light rounded-4 border h-100">
+                        <div class="small text-muted mb-1"><i class="fa-solid fa-car text-primary me-1"></i> Vehicle</div>
+                        <div class="fw-bold text-dark text-truncate">{{ vehicle.make_model|default:"Sedan" }}</div>
+                        <div class="badge bg-secondary mt-1">{{ vehicle.registration_number|default:driver.vehicle_number|default:"XX-00-0000" }}</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 bg-light rounded-4 border h-100">
+                        <div class="small text-muted mb-1"><i class="fa-solid fa-location-crosshairs text-danger me-1"></i> Current Location</div>
+                        <div class="fw-bold text-dark small text-truncate" id="text-coords">
+                            Fetching location...
+                        </div>
+                        <div class="small text-muted mt-1" id="last-updated">Live tracking active</div>
+                    </div>
+                </div>
             </div>
-            <div class="col-6">
-                <a href="tel:{{ trip.passenger.phone|default:'' }}" class="btn btn-outline-primary w-100 rounded-pill fw-bold">
-                    <i class="fa-solid fa-phone me-1"></i> Call Passenger
-                </a>
+            
+            <div class="bg-light p-3 rounded-4 border mb-3">
+                <div class="d-flex align-items-start">
+                    <div class="me-3 mt-1 text-primary"><i class="fa-regular fa-circle-dot"></i></div>
+                    <div>
+                        <div class="small text-muted">Destination</div>
+                        <div class="fw-bold text-dark text-truncate">{{ trip.destination_address|default:trip.drop_location_name|default:"Ongoing Journey" }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-2">
+                <div class="col-6">
+                    <a href="tel:{{ driver.phone_number|default:driver.user.phone|default:'' }}" class="btn btn-primary w-100 rounded-pill fw-bold">
+                        <i class="fa-solid fa-phone me-1"></i> Call Driver
+                    </a>
+                </div>
+                <div class="col-6">
+                    <a href="tel:{{ trip.passenger.phone|default:'' }}" class="btn btn-outline-primary w-100 rounded-pill fw-bold">
+                        <i class="fa-solid fa-phone me-1"></i> Call Passenger
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -233,9 +307,12 @@
             attributionControl: false
         }).setView([initialLat, initialLng], 16);
 
-        // High performance Esri World Street Map tiles (No API key, zero watermarks)
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-            maxZoom: 19
+        // Add Zoom Control
+        L.control.zoom({ position: 'topright' }).addTo(map);
+
+        // Google Maps tiles (Extremely reliable, infinite zoom, no API key required for testing)
+        L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            maxZoom: 22
         }).addTo(map);
 
         // Custom Car Marker
@@ -248,6 +325,72 @@
 
         let carMarker = L.marker([initialLat, initialLng], {icon: carIcon}).addTo(map);
         
+        // Map Interaction & Follow Mode
+        let isFollowing = true;
+        
+        // Add Recenter Control
+        const RecenterControl = L.Control.extend({
+            options: { position: 'topright' },
+            onAdd: function() {
+                const btn = L.DomUtil.create('button');
+                btn.innerHTML = '<i class="fa-solid fa-location-crosshairs me-1"></i> Recenter';
+                btn.id = 'recenter-map-btn';
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    isFollowing = true;
+                    btn.style.display = 'none';
+                    map.setView(carMarker.getLatLng());
+                };
+                return btn;
+            }
+        });
+        map.addControl(new RecenterControl());
+
+        // Stop following if user interacts with map
+        map.on('dragstart', () => {
+            isFollowing = false;
+            document.getElementById('recenter-map-btn').style.display = 'block';
+        });
+        
+        // Reverse Geocoding Logic
+        let lastGeocodedLat = null;
+        let lastGeocodedLng = null;
+
+        function reverseGeocode(lat, lng) {
+            // Only hit the API if location changed significantly (~150m) to respect rate limits
+            if (lastGeocodedLat && lastGeocodedLng) {
+                const diffLat = Math.abs(lat - lastGeocodedLat);
+                const diffLng = Math.abs(lng - lastGeocodedLng);
+                if (diffLat < 0.0015 && diffLng < 0.0015) {
+                    return; 
+                }
+            }
+            lastGeocodedLat = lat;
+            lastGeocodedLng = lng;
+
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=en&email=contact@saferide.com`)
+                .then(res => res.json())
+                .then(data => {
+                    let address = `${lat.toFixed(4)}, ${lng.toFixed(4)}`; // fallback
+                    if (data && data.display_name) {
+                        // Nominatim returns the most specific exact place first (e.g., Amenity, Building, Street)
+                        // We take the first 3 parts to give an exact, readable location.
+                        let parts = data.display_name.split(',').map(p => p.trim());
+                        address = parts.slice(0, Math.min(3, parts.length)).join(', ');
+                    }
+                    
+                    let coordsEl = document.getElementById('text-coords');
+                    if (coordsEl) {
+                        coordsEl.innerText = address;
+                        coordsEl.title = data.display_name || address; // Full address on hover
+                    }
+                })
+                .catch(err => console.error("Geocoding failed:", err));
+        }
+
+        // Fetch initial place name
+        reverseGeocode(initialLat, initialLng);
+        
         // Polling Logic
         function pollLiveLocation() {
             fetch('/api/trip/{{ trip.trip_id }}/live-location/')
@@ -259,11 +402,20 @@
                         
                         // Update Map
                         carMarker.setLatLng([lat, lng]);
-                        map.setView([lat, lng]);
                         
-                        // Update UI Text
-                        document.getElementById('text-coords').innerText = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-                        document.getElementById('last-updated').innerText = 'Updated just now';
+                        // Only auto-pan if the user hasn't taken manual control of the map
+                        if (isFollowing) {
+                            map.setView([lat, lng]);
+                        }
+                        
+                        // Update UI Text (Geocode if moved)
+                        reverseGeocode(lat, lng);
+                        
+                        let updatedEl = document.getElementById('last-updated');
+                        if (updatedEl) {
+                            let now = new Date();
+                            updatedEl.innerText = `Updated at ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+                        }
                         
                         // Update Google Maps button link
                         document.getElementById('open-maps-btn').href = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
@@ -273,7 +425,7 @@
         }
 
         // Poll every 2.5 seconds
-        {% if trip.status != 'Completed' %}
+        {% if trip.status == 'Active' or trip.status == 'SOS_Triggered' %}
             setInterval(pollLiveLocation, 2500);
         {% endif %}
     </script>

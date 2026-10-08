@@ -47,9 +47,9 @@ def main():
     print("\n[*] Initializing secure public tunnel for port 8000...")
 
     print("\nAvailable Tunnel Engines:")
-    print("  1. Localhost.run (Recommended, Highly Stable SSH)")
+    print("  1. Localhost.run (Alternative SSH tunnel)")
     print("  2. Pinggy.io (Fast alternative SSH tunnel)")
-    print("  3. Cloudflare (Prone to Error 1033 without account)")
+    print("  3. Cloudflare (Recommended, Highly Stable)")
     print("  4. Serveo (Basic fallback)")
     
     # Check if user provided an argument
@@ -57,9 +57,11 @@ def main():
         choice = sys.argv[1].strip()
     else:
         try:
-            choice = input("\nSelect a tunnel engine [1-4] (default 1): ").strip()
+            choice = input("\nSelect a tunnel engine [1-4] (default 3): ").strip()
+            if not choice:
+                choice = '3'
         except EOFError:
-            choice = '1'
+            choice = '3'
 
     if choice == '3' and CLOUDFLARED_EXE.exists():
         cmd = [str(CLOUDFLARED_EXE), "tunnel", "--url", "http://127.0.0.1:8000"]
@@ -101,6 +103,8 @@ def main():
 
             match = re.search(pattern, line)
             if match and not url_detected:
+                if 'api.trycloudflare.com' in match.group(0):
+                    continue
                 public_url = match.group(0)
                 url_detected = True
                 update_env_file(public_url)

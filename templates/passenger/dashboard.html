@@ -124,28 +124,16 @@
             <small class="text-white opacity-50 d-block mt-2">
               <i class="fa-solid fa-circle-info me-1"></i> Accepts all formats: <code>KL 05 AT 4455</code>, <code>KL05AT4455</code>, <code>KL-05-AT-4455</code>
             </small>
-
-            <div class="mt-3 pt-2 border-top border-secondary border-opacity-25 small">
-              <span class="text-white opacity-75 small fw-semibold d-block mb-2"><i class="fa-solid fa-users me-1 text-warning"></i> Select a Verified Driver to Board:</span>
-              <div class="d-flex align-items-center gap-2 flex-wrap">
-                {% for d in verified_drivers %}
-                <a href="{% url 'verify_driver_search' %}?query={{ d.vehicle_number }}" class="badge bg-dark border {% if d.vehicle_type == 'auto' %}text-warning{% elif d.vehicle_type == 'taxi' %}text-info{% else %}text-success{% endif %} text-decoration-none py-2 px-3 rounded-pill shadow-sm d-inline-flex align-items-center gap-1" title="Select {{ d.name }} ({{ d.vehicle_number }})">
-                  {% if d.vehicle_type == 'auto' %}
-                    <i class="fa-solid fa-motorcycle"></i>
-                  {% elif d.vehicle_type == 'taxi' %}
-                    <i class="fa-solid fa-taxi"></i>
-                  {% else %}
-                    <i class="fa-solid fa-car"></i>
-                  {% endif %}
-                  <span>{{ d.name }}</span>
-                  <span class="opacity-50">({{ d.vehicle_number }})</span>
-                  <span class="badge bg-warning text-dark ms-1 font-monospace" style="font-size: 0.65rem;">⭐ {{ d.average_rating|default:5.0|floatformat:1 }}</span>
-                </a>
-                {% empty %}
-                <span class="text-white-50">No verified drivers found.</span>
+            <div class="mt-3 text-white opacity-75 small">
+              <i class="fa-solid fa-vial me-1 text-info"></i> Valid Test Vehicles:
+              <div class="d-flex flex-wrap gap-2 mt-1">
+                {% for d in verified_drivers|slice:":5" %}
+                  <span class="badge bg-dark border border-secondary font-monospace user-select-all">{{ d.vehicle_number }}</span>
                 {% endfor %}
               </div>
             </div>
+
+
           </div>
         </form>
 
