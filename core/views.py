@@ -876,10 +876,15 @@ def rate_trip(request, trip_id):
 
     fare_qr_url = trip.fare_qr_code.url if (trip.fare_qr_code and trip.fare_qr_code.name and default_storage.exists(trip.fare_qr_code.name)) else None
 
+    from urllib.parse import quote
+    payee_name = quote(trip.driver.name or 'SafeRide Driver')
+    upi_pay_str = f"upi://pay?pa=saferide@upi&pn={payee_name}&am={trip.fare_amount}&cu=INR&tn=SafeRide_TRP_{trip.trip_id}"
+
     profile = getattr(request.user, 'passenger_profile', None)
     return render(request, 'trip_feedback.html', {
         'trip': trip,
         'fare_qr_url': fare_qr_url,
+        'upi_pay_str': upi_pay_str,
         'profile': profile,
     })
 

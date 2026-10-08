@@ -146,9 +146,12 @@
                     <span class="badge bg-dark border text-warning font-monospace small px-3 py-1">
                       <i class="fa-solid fa-qrcode me-1"></i> FARE RECEIPT QR
                     </span>
-                    <p class="text-white opacity-75 small mt-1 mb-0" style="font-size: 0.8rem;">
+                    <p class="text-white opacity-75 small mt-1 mb-2" style="font-size: 0.8rem;">
                       Scan to view digital fare receipt & UPI payment
                     </p>
+                    <a href="{{ upi_pay_str|default:'#' }}" class="btn btn-outline-success btn-sm px-4 rounded-pill fw-bold">
+                      <i class="fa-solid fa-money-bill-transfer me-1"></i> Pay with UPI
+                    </a>
                   </div>
                 </div>
 

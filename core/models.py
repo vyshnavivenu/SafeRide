@@ -597,7 +597,9 @@ class Trip(models.Model):
             pass
 
         # Formatted digital receipt & UPI payment string
-        upi_pay_str = f"upi://pay?pa=saferide@upi&pn={self.driver.name or 'SafeRide Driver'}&am={self.fare_amount}&cu=INR&tn=SafeRide_TRP_{self.trip_id}"
+        from urllib.parse import quote
+        payee_name = quote(self.driver.name or 'SafeRide Driver')
+        upi_pay_str = f"upi://pay?pa=saferide@upi&pn={payee_name}&am={self.fare_amount}&cu=INR&tn=SafeRide_TRP_{self.trip_id}"
         receipt_text = (
             f"SafeRide Verified Fare Receipt\n"
             f"Trip ID: #TRP-{str(self.trip_id).zfill(4)}\n"

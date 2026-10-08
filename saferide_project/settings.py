@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,14 +21,29 @@ if env_file.exists():
     except Exception:
         pass
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-saferide-driver-verification-passenger-safety-key')
+# Define the environment (development or production)
+ENVIRONMENT = os.getenv('ENVIRONMENT', 'development').lower()
+IS_PRODUCTION = ENVIRONMENT == 'production'
 
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = os.getenv('SECRET_KEY')
+if not SECRET_KEY:
+    if IS_PRODUCTION:
+        raise ImproperlyConfigured("The SECRET_KEY environment variable must be set in production!")
+    else:
+        SECRET_KEY = 'django-insecure-saferide-driver-verification-passenger-safety-key'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true' if IS_PRODUCTION else True
 
-ALLOWED_HOSTS = ['*']
+# ALLOWED_HOSTS Configuration
+if IS_PRODUCTION:
+    allowed_hosts_env = os.getenv('ALLOWED_HOSTS', '')
+    if not allowed_hosts_env:
+        raise ImproperlyConfigured("ALLOWED_HOSTS environment variable must be set in production (comma-separated list).")
+    ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',') if host.strip()]
+else:
+    ALLOWED_HOSTS = ['*']
 
 # CSRF Trusted Origins for development & public mobile tunnels
 CSRF_TRUSTED_ORIGINS = [
@@ -49,13 +65,26 @@ CSRF_TRUSTED_ORIGINS = [
     'https://*.serveo.net',
 ]
 
-# Development CSRF & Session Cookie Settings
+# Security & Cookie Settings
+if IS_PRODUCTION:
+    SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'True').lower() == 'true'
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+else:
+    # Development CSRF & Session Cookie Settings
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+
 CSRF_COOKIE_HTTPONLY = False
 CSRF_USE_SESSIONS = False
 CSRF_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_SECURE = False
-SESSION_COOKIE_SECURE = False
 
 # Application definition
 INSTALLED_APPS = [
