@@ -1944,10 +1944,10 @@ def serve_trip_fare_qr(request, trip_id):
         box_size=8,
         border=2,
     )
-    # To launch payment apps correctly, the QR payload must strictly be the UPI URI, not plain text.
     qr.add_data(upi_pay_str)
     qr.make(fit=True)
-    img = qr.make_image(fill_color="#0F172A", back_color="white")
+    # Simplify make_image to prevent PIL color factory crashes on some serverless/mobile environments
+    img = qr.make_image()
     buffer = BytesIO()
     img.save(buffer, format='PNG')
 

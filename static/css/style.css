@@ -82,6 +82,7 @@ body {
   overflow-x: hidden;
   width: 100%;
   margin: 0;
+  padding-bottom: 90px; /* Add safe space for bottom floating SOS button */
   padding-left: var(--sal);
   padding-right: var(--sar);
 }
