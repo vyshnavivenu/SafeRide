@@ -256,7 +256,7 @@
         </div>
 
         <!-- Arrived Safely (End Trip Form) -->
-        <form action="{% url 'end_trip' trip.trip_id %}" method="POST" id="end-trip-form">
+        <form action="{% url 'end_trip' trip.trip_id %}" method="POST" id="end-trip-form" onsubmit="return handleEndTrip(event);">
           {% csrf_token %}
           <input type="hidden" name="final_lat" id="final_drop_lat" value="">
           <input type="hidden" name="final_lng" id="final_drop_lng" value="">
@@ -467,7 +467,7 @@
 </div>
 
 <!-- Fixed Floating Large Pulsing Red SOS Emergency Button -->
-<div class="fixed-sos-bottom-container">
+<div class="fixed-sos-bottom-container d-md-none">
   <button type="button" class="btn btn-danger fixed-pulsing-sos-btn shadow-lg" id="floating-sos-action-btn" data-bs-toggle="modal" data-bs-target="#sosEmergencyModal">
     <i class="fa-solid fa-triangle-exclamation fa-shake me-2 fs-4 text-warning"></i>
     <span>EMERGENCY SOS</span>
@@ -703,9 +703,23 @@
           updateMapPosition(currentLat, currentLng);
           syncLocationWithBackend(currentLat, currentLng);
         },
-        (err) => console.warn("GPS watch info:", err.message),
+        (err) => {
+          console.warn("GPS watch info:", err.message);
+          const syncBadge = document.getElementById('sync-status-indicator');
+          if (syncBadge) {
+            syncBadge.className = 'badge bg-danger bg-opacity-25 text-danger border border-danger small';
+            if (err.code === err.PERMISSION_DENIED) {
+              syncBadge.innerText = 'GPS Permission Denied';
+              alert("⚠️ Location permission denied! Please allow location access in your browser to enable live GPS tracking.");
+            } else {
+              syncBadge.innerText = 'GPS Signal Lost';
+            }
+          }
+        },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
+    } else {
+      alert("Geolocation is not supported by your browser.");
     }
   }
 
@@ -844,7 +858,10 @@
         longitude: lng
       })
     })
-    .then(response => response.json())
+    .then(response => {
+      if (!response.ok) throw new Error("Network response was not ok");
+      return response.json();
+    })
     .then(data => {
       const syncBadge = document.getElementById('sync-status-indicator');
       if (syncBadge) {
@@ -864,7 +881,14 @@
         }
       }
     })
-    .catch(e => console.warn("GPS Location Sync Error:", e));
+    .catch(e => {
+      console.warn("GPS Location Sync Error:", e);
+      const syncBadge = document.getElementById('sync-status-indicator');
+      if (syncBadge) {
+        syncBadge.className = 'badge bg-warning bg-opacity-25 text-warning border border-warning small';
+        syncBadge.innerText = 'Offline - Reconnecting...';
+      }
+    });
   }
 
   // 5. Asynchronous SOS Dispatch with Automatic WhatsApp Alert
@@ -959,6 +983,52 @@
     }
   }
 
+  // 6. Handle End Trip
+  function handleEndTrip(e) {
+    if (confirm("Are you sure you want to end this trip and notify the driver?")) {
+      if (watchId && navigator.geolocation) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+      document.getElementById('final_drop_lat').value = currentLat;
+      document.getElementById('final_drop_lng').value = currentLng;
+      document.getElementById('final_drop_address').value = lastGeocodedAddress || "Destination";
+      return true;
+    }
+    e.preventDefault();
+    return false;
+  }
+
+  // 7. Cross-Device Synchronization Poller
+  function pollBackendForTripUpdates() {
+    fetch('/api/trip/{{ trip.trip_id }}/live-location/')
+      .then(res => res.json())
+      .then(data => {
+         if (data.status === 'success') {
+            const lat = data.location.lat;
+            const lng = data.location.lng;
+            
+            // If the GPS has updated remotely and we aren't currently tracking, or it's a significant change
+            if (lat !== 0 && lng !== 0) {
+               updateMapPosition(lat, lng);
+            }
+
+            // Sync SOS Emergency Status Triggered by Another Device
+            if (data.sos_active && typeof isDistressActive !== 'undefined' && !isDistressActive) {
+               setDistressActiveUI();
+            }
+
+            // Sync Trip End Status Triggered by Another Device
+            if (data.trip_status === 'Completed' || data.trip_status === 'Cancelled') {
+               window.location.href = "{% url 'rate_trip' trip.trip_id %}";
+            }
+         }
+      })
+      .catch(err => console.warn("Polling Sync Error:", err));
+  }
+
+  // Start polling every 3.5 seconds
+  setInterval(pollBackendForTripUpdates, 3500);
+
   function setDistressActiveUI() {
     isDistressActive = true;
 
@@ -1012,7 +1082,7 @@
     }
     
     if (!url) {
-      url = window.location.origin + "/live-track/{{ trip.trip_id }}/";
+      url = window.location.origin + "/live-track/{{ trip.share_token }}/";
     }
     return url;
   }

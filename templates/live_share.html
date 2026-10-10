@@ -420,6 +420,26 @@
                         // Update Google Maps button link
                         document.getElementById('open-maps-btn').href = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
                     }
+                    
+                    // Sync Trip End Status
+                    if (data.trip_status === 'Completed' || data.trip_status === 'Cancelled') {
+                        const tripStatusBadge = document.querySelector('.badge.bg-success');
+                        if (tripStatusBadge) {
+                            tripStatusBadge.innerText = 'Completed';
+                            tripStatusBadge.classList.replace('bg-success', 'bg-secondary');
+                        }
+                        location.reload(); // Reload to show completed static view
+                    }
+                    
+                    // Sync SOS Emergency Status
+                    if (data.sos_active) {
+                        const topBanner = document.querySelector('.bg-success.text-white');
+                        if (topBanner && !topBanner.classList.contains('bg-danger')) {
+                            topBanner.classList.replace('bg-success', 'bg-danger');
+                            topBanner.classList.add('fa-beat-fade');
+                            topBanner.innerHTML = '🚨 SOS EMERGENCY TRIGGERED 🚨';
+                        }
+                    }
                 })
                 .catch(err => console.error("Error polling location:", err));
         }

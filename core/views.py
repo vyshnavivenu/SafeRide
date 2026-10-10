@@ -1576,6 +1576,10 @@ def update_trip_location(request, trip_id):
     if not trip:
         return JsonResponse({'status': 'error', 'message': 'Trip not found.'}, status=404)
 
+    # Security: Only the authorized passenger can push GPS updates to their trip
+    if not request.user.is_authenticated or trip.passenger != request.user:
+        return JsonResponse({'status': 'error', 'message': 'Unauthorized to update trip location.'}, status=403)
+
     # Update current telemetry
     trip.current_latitude = lat
     trip.current_longitude = lng
@@ -1621,12 +1625,19 @@ def get_live_location(request, trip_id):
     if not trip:
         return JsonResponse({'status': 'error', 'message': 'Trip not found.'}, status=404)
 
+    # Security: Protect GPS coordinates from unauthorized integer-id scanning
+    if cleaned_id.isdigit():
+        if not request.user.is_authenticated or (trip.passenger != request.user and not request.user.is_superuser):
+            return JsonResponse({'status': 'error', 'message': 'Unauthorized to view this trip without a secure share token.'}, status=403)
+
     return JsonResponse({
         'status': 'success',
         'location': {
             'lat': float(trip.live_latitude or trip.current_latitude or 0.0),
             'lng': float(trip.live_longitude or trip.current_longitude or 0.0)
-        }
+        },
+        'trip_status': trip.status,
+        'sos_active': True if trip.status in ['SOS_Triggered', 'SOS_TRIGGERED'] else False
     })
 
 @login_required
