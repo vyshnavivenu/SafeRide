@@ -37,15 +37,15 @@ if not SECRET_KEY:
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true' if IS_PRODUCTION else True
 
 # ALLOWED_HOSTS Configuration
-if IS_PRODUCTION:
-    allowed_hosts_env = os.getenv('ALLOWED_HOSTS', '')
-    if not allowed_hosts_env:
-        raise ImproperlyConfigured("ALLOWED_HOSTS environment variable must be set in production (comma-separated list).")
+allowed_hosts_env = os.getenv('ALLOWED_HOSTS', '')
+if allowed_hosts_env:
     ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',') if host.strip()]
+elif IS_PRODUCTION:
+    ALLOWED_HOSTS = ['.pythonanywhere.com', 'localhost', '127.0.0.1']
 else:
     ALLOWED_HOSTS = ['*']
 
-# CSRF Trusted Origins for development & public mobile tunnels
+# CSRF Trusted Origins for development, PythonAnywhere, & public mobile tunnels
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8000',
@@ -58,6 +58,8 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost',
     'http://127.0.0.1',
     'http://0.0.0.0:8000',
+    'https://*.pythonanywhere.com',
+    'http://*.pythonanywhere.com',
     'https://*.trycloudflare.com',
     'https://book-attempted-classifieds-kissing.trycloudflare.com',
     'https://*.loca.lt',
@@ -158,7 +160,7 @@ elif os.getenv('USE_SQLITE') == '1':
         }
     }
 else:
-    # Strictly MySQL Only for local development / full servers
+    # MySQL Database Configuration (XAMPP / PythonAnywhere / Cloud MySQL)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
@@ -166,7 +168,7 @@ else:
             'USER': os.getenv('DB_USER', 'root'),
             'PASSWORD': os.getenv('DB_PASSWORD', ''),
             'HOST': os.getenv('DB_HOST', '127.0.0.1'),
-            'PORT': int(os.getenv('DB_PORT', '3307')),
+            'PORT': int(os.getenv('DB_PORT', '3306')),
             'OPTIONS': {
                 'charset': 'utf8mb4',
                 'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
