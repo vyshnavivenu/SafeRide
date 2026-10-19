@@ -51,9 +51,9 @@ class PassengerAdmin(admin.ModelAdmin):
 
 @admin.register(Driver)
 class DriverAdmin(admin.ModelAdmin):
-    list_display = ('driver_id', 'name', 'phone_number', 'vehicle_number', 'vehicle_type', 'verification_status', 'reputation_score', 'average_rating', 'total_trips', 'qr_code_preview')
+    list_display = ('driver_id', 'name', 'phone_number', 'upi_id', 'vehicle_number', 'vehicle_type', 'verification_status', 'reputation_score', 'average_rating', 'total_trips', 'qr_code_preview')
     list_filter = ('verification_status', 'vehicle_type')
-    search_fields = ('name', 'email', 'phone_number', 'license_number', 'vehicle_number', 'user__username')
+    search_fields = ('name', 'email', 'phone_number', 'upi_id', 'license_number', 'vehicle_number', 'user__username')
     actions = ['approve_verification', 'reject_verification', 'suspend_driver', 'reset_pending']
 
     def qr_code_preview(self, obj):
@@ -98,7 +98,7 @@ class VehicleDocumentsAdmin(admin.ModelAdmin):
 
 @admin.register(Trip)
 class TripAdmin(admin.ModelAdmin):
-    list_display = ('trip_id', 'passenger', 'driver', 'status', 'start_location', 'destination_address', 'distance_km', 'fare_amount', 'start_time', 'end_time')
+    list_display = ('trip_id', 'passenger', 'driver', 'status', 'fare_amount', 'start_location', 'destination_address', 'start_time')
     list_filter = ('status', 'start_time')
     search_fields = ('trip_id', 'passenger__username', 'passenger__email', 'driver__name', 'driver__vehicle_number', 'start_location', 'destination_address')
 

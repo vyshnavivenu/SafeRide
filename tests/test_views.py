@@ -189,3 +189,111 @@ class RoleBasedAccessControlTests(TestCase):
         # Should not contain the SOS emergency button in header or floating
         self.assertNotContains(response, 'header-sos-btn')
         self.assertNotContains(response, 'floating-sos-trigger')
+
+
+class DriverUPIFormsAndProfileViewTests(TestCase):
+    """
+    Test Case 4: Driver UPI ID Forms & Profile Views Tests
+    Verifies that admin registration and driver profile views properly validate and update UPI IDs.
+    """
+
+    def setUp(self):
+        self.client = Client()
+        self.admin = User.objects.create_superuser(
+            username='admin_upi',
+            email='adminupi@saferide.org',
+            password='password123',
+            role=User.Role.ADMIN
+        )
+        self.driver_user = User.objects.create_user(
+            username='driver_profile_test',
+            email='drvprof@saferide.org',
+            password='password123',
+            role=User.Role.DRIVER,
+            phone='9447022222'
+        )
+        self.driver = Driver.objects.create(
+            user=self.driver_user,
+            name='Test Driver',
+            email='drvprof@saferide.org',
+            phone_number='9447022222',
+            license_number='KL-05-20230009999',
+            vehicle_number='KL-05-AT-7777',
+            vehicle_type='auto',
+            verification_status=Driver.VerificationStatus.VERIFIED,
+            upi_id='sample.testdriver@oksbi'
+        )
+
+    def test_driver_profile_view_updates_upi_id(self):
+        """Verify that a driver can update their UPI ID through the profile management view."""
+        self.client.force_login(self.driver_user)
+        new_upi = 'updated.driver@okhdfcbank'
+        response = self.client.post(reverse('driver_profile'), {
+            'name': 'Test Driver Updated',
+            'phone_number': '9447022222',
+            'license_number': 'KL-05-20230009999',
+            'vehicle_number': 'KL-05-AT-7777',
+            'vehicle_type': 'auto',
+            'upi_id': new_upi,
+        }, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.driver.refresh_from_db()
+        self.assertEqual(self.driver.upi_id, new_upi)
+
+
+class TripFareQRViewTests(TestCase):
+    """
+    Test Case 5: Trip Fare QR & Driver UPI Integration Tests
+    Verifies that the rate_trip view and QR generator properly render the driver's UPI ID and fare amount.
+    """
+
+    def setUp(self):
+        self.client = Client()
+        self.passenger = User.objects.create_user(
+            username='passenger_rater',
+            email='rater@saferide.org',
+            password='password123',
+            role=User.Role.PASSENGER
+        )
+        self.driver_user = User.objects.create_user(
+            username='driver_recipient',
+            email='recipient@saferide.org',
+            password='password123',
+            role=User.Role.DRIVER,
+            phone='9847055555'
+        )
+        self.driver = Driver.objects.create(
+            user=self.driver_user,
+            name='Recipient Driver',
+            email='recipient@saferide.org',
+            phone_number='9847055555',
+            license_number='KL-05-20210005555',
+            vehicle_number='KL-05-TX-5555',
+            vehicle_type='taxi',
+            upi_id='sample.recipient@oksbi'
+        )
+        self.trip = Trip.objects.create(
+            passenger=self.passenger,
+            driver=self.driver,
+            distance_km=Decimal('3.00'),
+            fare_amount=Decimal('52.50'),
+            status=Trip.Status.COMPLETED
+        )
+
+    def test_rate_trip_page_renders_cleanly_with_upi_pay_str(self):
+        """Verify that rate_trip view loads successfully with the driver's UPI ID and exact fare in context."""
+        self.client.force_login(self.passenger)
+        response = self.client.get(reverse('rate_trip', kwargs={'trip_id': self.trip.trip_id}))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Official Fare Receipt')
+        self.assertEqual(response.context['driver_upi'], 'sample.recipient@oksbi')
+        self.assertIn('upi://pay', response.context['upi_pay_str'])
+        self.assertIn(f"am={response.context['trip'].fare_amount}", response.context['upi_pay_str'])
+
+    def test_serve_trip_fare_qr_returns_valid_png(self):
+        """Verify that the fare QR generator endpoint returns a valid image/png."""
+        self.client.force_login(self.passenger)
+        response = self.client.get(reverse('serve_trip_fare_qr', kwargs={'trip_id': self.trip.trip_id}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'image/png')
+

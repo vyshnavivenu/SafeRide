@@ -30,25 +30,25 @@
           <!-- Full Name -->
           <div class="mb-3">
             <label class="form-label fw-bold text-light">Full Name :</label>
-            <input type="text" name="full_name" class="form-control py-2" placeholder="Full Name" value="{{ user.get_full_name|default:user.username }}" pattern="[a-zA-Z\s\.\'\-]+" minlength="2" maxlength="100" title="Letters and spaces only" required>
+            <input type="text" name="full_name" class="form-control py-2 text-white" style="background-color: #0F172A; border-color: #334155;" placeholder="Full Name" value="{{ user.get_full_name|default:user.username }}" pattern="[a-zA-Z\s\.\'\-]+" minlength="2" maxlength="100" title="Letters and spaces only" required>
           </div>
 
           <!-- Email -->
           <div class="mb-3">
             <label class="form-label fw-bold text-light">Email :</label>
-            <input type="email" name="email" class="form-control py-2" placeholder="Email" value="{{ user.email|default:'' }}" required>
+            <input type="email" name="email" class="form-control py-2 text-white" style="background-color: #0F172A; border-color: #334155;" placeholder="Email" value="{{ user.email|default:'' }}" required>
           </div>
 
           <!-- Phone Number -->
           <div class="mb-3">
             <label class="form-label fw-bold text-light">Phone Number :</label>
-            <input type="tel" name="phone_number" class="form-control py-2" placeholder="10-digit Mobile (e.g. 9876543210)" pattern="(\+91[\-\s]?)?[6-9]\d{9}" minlength="10" maxlength="15" title="Valid 10-digit mobile number" value="{{ user.phone|default:'' }}" required>
+            <input type="tel" name="phone_number" class="form-control py-2 text-white" style="background-color: #0F172A; border-color: #334155;" placeholder="10-digit Mobile (e.g. 9876543210)" pattern="(\+91[\-\s]?)?[6-9]\d{9}" minlength="10" maxlength="15" title="Valid 10-digit mobile number" value="{{ user.phone|default:'' }}" required>
           </div>
 
           <!-- Profile Photo -->
           <div class="mb-4">
             <label class="form-label fw-bold text-light">Profile Photo :</label>
-            <input type="file" name="profile_photo" class="form-control py-2" accept="image/*">
+            <input type="file" name="profile_photo" class="form-control py-2 text-white" style="background-color: #0F172A; border-color: #334155;" accept="image/*">
           </div>
 
           <!-- Action Buttons -->
@@ -70,4 +70,3 @@
 {% endblock %}
 
 {% block floating_sos %}{% endblock %}
-{% block footer %}{% endblock %}

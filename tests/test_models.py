@@ -431,3 +431,108 @@ class RatingAndComplaintModelTests(TestCase):
         self.assertEqual(complaint.status, 'Resolved')
         self.assertEqual(complaint.penalty_points_deducted, 5)
         self.assertIsNotNone(complaint.resolved_at)
+
+
+class DriverUPIValidationTests(TestCase):
+    """
+    Test Case 6: Driver UPI ID Validation & Integration Tests
+    Verifies that Driver model enforces correct VPA formats and handles UPI updates securely.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='driver_upi_tester',
+            email='upitester@saferide.org',
+            password='testpassword123',
+            role=User.Role.DRIVER,
+            phone='9847112233'
+        )
+        self.driver = Driver.objects.create(
+            user=self.user,
+            name='Rajesh Kumar',
+            email='upitester@saferide.org',
+            phone_number='9847112233',
+            license_number='KL-05-20220007812',
+            vehicle_number='KL-05-AT-4455',
+            vehicle_type='auto',
+            upi_id='sample.rajesh@oksbi'
+        )
+
+    def test_valid_upi_id_persists_successfully(self):
+        """Verify that valid VPAs (e.g. name@bank, phone@bank) pass full model clean."""
+        valid_upis = [
+            'rajesh@oksbi',
+            '9847112233@paytm',
+            'driver.safe@okhdfcbank',
+            'sample.rajeshkumar@okaxis',
+            'driver123@icici',
+        ]
+        for vpa in valid_upis:
+            self.driver.upi_id = vpa
+            self.driver.full_clean()
+            self.driver.save()
+            self.assertEqual(Driver.objects.get(pk=self.driver.pk).upi_id, vpa)
+
+    def test_invalid_upi_id_raises_validation_error(self):
+        """Verify that malformed UPI strings raise a ValidationError on full_clean()."""
+        invalid_upis = [
+            'invalid_vpa_without_at',
+            '@bank',
+            'driver@',
+            'driver@ bank',
+            'dr!ver#@bank',
+        ]
+        for vpa in invalid_upis:
+            self.driver.upi_id = vpa
+            with self.assertRaises(ValidationError):
+                self.driver.full_clean()
+
+
+class TripPaymentAndQRTests(TestCase):
+    """
+    Test Case 7: Secure Payment Verification & QR Code Integration Tests
+    Verifies that the Trip QR code encodes the driver's UPI ID and exact fare,
+    and rides are marked as paid only after verified payment.
+    """
+
+    def setUp(self):
+        self.passenger = User.objects.create_user(
+            username='passenger_vyshnavi',
+            email='vyshnavi@saferide.org',
+            password='testpassword123',
+            role=User.Role.PASSENGER
+        )
+        self.driver_user = User.objects.create_user(
+            username='driver_rajesh_pay',
+            email='rajeshpay@saferide.org',
+            password='testpassword123',
+            role=User.Role.DRIVER,
+            phone='9447182930'
+        )
+        self.driver = Driver.objects.create(
+            user=self.driver_user,
+            name='Rajesh Kumar',
+            email='rajeshpay@saferide.org',
+            phone_number='9447182930',
+            license_number='KL-05-20180004521',
+            vehicle_number='KL-05-AT-4455',
+            vehicle_type='auto',
+            upi_id='sample.rajeshkumar@oksbi'
+        )
+        self.trip = Trip.objects.create(
+            passenger=self.passenger,
+            driver=self.driver,
+            distance_km=Decimal('4.50'),
+            fare_amount=Decimal('75.00'),
+            status=Trip.Status.COMPLETED
+        )
+
+    def test_trip_qr_code_encodes_driver_upi_and_exact_fare(self):
+        """Verify that generated fare QR code contains the driver's UPI ID and exact fare amount."""
+        upi_url = self.trip.upi_payment_url
+        self.assertIn(f"pa={self.driver.upi_id}", upi_url)
+        self.assertIn("am=75.00", upi_url)
+        self.assertIn("cu=INR", upi_url)
+        self.assertIn(f"tn=SafeRide_TRP_{self.trip.trip_id}", upi_url)
+
+

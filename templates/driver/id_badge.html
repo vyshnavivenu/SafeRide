@@ -244,7 +244,7 @@
           <div class="mb-3">
             <div class="vehicle-plate-badge">
               <span class="plate-country">IND</span>
-              <span>{{ vehicle.registration_number|default:driver.vehicle_number|default:"KL-05-AT-4455" }}</span>
+              <span>{{ vehicle.registration_number|default:driver.vehicle_number|default:"Not Available" }}</span>
             </div>
           </div>
 
@@ -256,6 +256,13 @@
             <div class="mt-2 text-cyan fw-bold small">
               <i class="fa-solid fa-qrcode me-1"></i> SCAN TO VERIFY & START RIDE
             </div>
+            {% if driver.upi_id %}
+            <div class="mt-2">
+              <span class="badge bg-dark border border-success text-success font-monospace px-3 py-1 shadow-sm" style="font-size: 0.75rem;">
+                <i class="fa-solid fa-money-bill-transfer me-1"></i> UPI: {{ driver.upi_id }}
+              </span>
+            </div>
+            {% endif %}
           </div>
 
           <!-- Key Vehicle & Safety Metadata -->

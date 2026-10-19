@@ -218,21 +218,27 @@
           <span>Profile</span>
         </a>
       {% elif user.is_driver_user %}
-        <a href="{% url 'home' %}" class="nav-tab {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
-          <i class="fa-solid fa-house"></i>
-          <span>Home</span>
+        <a href="{% url 'driver_dashboard' %}" class="nav-tab {% if request.resolver_match.url_name == 'driver_dashboard' %}active{% endif %}">
+          <i class="fa-solid fa-gauge-high"></i>
+          <span>Dashboard</span>
         </a>
-
         <a href="{% url 'driver_id_badge' %}" class="nav-tab {% if request.resolver_match.url_name == 'driver_id_badge' %}active{% endif %}">
           <i class="fa-solid fa-qrcode text-warning"></i>
           <span>QR Code</span>
+        </a>
+        <a href="{% url 'driver_trip_logs' %}" class="nav-tab {% if request.resolver_match.url_name == 'driver_trip_logs' %}active{% endif %}">
+          <i class="fa-solid fa-route"></i>
+          <span>Trips</span>
         </a>
         <a href="{% url 'driver_profile' %}" class="nav-tab {% if request.resolver_match.url_name == 'driver_profile' %}active{% endif %}">
           <i class="fa-solid fa-user-pen"></i>
           <span>Profile</span>
         </a>
       {% elif user.is_admin_user %}
-
+        <a href="{% url 'admin_dashboard' %}" class="nav-tab {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span>Console</span>
+        </a>
         <a href="{% url 'admin_sos_monitoring' %}" class="nav-tab {% if request.resolver_match.url_name == 'admin_sos_monitoring' %}active{% endif %}">
           <i class="fa-solid fa-triangle-exclamation text-danger"></i>
           <span>SOS</span>
@@ -381,16 +387,14 @@
   {% endif %}
   {% endblock %}
 
+  {% block footer %}{% endblock %}
+
   <!-- Scripts -->
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <!-- jsQR Precision QR Code Decoder -->
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
-  <!-- Google Maps JavaScript API (Maps & Location Services) -->
-  {% if GOOGLE_MAPS_API_KEY %}
-  <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&libraries=places,geometry"></script>
-  {% endif %}
   <script src="/static/js/app.js?v=6.0"></script>
   <script>
     function triggerHeaderSOS() {
@@ -404,12 +408,32 @@
         }
       }
 
-      if (confirm("🚨 BROADCAST EMERGENCY SOS BEACON?\n\nThis will immediately dispatch your live GPS location to Police (112) and the Central Admin Command Center.")) {
+      if (confirm("EMERGENCY SOS BEACON: Broadcast your live GPS location immediately to Police (112) and the Central Admin Command Center?")) {
         if (typeof triggerSOSEmergency === 'function') {
           triggerSOSEmergency();
         }
       }
       {% endif %}
+    }
+
+    // Global password toggle utility
+    function togglePasswordVisibility(inputId, iconId) {
+      const input = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+      if (!input) return;
+      if (input.type === 'password') {
+        input.type = 'text';
+        if (icon) {
+          icon.classList.remove('fa-eye');
+          icon.classList.add('fa-eye-slash');
+        }
+      } else {
+        input.type = 'password';
+        if (icon) {
+          icon.classList.remove('fa-eye-slash');
+          icon.classList.add('fa-eye');
+        }
+      }
     }
   </script>
   {% block extra_js %}{% endblock %}

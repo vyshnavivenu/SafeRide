@@ -6,7 +6,7 @@
 <div class="container py-5">
   <div class="row justify-content-center">
     <div class="col-md-6 col-lg-5">
-      <div class="card rounded-4 border shadow-lg p-4 p-md-5">
+      <div class="card rounded-4 border shadow-lg p-4 p-md-5" style="background-color: #131C2E !important; border-color: #334155 !important;">
         
         <!-- Header: PASSENGER LOGIN -->
         <div class="text-center mb-4 border-bottom pb-3">
@@ -21,14 +21,14 @@
           <div class="mb-3">
             <label class="form-label fw-bold text-light">Username / Email :</label>
             <input type="text" name="username" id="id_username" value="{{ username|default:'' }}"
-              class="form-control py-2 text-white" style="background-color: #0F172A;" placeholder="Email or Username" required autofocus>
+              class="form-control py-2 text-white" style="background-color: #0F172A; border-color: #334155;" placeholder="Email or Username" required autofocus>
           </div>
 
           <!-- Password -->
           <div class="mb-4">
             <label class="form-label fw-bold text-light">Password :</label>
             <div class="position-relative">
-              <input type="password" name="password" id="id_password" class="form-control py-2 pe-5" required>
+              <input type="password" name="password" id="id_password" class="form-control py-2 pe-5 text-white" style="background-color: #0F172A; border-color: #334155;" placeholder="Enter Password" required>
               <button type="button" class="btn p-0 border-0 bg-transparent position-absolute end-0 top-50 translate-middle-y me-3" id="togglePasswordBtn" onclick="togglePasswordVisibility('id_password', 'togglePasswordIcon')" title="Show / Hide Password" style="cursor: pointer; z-index: 10; line-height: 1; outline: none; box-shadow: none;">
                 <i class="fa-solid fa-eye fs-5 text-light opacity-75" id="togglePasswordIcon"></i>
               </button>
@@ -36,7 +36,7 @@
           </div>
 
           <!-- Login and Forgot Password? -->
-          <div class="d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center justify-content-between mb-4">
             <button type="submit" class="btn btn-primary btn-lg fw-bold px-4 rounded-pill shadow-sm">
               LOGIN
             </button>
@@ -46,32 +46,15 @@
           </div>
         </form>
 
+        <div class="text-center pt-3 border-top small">
+          <span class="text-white-50">Don't have an account?</span>
+          <a href="{% url 'passenger_register' %}" class="fw-bold text-decoration-none ms-1" style="color: #FF9800;">Register as Passenger &rarr;</a>
+        </div>
+
       </div>
     </div>
   </div>
 </div>
-
-<script>
-function togglePasswordVisibility(inputId, iconId) {
-  const input = document.getElementById(inputId || 'id_password');
-  const icon = document.getElementById(iconId || 'togglePasswordIcon');
-  if (!input) return;
-  if (input.type === 'password') {
-    input.type = 'text';
-    if (icon) {
-      icon.classList.remove('fa-eye');
-      icon.classList.add('fa-eye-slash');
-    }
-  } else {
-    input.type = 'password';
-    if (icon) {
-      icon.classList.remove('fa-eye-slash');
-      icon.classList.add('fa-eye');
-    }
-  }
-}
-</script>
 {% endblock %}
 
 {% block floating_sos %}{% endblock %}
-{% block footer %}{% endblock %}

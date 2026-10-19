@@ -53,67 +53,83 @@ function playSOSAudioBeep() {
   }
 }
 
-// Universal Mobile Geolocation Helper with High-Accuracy -> Low-Accuracy Fallback Cascade
+// Universal High-Precision GPS Geolocation Engine (Strictly enableHighAccuracy: true, Zero IP fallback)
 function getAccurateUserLocation(onSuccess, onError, customOptions = {}) {
   if (!("geolocation" in navigator)) {
     if (onError) onError({ code: -1, message: "Geolocation is not supported by your browser." });
     return;
   }
 
-  const highAccuracyOptions = {
+  const gpsOptions = {
     enableHighAccuracy: true,
-    timeout: 8000,
+    timeout: 15000,
     maximumAge: 0,
     ...customOptions
   };
 
-  const lowAccuracyOptions = {
-    enableHighAccuracy: false,
-    timeout: 12000,
-    maximumAge: 60000,
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      onSuccess(
+        position.coords.latitude,
+        position.coords.longitude,
+        position.coords.accuracy,
+        position.coords.speed,
+        position.coords.heading
+      );
+    },
+    (err) => {
+      console.warn("High-accuracy GPS acquisition error:", err);
+      let userMsg = "GPS location request failed.";
+      if (err.code === err.PERMISSION_DENIED) {
+        userMsg = "Location permission denied. Please allow location access in your device/browser settings.";
+      } else if (err.code === err.POSITION_UNAVAILABLE) {
+        userMsg = "GPS satellite/hardware signal unavailable on this device.";
+      } else if (err.code === err.TIMEOUT) {
+        userMsg = "GPS signal acquisition timed out. Please ensure you have a clear view of the sky or active GPS.";
+      }
+      if (onError) onError({ code: err.code, message: userMsg, rawError: err });
+    },
+    gpsOptions
+  );
+}
+
+// Continuous Real-Time GPS Tracking with watchPosition (enableHighAccuracy: true)
+function watchAccurateUserLocation(onSuccess, onError, customOptions = {}) {
+  if (!("geolocation" in navigator)) {
+    if (onError) onError({ code: -1, message: "Geolocation is not supported by your browser." });
+    return null;
+  }
+
+  const gpsOptions = {
+    enableHighAccuracy: true,
+    timeout: 20000,
+    maximumAge: 0,
     ...customOptions
   };
 
-  // Step 1: Attempt High-Accuracy GPS
-  navigator.geolocation.getCurrentPosition(
+  return navigator.geolocation.watchPosition(
     (position) => {
-      onSuccess(position.coords.latitude, position.coords.longitude, position.coords.accuracy || 10);
-    },
-    (firstError) => {
-      console.warn("High-accuracy GPS timed out or unavailable. Falling back to cell/WiFi triangulation...", firstError);
-
-      // If user explicitly denied permission, do not retry
-      if (firstError.code === firstError.PERMISSION_DENIED) {
-        if (onError) {
-          onError({
-            code: firstError.code,
-            message: "⚠️ Location permission denied. Please allow location access in your browser or phone Settings to transmit live GPS coordinates."
-          });
-        }
-        return;
-      }
-
-      // Step 2: Low-Accuracy Fallback (WiFi / Cellular tower positioning)
-      navigator.geolocation.getCurrentPosition(
-        (fallbackPosition) => {
-          onSuccess(fallbackPosition.coords.latitude, fallbackPosition.coords.longitude, fallbackPosition.coords.accuracy || 50);
-        },
-        (finalError) => {
-          console.warn("Low-accuracy geolocation fallback also failed:", finalError);
-          let userMsg = "Location acquisition failed. Defaulting to transit coordinates.";
-          if (finalError.code === finalError.PERMISSION_DENIED) {
-            userMsg = "⚠️ Location access is blocked. Please enable Location Services in your phone Settings.";
-          } else if (finalError.code === finalError.POSITION_UNAVAILABLE) {
-            userMsg = "⚠️ GPS location signal unavailable on this device.";
-          } else if (finalError.code === finalError.TIMEOUT) {
-            userMsg = "⚠️ GPS location request timed out.";
-          }
-          if (onError) onError({ code: finalError.code, message: userMsg });
-        },
-        lowAccuracyOptions
+      onSuccess(
+        position.coords.latitude,
+        position.coords.longitude,
+        position.coords.accuracy,
+        position.coords.speed,
+        position.coords.heading
       );
     },
-    highAccuracyOptions
+    (err) => {
+      console.warn("Real-time GPS tracking stream error:", err);
+      let userMsg = "GPS stream interrupted.";
+      if (err.code === err.PERMISSION_DENIED) {
+        userMsg = "Location permission denied. GPS tracking suspended.";
+      } else if (err.code === err.POSITION_UNAVAILABLE) {
+        userMsg = "GPS signal temporarily lost. Waiting for satellite lock...";
+      } else if (err.code === err.TIMEOUT) {
+        userMsg = "GPS signal timed out. Attempting reconnection...";
+      }
+      if (onError) onError({ code: err.code, message: userMsg, rawError: err });
+    },
+    gpsOptions
   );
 }
 

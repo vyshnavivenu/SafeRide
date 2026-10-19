@@ -48,7 +48,7 @@
           </div>
 
           <div class="d-flex flex-wrap align-items-center gap-2 small text-white opacity-75">
-            <span><i class="fa-solid fa-phone me-1 text-warning"></i> {{ driver.user.phone|default:"+91 98471 23456" }}</span> &bull; 
+            <span><i class="fa-solid fa-phone me-1 text-warning"></i> {{ driver.phone_number|default:driver.user.phone|default:"Phone not provided" }}</span> &bull; 
             <span><i class="fa-solid fa-car-side text-info me-1"></i> {{ driver.get_vehicle_type_display|default:"Sedan" }} (<strong class="text-white">{{ driver.vehicle_number }}</strong>)</span> &bull; 
             <span><i class="fa-solid fa-id-card text-success me-1"></i> DL: <strong class="text-white font-monospace">{{ driver.license_number }}</strong></span>
           </div>
@@ -257,9 +257,15 @@
               </div>
 
               <!-- Review Text -->
+              {% if r.review or r.review_text %}
               <p class="small mb-2 text-white opacity-90 fst-italic">
-                "{{ r.review|default:r.review_text|default:"Smooth and safe ride. Driver followed traffic regulations and polite conduct." }}"
+                "{{ r.review|default:r.review_text }}"
               </p>
+              {% else %}
+              <p class="small mb-2 text-white-50 fst-italic">
+                Rating submitted without additional written commentary.
+              </p>
+              {% endif %}
 
               <!-- Aspect Metrics Breakdown -->
               <div class="small text-white opacity-75 d-flex flex-wrap gap-3 pt-2 border-top" style="border-color: #1E293B !important;">

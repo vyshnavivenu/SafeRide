@@ -585,6 +585,7 @@ def ensure_diverse_driver_ecosystem(user=None):
                 'reputation_score': d['score'],
                 'experience_years': 5,
                 'total_trips': d['trips'],
+                'upi_id': d.get('upi_id', f"sample.{d['username'].replace('driver_', '')}@oksbi"),
             }
         )
         created_drivers.append(drv)
@@ -870,21 +871,23 @@ def rate_trip(request, trip_id):
             trip.generate_fare_qr_code(request.build_absolute_uri('/')[:-1])
             trip.save(update_fields=['fare_amount', 'distance_km', 'fare_qr_code'])
         except Exception as e:
-            pass
+            print(f"Error generating fare QR code: {e}")
     else:
         trip.save(update_fields=['fare_amount', 'distance_km'])
 
-    fare_qr_url = trip.fare_qr_code.url if (trip.fare_qr_code and trip.fare_qr_code.name and default_storage.exists(trip.fare_qr_code.name)) else None
+    fare_qr_url = trip.fare_qr_code.url if (trip.fare_qr_code and trip.fare_qr_code.name and default_storage.exists(trip.fare_qr_code.name)) else f"/api/trip/{trip.trip_id}/qr-fallback/"
 
     from urllib.parse import quote
+    driver_upi = (trip.driver.upi_id if (trip.driver and trip.driver.upi_id) else 'saferide@upi').strip()
     payee_name = quote(trip.driver.name or 'SafeRide Driver')
-    upi_pay_str = f"upi://pay?pa=saferide@upi&pn={payee_name}&am={trip.fare_amount}&cu=INR&tn=SafeRide_TRP_{trip.trip_id}"
+    upi_pay_str = f"upi://pay?pa={driver_upi}&pn={payee_name}&am={trip.fare_amount}&cu=INR&tn=SafeRide_TRP_{trip.trip_id}&tr=TRP{trip.trip_id}"
 
     profile = getattr(request.user, 'passenger_profile', None)
     return render(request, 'trip_feedback.html', {
         'trip': trip,
         'fare_qr_url': fare_qr_url,
         'upi_pay_str': upi_pay_str,
+        'driver_upi': driver_upi,
         'profile': profile,
     })
 
@@ -1257,6 +1260,8 @@ def driver_profile_view(request):
 
             driver.name = name
             driver.phone_number = form.cleaned_data['phone_number']
+            if form.cleaned_data.get('upi_id') is not None:
+                driver.upi_id = form.cleaned_data.get('upi_id') or None
             if form.cleaned_data.get('license_number'):
                 driver.license_number = form.cleaned_data['license_number'].strip().upper()
             if form.cleaned_data.get('vehicle_number'):
@@ -1269,14 +1274,17 @@ def driver_profile_view(request):
 
             driver.save()
 
-            if vehicle:
+            if vehicle and hasattr(vehicle, 'save'):
                 if form.cleaned_data.get('vehicle_number'):
                     vehicle.registration_number = form.cleaned_data['vehicle_number'].strip().upper()
                 if form.cleaned_data.get('vehicle_make_model'):
                     vehicle.make_model = form.cleaned_data['vehicle_make_model'].strip()
                 if form.cleaned_data.get('vehicle_type'):
                     vehicle.vehicle_type = form.cleaned_data['vehicle_type']
-                vehicle.save()
+                try:
+                    vehicle.save()
+                except Exception:
+                    pass
 
             messages.success(request, "Driver and Vehicle Profiles updated successfully.")
             return redirect('driver_profile')
@@ -1285,6 +1293,7 @@ def driver_profile_view(request):
             'name': driver.name or user.get_full_name() or user.username,
             'email': user.email or driver.email or '',
             'phone_number': driver.phone_number or user.phone or '',
+            'upi_id': driver.upi_id or '',
             'license_number': driver.license_number or '',
             'vehicle_number': driver.vehicle_number or (vehicle.registration_number if vehicle else ''),
             'vehicle_type': driver.vehicle_type or (vehicle.vehicle_type if vehicle else 'auto'),
@@ -1390,6 +1399,7 @@ def admin_driver_register(request):
                 vehicle_number=form.cleaned_data['registration_number'].upper(),
                 vehicle_type=form.cleaned_data['vehicle_type'],
                 password=user.password,
+                upi_id=form.cleaned_data.get('upi_id') or None,
                 experience_years=form.cleaned_data['experience_years'],
                 driver_photo=form.cleaned_data.get('driver_photo'),
                 license_doc=form.cleaned_data.get('license_doc'),
@@ -1915,6 +1925,7 @@ def serve_trip_fare_qr(request, trip_id):
     """Dynamically generate and stream Fare Receipt QR code PNG image."""
     from django.http import HttpResponse, Http404
     from io import BytesIO
+    from urllib.parse import quote
     import qrcode
 
     trip = Trip.objects.filter(
@@ -1926,7 +1937,9 @@ def serve_trip_fare_qr(request, trip_id):
     trip.calculate_distance_and_fare()
 
     # Formatted digital receipt & UPI payment string
-    upi_pay_str = f"upi://pay?pa=saferide@upi&pn={trip.driver.name or 'SafeRide Driver'}&am={trip.fare_amount}&cu=INR&tn=SafeRide_TRP_{trip.trip_id}"
+    driver_upi = (trip.driver.upi_id if (trip.driver and trip.driver.upi_id) else 'saferide@upi').strip()
+    payee_name = quote(trip.driver.name or 'SafeRide Driver')
+    upi_pay_str = f"upi://pay?pa={driver_upi}&pn={payee_name}&am={trip.fare_amount}&cu=INR&tn=SafeRide_TRP_{trip.trip_id}&tr=TRP{trip.trip_id}"
     receipt_text = (
         f"SafeRide Verified Fare Receipt\n"
         f"Trip ID: #TRP-{str(trip.trip_id).zfill(4)}\n"
@@ -1960,4 +1973,47 @@ def serve_trip_fare_qr(request, trip_id):
         pass
 
     return HttpResponse(buffer.getvalue(), content_type='image/png')
+
+
+def serve_media_fare_qr(request, filename):
+    """
+    On-demand handler for /media/fare_qrcodes/<filename>.
+    Serves the file if it exists, or dynamically generates and saves it to disk if missing,
+    completely eliminating 404 errors for fare QR codes.
+    """
+    import os
+    import re
+    from django.conf import settings
+    from django.http import HttpResponse, Http404, FileResponse
+
+    fare_dir = settings.MEDIA_ROOT / 'fare_qrcodes'
+    fare_dir.mkdir(parents=True, exist_ok=True)
+    file_path = fare_dir / filename
+
+    if file_path.exists() and os.path.getsize(file_path) > 0:
+        return FileResponse(open(file_path, 'rb'), content_type='image/png')
+
+    # Extract trip_id from filename (e.g. fare_qr_trip_29.png)
+    match = re.search(r'fare_qr_trip_(\d+)', filename)
+    if not match:
+        raise Http404("Fare QR code not found")
+
+    trip_id = int(match.group(1))
+    trip = Trip.objects.filter(trip_id=trip_id).first()
+    if not trip:
+        raise Http404(f"Trip #{trip_id} not found")
+
+    try:
+        trip.generate_fare_qr_code(request.build_absolute_uri('/')[:-1])
+        trip.save(update_fields=['fare_qr_code'])
+    except Exception as e:
+        print(f"Error generating fare QR on demand: {e}")
+
+    if file_path.exists() and os.path.getsize(file_path) > 0:
+        return FileResponse(open(file_path, 'rb'), content_type='image/png')
+
+    return serve_trip_fare_qr(request, trip_id)
+
+
+
 

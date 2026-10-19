@@ -51,6 +51,13 @@ license_validator = RegexValidator(
     message="Enter a valid driving license format (e.g. KL-05-2021000892)."
 )
 
+UPI_ID_REGEX = r"^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z0-9]{2,64}$"
+upi_id_validator = RegexValidator(
+    regex=UPI_ID_REGEX,
+    message="Enter a valid Virtual Payment Address (UPI ID) format (e.g. driver@oksbi or 9876543210@paytm)."
+)
+
+
 
 class PassengerRegisterForm(UserCreationForm):
     first_name = forms.CharField(
@@ -248,6 +255,17 @@ class AdminDriverRegistrationForm(forms.Form):
     make_model = forms.CharField(max_length=100, required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Bajaj RE Compact 4S / Swift Dzire'}))
     rc_book_doc = forms.FileField(required=False, widget=forms.FileInput(attrs={'class': 'form-control', 'accept': '.pdf,image/*'}))
     
+    # Payment & UPI Details
+    upi_id = forms.CharField(
+        max_length=100,
+        required=False,
+        validators=[upi_id_validator],
+        widget=forms.TextInput(attrs={
+            'class': 'form-control font-monospace',
+            'placeholder': 'e.g. driver@oksbi or 9876543210@paytm'
+        })
+    )
+
     # Immediate Approval Checkbox
     auto_approve = forms.BooleanField(required=False, initial=True, widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}), label="Approve & Generate QR Code immediately")
 
@@ -295,6 +313,14 @@ class AdminDriverRegistrationForm(forms.Form):
         if Driver.objects.filter(phone_number=phone).exists() or Driver.objects.filter(phone_number__endswith=digits).exists():
             raise forms.ValidationError(f"A driver with phone number '{phone}' is already registered.")
         return phone
+
+    def clean_upi_id(self):
+        upi = self.cleaned_data.get('upi_id', '').strip()
+        if not upi:
+            return None
+        if not re.match(UPI_ID_REGEX, upi):
+            raise forms.ValidationError("Please enter a valid Virtual Payment Address (e.g. driver@oksbi or 9876543210@paytm).")
+        return upi
 
     def clean_driver_photo(self):
         return validate_kyc_document(self.cleaned_data.get('driver_photo'), 'Driver Photo')
@@ -559,6 +585,16 @@ class DriverProfileManagementForm(forms.Form):
         label="Vehicle Make & Model",
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Bajaj RE Compact 4S'})
     )
+    upi_id = forms.CharField(
+        max_length=100,
+        required=False,
+        validators=[upi_id_validator],
+        label="UPI ID / Virtual Payment Address (VPA)",
+        widget=forms.TextInput(attrs={
+            'class': 'form-control font-monospace',
+            'placeholder': 'e.g. driver@oksbi or 9876543210@paytm'
+        })
+    )
     profile_photo = forms.ImageField(
         required=False,
         label="Driver Photo",
@@ -591,6 +627,14 @@ class DriverProfileManagementForm(forms.Form):
         if reg and not re.match(VEHICLE_PLATE_REGEX, reg):
             raise forms.ValidationError("Please enter a valid vehicle plate format (e.g. KL-05-AT-4455).")
         return reg
+
+    def clean_upi_id(self):
+        upi = self.cleaned_data.get('upi_id', '').strip()
+        if not upi:
+            return None
+        if not re.match(UPI_ID_REGEX, upi):
+            raise forms.ValidationError("Please enter a valid Virtual Payment Address (e.g. driver@oksbi or 9876543210@paytm).")
+        return upi
 
 
 class PassengerProfileManagementForm(forms.Form):
@@ -631,3 +675,4 @@ class PassengerProfileManagementForm(forms.Form):
         if len(digits) != 10:
             raise forms.ValidationError("Phone number must contain exactly 10 digits.")
         return phone
+

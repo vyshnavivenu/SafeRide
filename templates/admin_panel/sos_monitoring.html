@@ -167,8 +167,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- Google Maps JavaScript API with Leaflet OpenStreetMap Fallback -->
-<script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY|default:'' }}&libraries=places,geometry"></script>
+<!-- Leaflet Map JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
   let activeMapInstance = null;
@@ -223,18 +222,18 @@
       markersMap[alert.id] = marker;
 
       marker.bindPopup(`
-        <div style="font-family: 'Inter', sans-serif; padding: 2px; color: #FFFFFF; min-width: 220px;">
+        <div style="font-family: 'Inter', system-ui, sans-serif; color: #FFFFFF; min-width: 220px;">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-            <span style="background: #DC2626; color: #FFFFFF; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 20px; text-transform: uppercase;">🚨 ACTIVE SOS DISTRESS</span>
+            <span class="badge border" style="background-color: #450A0A; color: #FCA5A5; border-color: #DC2626 !important; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 20px; text-transform: uppercase;">🚨 ACTIVE SOS DISTRESS</span>
           </div>
           <p style="margin: 0 0 4px 0; font-size: 14px; font-weight: 700; color: #FFFFFF;">👤 Passenger: ${alert.passenger}</p>
-          <p style="margin: 0 0 4px 0; font-size: 12px; color: #E2E8F0;"><i class="fa-solid fa-phone" style="color: #FBBF24; margin-right: 4px;"></i> <b>Phone:</b> ${alert.phone}</p>
+          <p style="margin: 0 0 4px 0; font-size: 12px; color: #E2E8F0;"><i class="fa-solid fa-phone" style="color: #FF9800; margin-right: 4px;"></i> <b>Phone:</b> ${alert.phone}</p>
           <p style="margin: 0 0 4px 0; font-size: 12px; color: #E2E8F0;"><i class="fa-solid fa-user-tie" style="color: #60A5FA; margin-right: 4px;"></i> <b>Driver:</b> ${alert.driver}</p>
-          <p style="margin: 0 0 4px 0; font-size: 12px; color: #E2E8F0;"><i class="fa-solid fa-car" style="color: #FCD34D; margin-right: 4px;"></i> <b>Vehicle:</b> <span style="font-family: monospace; color: #F59E0B;">${alert.vehicle}</span></p>
+          <p style="margin: 0 0 4px 0; font-size: 12px; color: #E2E8F0;"><i class="fa-solid fa-car" style="color: #FF9800; margin-right: 4px;"></i> <b>Vehicle:</b> <span style="font-family: monospace; color: #FF9800;">${alert.vehicle}</span></p>
           <p style="margin: 0 0 4px 0; font-size: 11px; color: #94A3B8;"><i class="fa-solid fa-clock" style="margin-right: 4px;"></i> <b>Time:</b> ${alert.timestamp}</p>
-          <p style="margin: 0 0 6px 0; font-size: 12px; color: #FCD34D;"><i class="fa-solid fa-location-dot" style="color: #F87171; margin-right: 4px;"></i> <b>Location:</b> ${alert.locationName}</p>
+          <p style="margin: 0 0 6px 0; font-size: 12px; color: #FCD34D;"><i class="fa-solid fa-location-dot" style="color: #EF4444; margin-right: 4px;"></i> <b>Location:</b> ${alert.locationName}</p>
           <hr style="margin: 6px 0; border-color: #334155;">
-          <a href="https://www.google.com/maps/search/?api=1&query=${alert.lat},${alert.lng}" target="_blank" class="btn btn-sm btn-danger text-white py-1 px-3 rounded-pill fw-bold" style="font-size: 11px; display: inline-block;">Open in Google Maps &rarr;</a>
+          <a href="tel:${alert.phone}" class="btn btn-sm btn-danger text-white py-1 px-3 rounded-pill fw-bold" style="font-size: 11px; display: inline-block;"><i class="fa-solid fa-phone me-1"></i> Call Passenger</a>
         </div>
       `).openPopup();
     });
@@ -250,74 +249,8 @@
   }
 
   function initAdminSOSMap() {
-    const mapElement = document.getElementById('admin-sos-map');
-    if (!mapElement) return;
-
-    if (typeof google === 'undefined' || !google.maps || !google.maps.Map) {
-      renderLeafletFallbackMap();
-      return;
-    }
-
-    try {
-      const map = new google.maps.Map(mapElement, {
-        zoom: 14,
-        center: { lat: defaultCenter[0], lng: defaultCenter[1] },
-        mapTypeId: google.maps.MapTypeId.ROADMAP,
-        disableDefaultUI: false,
-        zoomControl: true,
-        styles: [
-          { elementType: "geometry", stylers: [{ color: "#1e293b" }] },
-          { elementType: "labels.text.stroke", stylers: [{ color: "#0f172a" }] },
-          { elementType: "labels.text.fill", stylers: [{ color: "#94a3b8" }] },
-          { featureType: "road", elementType: "geometry", stylers: [{ color: "#334155" }] },
-          { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#f8fafc" }] },
-          { featureType: "water", elementType: "geometry", stylers: [{ color: "#0f172a" }] }
-        ]
-      });
-
-      alertsData.forEach(a => {
-        const marker = new google.maps.Marker({
-          position: { lat: a.lat, lng: a.lng },
-          map: map,
-          title: `🚨 SOS Distress: ${a.passenger}`,
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 14,
-            fillColor: "#DC2626",
-            fillOpacity: 1,
-            strokeColor: "#FFFFFF",
-            strokeWeight: 3
-          }
-        });
-
-        const infoWindow = new google.maps.InfoWindow({
-          content: `
-            <div style="color: #0F172A; font-family: 'Inter', sans-serif; padding: 4px; min-width: 200px;">
-              <h6 style="margin: 0; font-weight: 700; color: #DC2626;">🚨 SOS DISTRESS BEACON</h6>
-              <p style="margin: 3px 0 0 0; font-size: 13px;">Passenger: <b>${a.passenger}</b></p>
-              <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748B;">Phone: ${a.phone}</p>
-              <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748B;">Driver: ${a.driver}</p>
-              <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748B;">Vehicle: <b>${a.vehicle}</b></p>
-              <p style="margin: 2px 0 0 0; font-size: 11px; color: #94A3B8;">Time: ${a.timestamp}</p>
-              <span style="display:inline-block; background: #DC2626; color: white; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-top: 4px;">Active Distress</span>
-            </div>
-          `
-        });
-
-        infoWindow.open(map, marker);
-        marker.addListener("click", () => infoWindow.open(map, marker));
-      });
-    } catch (e) {
-      console.warn("Google Maps init error, using fallback:", e);
-      renderLeafletFallbackMap();
-    }
-  }
-
-  // Intercept Google Maps Auth Failure callback if key is invalid
-  window.gm_authFailure = function() {
-    console.warn("Google Maps authentication failed. Engaging resilient fallback map.");
     renderLeafletFallbackMap();
-  };
+  }
 
   document.addEventListener('DOMContentLoaded', function() {
     initAdminSOSMap();

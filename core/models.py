@@ -19,6 +19,12 @@ VEHICLE_PLATE_VALIDATOR = RegexValidator(
     message="Vehicle number must follow standard license plate format (e.g. KL-05-AT-4455 or DL-01-A-1234)."
 )
 
+UPI_ID_VALIDATOR = RegexValidator(
+    regex=r"^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z0-9]{2,64}$",
+    message="UPI ID must follow valid Virtual Payment Address (VPA) format (e.g. driver@oksbi, 9876543210@paytm, or username@bank)."
+)
+
+
 
 class User(AbstractUser):
     class Role(models.TextChoices):
@@ -171,6 +177,14 @@ class Driver(models.Model):
         choices=VerificationStatus.choices, 
         default=VerificationStatus.PENDING,
         db_column='verification_status'
+    )
+    upi_id = models.CharField(
+        max_length=100, 
+        blank=True, 
+        null=True, 
+        db_column='upi_id', 
+        validators=[UPI_ID_VALIDATOR],
+        help_text="Driver's Virtual Payment Address (UPI ID)"
     )
     qr_code = models.CharField(max_length=255, blank=True, null=True, db_column='qr_code')
     password = models.CharField(max_length=255, db_column='password')
@@ -347,6 +361,14 @@ class Driver(models.Model):
                 
             def clean_reg_number(self):
                 return self.registration_number.upper().replace(" ", "").replace("-", "") if self.registration_number else ""
+
+            def save(self, *args, **kwargs):
+                if hasattr(self, 'registration_number') and self.registration_number:
+                    self.driver.vehicle_number = self.registration_number
+                if hasattr(self, 'vehicle_type') and self.vehicle_type:
+                    self.driver.vehicle_type = self.vehicle_type
+                self.driver.save()
+                return self
                 
             def __str__(self):
                 return f"{self.registration_number} ({self.get_vehicle_type_display()})"
@@ -504,6 +526,14 @@ class Trip(models.Model):
         super().save(*args, **kwargs)
 
     @property
+    def upi_payment_url(self):
+        """Construct standard UPI URI embedding driver's UPI ID and exact trip fare."""
+        from urllib.parse import quote
+        driver_upi = (self.driver.upi_id if (self.driver and self.driver.upi_id) else 'saferide@upi').strip()
+        payee_name = quote(self.driver.name or 'SafeRide Driver')
+        return f"upi://pay?pa={driver_upi}&pn={payee_name}&am={self.fare_amount}&cu=INR&tn=SafeRide_TRP_{self.trip_id}&tr=TRP{self.trip_id}"
+
+    @property
     def boarding_point(self):
         return self.boarding_address or self.start_location or self.pickup_location_name or "Boarding Point"
 
@@ -579,14 +609,15 @@ class Trip(models.Model):
 
     def generate_fare_qr_code(self, base_url="http://127.0.0.1:8000"):
         """Generate a QR code containing fare receipt & UPI payment details for the completed trip."""
+        import os
         import qrcode
         from io import BytesIO
+        from django.conf import settings
         from django.core.files.base import ContentFile
         from django.core.files.storage import default_storage
 
         # Always enforce public tunnel URL if available to prevent localhost scanning failures
         try:
-            from django.conf import settings
             tunnel_file = settings.BASE_DIR / '.tunnel_url'
             if tunnel_file.exists():
                 with open(tunnel_file, 'r', encoding='utf-8') as f:
@@ -598,8 +629,9 @@ class Trip(models.Model):
 
         # Formatted digital receipt & UPI payment string
         from urllib.parse import quote
+        driver_upi = (self.driver.upi_id if (self.driver and self.driver.upi_id) else 'saferide@upi').strip()
         payee_name = quote(self.driver.name or 'SafeRide Driver')
-        upi_pay_str = f"upi://pay?pa=saferide@upi&pn={payee_name}&am={self.fare_amount}&cu=INR&tn=SafeRide_TRP_{self.trip_id}"
+        upi_pay_str = f"upi://pay?pa={driver_upi}&pn={payee_name}&am={self.fare_amount}&cu=INR&tn=SafeRide_TRP_{self.trip_id}&tr=TRP{self.trip_id}"
         receipt_text = (
             f"SafeRide Verified Fare Receipt\n"
             f"Trip ID: #TRP-{str(self.trip_id).zfill(4)}\n"
@@ -622,20 +654,28 @@ class Trip(models.Model):
         # To launch payment apps correctly, the QR payload must strictly be the UPI URI, not plain text.
         qr.add_data(upi_pay_str)
         qr.make(fit=True)
-        img = qr.make_image(fill_color="#0F172A", back_color="white")
+        try:
+            img = qr.make_image(fill_color="#0F172A", back_color="white")
+        except Exception:
+            img = qr.make_image()
 
         buffer = BytesIO()
         img.save(buffer, format='PNG')
         filename = f"fare_qr_trip_{self.trip_id}.png"
 
-        if self.fare_qr_code and self.fare_qr_code.name:
-            try:
-                if default_storage.exists(self.fare_qr_code.name):
-                    default_storage.delete(self.fare_qr_code.name)
-            except Exception:
-                pass
+        # Guarantee media directory exists and write file directly to disk
+        fare_dir = settings.MEDIA_ROOT / 'fare_qrcodes'
+        fare_dir.mkdir(parents=True, exist_ok=True)
+        file_path = fare_dir / filename
 
-        self.fare_qr_code.save(filename, ContentFile(buffer.getvalue()), save=False)
+        try:
+            with open(file_path, 'wb') as f:
+                f.write(buffer.getvalue())
+        except Exception as e:
+            print(f"Error saving fare QR directly to disk: {e}")
+
+        # Set model ImageField path
+        self.fare_qr_code = f"fare_qrcodes/{filename}"
         return self.fare_qr_code
 
     def complete_trip(self, end_lat=None, end_lng=None, end_address=None):

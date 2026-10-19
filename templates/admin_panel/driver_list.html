@@ -60,6 +60,13 @@
             <td>
               <strong class="text-white">{{ d.name|default:d.user.get_full_name|default:d.user.username }}</strong><br>
               <span class="small text-white opacity-75">{{ d.phone_number|default:d.user.phone|default:"No phone" }}</span>
+              {% if d.upi_id %}
+              <div class="mt-1">
+                <span class="badge bg-dark border border-success text-success font-monospace" style="font-size: 0.68rem;" title="Driver UPI ID">
+                  <i class="fa-solid fa-money-bill-transfer me-1"></i>{{ d.upi_id }}
+                </span>
+              </div>
+              {% endif %}
             </td>
             <td><code class="text-warning">{{ d.license_number }}</code></td>
             <td>
