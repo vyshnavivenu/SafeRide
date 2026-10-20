@@ -14,9 +14,6 @@
         <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-light rounded-pill btn-sm fw-semibold">
           <i class="fa-solid fa-arrow-left me-1"></i> Dashboard
         </a>
-        <a href="{% url 'admin_driver_register' %}" class="btn btn-primary rounded-pill btn-sm fw-semibold">
-          <i class="fa-solid fa-plus me-1"></i> Register New Driver
-        </a>
       </div>
     </div>
 
@@ -41,43 +38,88 @@
       </div>
     </form>
 
-    <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
-        <thead>
-          <tr>
-            <th>Driver</th>
-            <th>License Number</th>
-            <th>Vehicle & Plate</th>
-            <th>Reputation</th>
-            <th>Status</th>
-            <th>QR Code</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for d in drivers %}
-          <tr>
-            <td>
-              <strong class="text-white">{{ d.name|default:d.user.get_full_name|default:d.user.username }}</strong><br>
-              <span class="small text-white opacity-75">{{ d.phone_number|default:d.user.phone|default:"No phone" }}</span>
-              {% if d.upi_id %}
-              <div class="mt-1">
-                <span class="badge bg-dark border border-success text-success font-monospace" style="font-size: 0.68rem;" title="Driver UPI ID">
-                  <i class="fa-solid fa-money-bill-transfer me-1"></i>{{ d.upi_id }}
-                </span>
-              </div>
-              {% endif %}
-            </td>
-            <td><code class="text-warning">{{ d.license_number }}</code></td>
-            <td>
-              <strong class="text-white">{{ d.vehicle_number|default:d.vehicle.registration_number|default:"Pending" }}</strong><br>
-              <span class="small text-white opacity-75">{{ d.get_vehicle_type_display }}</span>
-            </td>
-            <td>
-              <span class="fw-bold text-success">{{ d.reputation_score }}/100</span><br>
-              <span class="small text-white opacity-75">{{ d.average_rating }} ★ ({{ d.total_trips }} trips)</span>
-            </td>
-            <td>
+    <!-- 1. DESKTOP VIEW (≥ 768px): Full Table -->
+    <div class="d-none d-md-block">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Driver</th>
+              <th>License Number</th>
+              <th>Vehicle & Plate</th>
+              <th>Reputation</th>
+              <th>Status</th>
+              <th>QR Code</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for d in drivers %}
+            <tr>
+              <td>
+                <strong class="text-white">{{ d.name|default:d.user.get_full_name|default:d.user.username }}</strong><br>
+                <span class="small text-white opacity-75">{{ d.phone_number|default:d.user.phone|default:"No phone" }}</span>
+                {% if d.upi_id %}
+                <div class="mt-1">
+                  <span class="badge bg-dark border border-success text-success font-monospace" style="font-size: 0.68rem;" title="Driver UPI ID">
+                    <i class="fa-solid fa-money-bill-transfer me-1"></i>{{ d.upi_id }}
+                  </span>
+                </div>
+                {% endif %}
+              </td>
+              <td><code class="text-warning">{{ d.license_number }}</code></td>
+              <td>
+                <strong class="text-white">{{ d.vehicle_number|default:d.vehicle.registration_number|default:"Pending" }}</strong><br>
+                <span class="small text-white opacity-75">{{ d.get_vehicle_type_display }}</span>
+              </td>
+              <td>
+                <span class="fw-bold text-success">{{ d.reputation_score }}/100</span><br>
+                <span class="small text-white opacity-75">{{ d.average_rating }} ★ ({{ d.total_trips }} trips)</span>
+              </td>
+              <td>
+                {% if d.verification_status == 'VERIFIED' or d.verification_status == 'Verified' %}
+                <span class="badge bg-success bg-opacity-25 text-success border border-success">Verified</span>
+                {% elif d.verification_status == 'PENDING' or d.verification_status == 'Pending' %}
+                <span class="badge bg-warning text-dark">Pending KYC</span>
+                {% else %}
+                <span class="badge bg-danger">{{ d.get_verification_status_display }}</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if d.qr_code %}
+                <img src="{{ d.qr_code }}" style="width: 40px; height: 40px; object-fit: contain;" class="border rounded bg-white p-1" alt="QR">
+                {% else %}
+                <span class="small text-white opacity-50">No QR</span>
+                {% endif %}
+              </td>
+              <td>
+                <a href="{% url 'admin_driver_kyc' d.id %}" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold">
+                  <i class="fa-solid fa-user-check me-1"></i> Verify KYC
+                </a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="text-center py-4 text-white opacity-75">No drivers match the selected filter.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 2. MOBILE VIEW (< 768px): Touch-Friendly Stacked Cards -->
+    <div class="d-block d-md-none">
+      <div class="d-flex flex-column gap-3">
+        {% for d in drivers %}
+        <div class="mobile-data-card shadow-sm p-3 rounded-4 border" style="background-color: #0F172A; border-color: #1E293B !important;">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+              <strong class="text-white fs-6">{{ d.name|default:d.user.get_full_name|default:d.user.username }}</strong>
+              <div class="small text-white opacity-75"><i class="fa-solid fa-phone me-1 text-warning"></i>{{ d.phone_number|default:d.user.phone|default:"No phone" }}</div>
+              <div class="small text-warning font-monospace mt-1">DL: {{ d.license_number }}</div>
+            </div>
+            <div>
               {% if d.verification_status == 'VERIFIED' or d.verification_status == 'Verified' %}
               <span class="badge bg-success bg-opacity-25 text-success border border-success">Verified</span>
               {% elif d.verification_status == 'PENDING' or d.verification_status == 'Pending' %}
@@ -85,27 +127,32 @@
               {% else %}
               <span class="badge bg-danger">{{ d.get_verification_status_display }}</span>
               {% endif %}
-            </td>
-            <td>
-              {% if d.qr_code %}
-              <img src="{{ d.qr_code }}" style="width: 40px; height: 40px; object-fit: contain;" class="border rounded bg-white p-1" alt="QR">
-              {% else %}
-              <span class="small text-white opacity-50">No QR</span>
-              {% endif %}
-            </td>
-            <td>
-              <a href="{% url 'admin_driver_kyc' d.id %}" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold">
-                <i class="fa-solid fa-user-check me-1"></i> Verify KYC
-              </a>
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="7" class="text-center py-4 text-white opacity-75">No drivers match the selected filter.</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+            </div>
+          </div>
+
+          <div class="py-2 border-top border-bottom my-2 d-flex justify-content-between align-items-center" style="border-color: #1E293B !important;">
+            <span class="badge bg-dark border text-warning font-monospace">{{ d.vehicle_number|default:d.vehicle.registration_number|default:"Pending" }} ({{ d.get_vehicle_type_display }})</span>
+            <span class="small fw-bold text-success">{{ d.reputation_score }}/100 ★</span>
+          </div>
+
+          {% if d.upi_id %}
+          <div class="mb-2">
+            <span class="badge bg-dark border border-success text-success font-monospace small" style="font-size: 0.72rem;">
+              <i class="fa-solid fa-money-bill-transfer me-1"></i> UPI: {{ d.upi_id }}
+            </span>
+          </div>
+          {% endif %}
+
+          <a href="{% url 'admin_driver_kyc' d.id %}" class="btn btn-sm btn-primary w-100 rounded-pill fw-bold py-2 shadow-sm">
+            <i class="fa-solid fa-user-check me-1"></i> Verify & Audit KYC
+          </a>
+        </div>
+        {% empty %}
+        <div class="text-center py-4 text-white opacity-75 p-3 rounded-3" style="background-color: #0F172A;">
+          No drivers match the selected filter.
+        </div>
+        {% endfor %}
+      </div>
     </div>
   </div>
 </div>

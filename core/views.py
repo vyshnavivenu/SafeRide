@@ -1501,8 +1501,25 @@ def admin_resolve_sos(request, alert_id):
 
     notes = request.POST.get('admin_notes', 'Dispatched emergency unit. Passenger safe.')
     alert.resolve_alert(notes)
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+        return JsonResponse({'status': 'success', 'message': f"SOS Alert #{str(alert.sos_id)} marked as RESOLVED."})
+
     messages.success(request, f"SOS Alert #{str(alert.sos_id)} marked as RESOLVED.")
-    return redirect('admin_sos_monitoring')
+    referer = request.META.get('HTTP_REFERER')
+    return redirect(referer or 'admin_sos_monitoring')
+
+@admin_required
+def admin_resolve_all_sos(request):
+    """Admin resolves all currently active SOS emergency alerts at once."""
+    notes = request.POST.get('admin_notes', 'All active alerts resolved by Administrator.')
+    active_alerts = SOSAlert.objects.filter(status__in=['Active', SOSAlert.Status.ACTIVE])
+    count = active_alerts.count()
+    for alert in active_alerts:
+        alert.resolve_alert(notes)
+    messages.success(request, f"Successfully resolved {count} active emergency beacon(s).")
+    referer = request.META.get('HTTP_REFERER')
+    return redirect(referer or 'admin_dashboard')
 
 @admin_required
 def admin_complaints_list(request):

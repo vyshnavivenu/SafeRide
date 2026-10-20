@@ -25,16 +25,20 @@
         <form action="{% url 'verify_driver_search' %}" method="GET" class="mb-4">
           <div class="mb-3">
             <label class="form-label fw-bold text-light small"><i class="fa-solid fa-car-side text-primary me-1"></i> Vehicle Registration Number :</label>
-            <div class="d-flex align-items-stretch gap-2 gap-sm-3 w-100 flex-wrap flex-sm-nowrap">
-              <div class="input-group input-group-lg shadow-sm flex-grow-1">
-                <span class="input-group-text border-end-0 text-white rounded-start-3" style="background-color: #0F172A; border-color: #334155;">
-                  <i class="fa-solid fa-id-card text-warning fs-5"></i>
-                </span>
-                <input type="text" name="query" class="form-control text-uppercase fw-bold text-white fs-5 rounded-end-3" style="background-color: #0F172A; border-color: #334155;" placeholder="e.g. KL 05 AT 4455" value="{{ search_query|default:'' }}" required autofocus>
+            <div class="row g-2 g-sm-3 align-items-stretch">
+              <div class="col-12 col-sm">
+                <div class="input-group input-group-lg shadow-sm h-100">
+                  <span class="input-group-text border-end-0 text-white rounded-start-3" style="background-color: #0F172A; border-color: #334155;">
+                    <i class="fa-solid fa-id-card text-warning fs-5"></i>
+                  </span>
+                  <input type="text" name="query" class="form-control text-uppercase fw-bold text-white fs-5 rounded-end-3" style="background-color: #0F172A; border-color: #334155;" placeholder="e.g. KL 05 AT 4455" value="{{ search_query|default:'' }}" required autofocus>
+                </div>
               </div>
-              <button type="submit" class="btn btn-primary btn-lg fw-bold px-3 px-sm-4 text-uppercase d-flex align-items-center justify-content-center text-nowrap rounded-3 shadow-sm flex-shrink-0 w-100 w-sm-auto">
-                <i class="fa-solid fa-shield-halved me-2"></i> VERIFY & BOARD
-              </button>
+              <div class="col-12 col-sm-auto">
+                <button type="submit" class="btn btn-primary btn-lg fw-bold px-3 px-sm-4 text-uppercase d-flex align-items-center justify-content-center text-nowrap rounded-3 shadow-sm h-100 w-100">
+                  <i class="fa-solid fa-shield-halved me-2"></i> VERIFY & BOARD
+                </button>
+              </div>
             </div>
             <small class="text-white opacity-50 d-block mt-2">
               <i class="fa-solid fa-circle-info me-1"></i> Accepts all formats: <code>KL 05 AT 4455</code>, <code>KL05AT4455</code>, <code>KL-05-AT-4455</code>

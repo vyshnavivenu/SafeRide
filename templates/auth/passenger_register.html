@@ -9,7 +9,7 @@
       <div class="card rounded-4 border shadow-lg p-4 p-md-5" style="background-color: #131C2E !important; border-color: #334155 !important;">
         
         <!-- Header: PASSENGER REGISTRATION -->
-        <div class="text-center mb-4 border-bottom pb-3">
+        <div class="text-center mb-4 border-bottom pb-3" style="border-color: #1E293B !important;">
           <h2 class="fw-bold text-white mb-0 text-uppercase tracking-wider">PASSENGER REGISTRATION</h2>
         </div>
 
@@ -32,24 +32,24 @@
           <div class="mb-3">
             <label class="form-label fw-bold text-light">Full Name :</label>
             <div class="row g-2">
-              <div class="col-6">
-                <input type="text" name="first_name" class="form-control py-2 text-white" style="background-color: #0F172A;" placeholder="First Name" value="{{ form.first_name.value|default:'' }}" pattern="[a-zA-Z\s\.\'\-]+" minlength="2" maxlength="50" title="Letters and spaces only" required>
+              <div class="col-12 col-sm-6">
+                <input type="text" name="first_name" class="form-control py-2 text-white" style="background-color: #0F172A; border-color: #334155;" placeholder="First Name" value="{{ form.first_name.value|default:'' }}" pattern="[a-zA-Z\s\.\'\-]+" minlength="2" maxlength="50" title="Letters and spaces only" required>
               </div>
-              <div class="col-6">
-                <input type="text" name="last_name" class="form-control py-2 text-white" style="background-color: #0F172A;" placeholder="Last Name" value="{{ form.last_name.value|default:'' }}" pattern="[a-zA-Z\s\.\'\-]+" minlength="1" maxlength="50" title="Letters and spaces only" required>
+              <div class="col-12 col-sm-6">
+                <input type="text" name="last_name" class="form-control py-2 text-white" style="background-color: #0F172A; border-color: #334155;" placeholder="Last Name" value="{{ form.last_name.value|default:'' }}" pattern="[a-zA-Z\s\.\'\-]+" minlength="1" maxlength="50" title="Letters and spaces only" required>
               </div>
             </div>
           </div>
 
           <!-- Contact Info: Email & Phone -->
           <div class="row g-2 mb-3">
-            <div class="col-md-6">
+            <div class="col-12 col-sm-6">
               <label class="form-label fw-bold text-light">Email Address :</label>
-              <input type="email" name="email" class="form-control py-2 text-white" style="background-color: #0F172A;" placeholder="Email (e.g. name@example.com)" value="{{ form.email.value|default:'' }}" required>
+              <input type="email" name="email" class="form-control py-2 text-white" style="background-color: #0F172A; border-color: #334155;" placeholder="Email (e.g. name@example.com)" value="{{ form.email.value|default:'' }}" required>
             </div>
-            <div class="col-md-6">
+            <div class="col-12 col-sm-6">
               <label class="form-label fw-bold text-light">Phone Number :</label>
-              <input type="tel" name="phone" class="form-control py-2 text-white" style="background-color: #0F172A;" placeholder="10-digit Mobile (e.g. 9876543210)" pattern="(\+91[\-\s]?)?[6-9]\d{9}" minlength="10" maxlength="15" title="Valid 10-digit mobile number" value="{{ form.phone.value|default:'' }}" required>
+              <input type="tel" name="phone" class="form-control py-2 text-white" style="background-color: #0F172A; border-color: #334155;" placeholder="10-digit Mobile" pattern="(\+91[\-\s]?)?[6-9]\d{9}" minlength="10" maxlength="15" title="Valid 10-digit mobile number" value="{{ form.phone.value|default:'' }}" required>
             </div>
           </div>
 
@@ -57,7 +57,7 @@
           <div class="mb-3">
             <label class="form-label fw-bold text-light">Password :</label>
             <div class="position-relative">
-              <input type="password" name="password1" id="id_password1" class="form-control py-2 pe-5 text-white" style="background-color: #0F172A;" placeholder="Password (min 4 chars)" minlength="4" required>
+              <input type="password" name="password1" id="id_password1" class="form-control py-2 pe-5 text-white" style="background-color: #0F172A; border-color: #334155;" placeholder="Password (min 4 chars)" minlength="4" required>
               <button type="button" class="btn p-0 border-0 bg-transparent position-absolute end-0 top-50 translate-middle-y me-3" onclick="togglePasswordVisibility('id_password1', 'togglePasswordIcon1')" title="Show / Hide Password" style="cursor: pointer; z-index: 10; line-height: 1; outline: none; box-shadow: none;">
                 <i class="fa-solid fa-eye fs-5 text-light opacity-75" id="togglePasswordIcon1"></i>
               </button>
@@ -68,7 +68,7 @@
           <div class="mb-4">
             <label class="form-label fw-bold text-light">Confirm Password :</label>
             <div class="position-relative">
-              <input type="password" name="password2" id="id_password2" class="form-control py-2 pe-5 text-white" style="background-color: #0F172A;" placeholder="Confirm Password" minlength="4" required>
+              <input type="password" name="password2" id="id_password2" class="form-control py-2 pe-5 text-white" style="background-color: #0F172A; border-color: #334155;" placeholder="Confirm Password" minlength="4" required>
               <button type="button" class="btn p-0 border-0 bg-transparent position-absolute end-0 top-50 translate-middle-y me-3" onclick="togglePasswordVisibility('id_password2', 'togglePasswordIcon2')" title="Show / Hide Password" style="cursor: pointer; z-index: 10; line-height: 1; outline: none; box-shadow: none;">
                 <i class="fa-solid fa-eye fs-5 text-light opacity-75" id="togglePasswordIcon2"></i>
               </button>
@@ -81,7 +81,7 @@
           </button>
         </form>
 
-        <div class="text-center pt-3 border-top small">
+        <div class="text-center pt-3 border-top small" style="border-color: #1E293B !important;">
           <span class="text-white">Already registered?</span> <a href="{% url 'passenger_login' %}" class="fw-bold text-decoration-none ms-1" style="color: #FF9800;">Sign In</a>
         </div>
 

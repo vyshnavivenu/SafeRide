@@ -113,19 +113,19 @@
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="verification_status" id="status_pending" value="Pending" {% if driver.verification_status == 'Pending' or driver.verification_status == 'PENDING' %}checked{% endif %}>
                   <label class="form-check-label fw-bold text-warning" for="status_pending">
-                    ( ) Pending
+                    Pending
                   </label>
                 </div>
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="verification_status" id="status_verified" value="Verified" {% if driver.verification_status == 'Verified' or driver.verification_status == 'VERIFIED' %}checked{% endif %}>
                   <label class="form-check-label fw-bold text-success" for="status_verified">
-                    ( ) Verified
+                    Verified
                   </label>
                 </div>
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="verification_status" id="status_rejected" value="Rejected" {% if driver.verification_status == 'Rejected' or driver.verification_status == 'REJECTED' %}checked{% endif %}>
                   <label class="form-check-label fw-bold text-danger" for="status_rejected">
-                    ( ) Rejected
+                    Rejected
                   </label>
                 </div>
               </div>
@@ -138,11 +138,11 @@
             </div>
 
             <!-- Action Buttons -->
-            <div class="d-flex gap-3">
+            <div class="d-flex flex-column flex-sm-row gap-2 gap-sm-3">
               <button type="submit" class="btn btn-primary btn-lg fw-bold flex-grow-1 rounded-pill shadow">
-                <i class="fa-solid fa-circle-check me-1"></i> [ Update Status ]
+                <i class="fa-solid fa-circle-check me-1"></i> Update Status
               </button>
-              <a href="{% url 'admin_driver_list' %}" class="btn btn-outline-light btn-lg rounded-pill fw-semibold px-4">
+              <a href="{% url 'admin_driver_list' %}" class="btn btn-outline-light btn-lg rounded-pill fw-semibold px-4 text-center">
                 Cancel
               </a>
             </div>

@@ -4,39 +4,6 @@
 
 {% block content %}
 <div class="container py-4">
-  <!-- Command Header -->
-  <div class="card rounded-4 border shadow-sm p-4 mb-4" style="background-color: #131C2E !important;">
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
-      <div class="d-flex align-items-center gap-3">
-        <span class="p-3 rounded-circle" style="background-color: #0F172A; border: 1px solid #334155;">
-          <i class="fa-solid fa-shield-halved fs-3" style="color: #06B6D4;"></i>
-        </span>
-        <div>
-          <span class="badge bg-danger px-3 py-1 rounded-pill mb-1">CENTRAL GOVERNANCE DESK</span>
-          <h4 class="fw-bold mb-0 text-white">SafeRide Command & Control Center</h4>
-          <span class="small text-white opacity-75">Administrative oversight of passenger safety, driver verifications, and SOS dispatch.</span>
-        </div>
-      </div>
-
-      <div class="d-flex flex-wrap gap-2">
-        <a href="{% url 'admin_driver_list' %}" class="btn btn-success btn-sm rounded-pill fw-semibold">
-          <i class="fa-solid fa-user-check me-1"></i> Driver KYC
-        </a>
-        <a href="{% url 'admin_driver_register' %}" class="btn btn-primary btn-sm rounded-pill fw-semibold">
-          <i class="fa-solid fa-user-plus me-1"></i> Driver Registration
-        </a>
-        <a href="{% url 'admin_passenger_list' %}" class="btn btn-outline-light btn-sm rounded-pill fw-semibold">
-          <i class="fa-solid fa-users me-1 text-warning"></i> Passengers
-        </a>
-        <a href="{% url 'admin_complaints_list' %}" class="btn btn-outline-light btn-sm rounded-pill fw-semibold">
-          <i class="fa-solid fa-file-circle-exclamation me-1 text-danger"></i> Complaints
-        </a>
-        <a href="{% url 'admin_sos_monitoring' %}" class="btn btn-danger btn-sm rounded-pill fw-bold">
-          <i class="fa-solid fa-triangle-exclamation me-1"></i> Live SOS Center
-        </a>
-      </div>
-    </div>
-  </div>
 
   <!-- Dynamic Real-Time SOS Alert Banner (Updated every 5 seconds by AJAX Poller) -->
   <div id="admin-live-sos-container" class="mb-4 {% if not active_sos %}d-none{% endif %}">
@@ -52,13 +19,22 @@
             </h5>
             <div id="admin-sos-details-list" class="small text-white opacity-95">
               {% for alert in active_sos %}
-              <div class="mt-1 d-flex flex-wrap align-items-center gap-2">
-                <span><strong>Passenger:</strong> {{ alert.passenger.get_full_name|default:alert.passenger.username }}</span> &bull;
-                <span><strong>Vehicle:</strong> {{ alert.vehicle_number }}</span> &bull;
-                <span><strong>GPS:</strong> {{ alert.latitude|floatformat:4 }}, {{ alert.longitude|floatformat:4 }}</span>
-                <a href="https://www.google.com/maps?q={{ alert.latitude }},{{ alert.longitude }}" target="_blank" class="btn btn-warning btn-sm py-0 px-2 fw-bold text-dark rounded-pill">
-                  <i class="fa-solid fa-map-location-dot me-1"></i> View on Map
-                </a>
+              <div class="mt-2 p-2 rounded bg-black bg-opacity-30 d-flex flex-wrap align-items-center justify-content-between gap-2 border border-danger">
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                  <span class="badge bg-warning text-dark fw-bold"><i class="fa-solid fa-tower-broadcast me-1"></i> Beacon #{{ forloop.counter }}</span>
+                  <span><strong>Passenger:</strong> {{ alert.passenger.get_full_name|default:alert.passenger.username }}</span> &bull;
+                  <span><strong>Driver:</strong> {{ alert.driver_name }}</span> &bull;
+                  <span><strong>Vehicle:</strong> <span class="font-monospace text-warning">{{ alert.vehicle_number }}</span></span> &bull;
+                  <span><strong>GPS:</strong> {{ alert.latitude|floatformat:4 }}, {{ alert.longitude|floatformat:4 }} ({{ alert.timestamp|date:"H:i:s" }})</span>
+                </div>
+                <div class="d-flex gap-2">
+                  <a href="https://www.google.com/maps?q={{ alert.latitude }},{{ alert.longitude }}" target="_blank" class="btn btn-warning btn-sm py-1 px-3 fw-bold text-dark rounded-pill">
+                    <i class="fa-solid fa-map-location-dot me-1"></i> View on Map
+                  </a>
+                  <a href="{% url 'admin_resolve_sos' alert.sos_id %}" class="btn btn-outline-light btn-sm py-1 px-2 rounded-pill" onclick="resolveSosItem(event, this.href)">
+                    Resolve
+                  </a>
+                </div>
               </div>
               {% empty %}
               <span>Immediate emergency dispatch and coordination required.</span>
@@ -66,7 +42,10 @@
             </div>
           </div>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+          <a href="{% url 'admin_resolve_all_sos' %}" class="btn btn-outline-light btn-sm rounded-pill px-3 fw-bold shadow-sm" onclick="return confirm('Resolve all active emergency alerts?');">
+            <i class="fa-solid fa-check-double me-1"></i> Resolve All
+          </a>
           <a href="{% url 'admin_sos_monitoring' %}" class="btn btn-light text-danger fw-bold rounded-pill px-4 shadow">
             <i class="fa-solid fa-shield-halved me-1"></i> Open Emergency Console
           </a>
@@ -196,6 +175,32 @@
 
 <script>
   /**
+   * Smoothly resolves an SOS beacon via AJAX and refreshes the alerts list
+   */
+  function resolveSosItem(event, url) {
+    if (event) event.preventDefault();
+    const btn = event ? event.currentTarget : null;
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Resolving...';
+    }
+    fetch(url, {
+      method: 'GET',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json'
+      }
+    })
+    .then(res => res.json())
+    .then(data => {
+      pollActiveSOSAlerts();
+    })
+    .catch(() => {
+      window.location.href = url;
+    });
+  }
+
+  /**
    * Admin Command Center Real-Time Poller
    * Pings /api/admin/sos/active/ every 5 seconds (5000ms) for active emergency distress beacons.
    */
@@ -222,11 +227,11 @@
 
         if (detailsList && data.alerts) {
           let html = '';
-          data.alerts.forEach(alert => {
+          data.alerts.forEach((alert, index) => {
             html += `
               <div class="mt-2 p-2 rounded bg-black bg-opacity-30 d-flex flex-wrap align-items-center justify-content-between gap-2 border border-danger">
                 <div class="d-flex flex-wrap align-items-center gap-2">
-                  <span class="badge bg-danger text-white"><i class="fa-solid fa-triangle-exclamation me-1"></i> ACTIVE DISTRESS</span>
+                  <span class="badge bg-warning text-dark fw-bold"><i class="fa-solid fa-tower-broadcast me-1"></i> Beacon #${index + 1}</span>
                   <span><strong>Passenger:</strong> ${alert.passenger_name}</span> &bull;
                   <span><strong>Driver:</strong> ${alert.driver_name}</span> &bull;
                   <span><strong>Vehicle:</strong> <span class="font-monospace text-warning">${alert.vehicle_number}</span></span> &bull;
@@ -236,7 +241,7 @@
                   <a href="${alert.map_url}" target="_blank" class="btn btn-warning btn-sm py-1 px-3 fw-bold text-dark rounded-pill">
                     <i class="fa-solid fa-map-location-dot me-1"></i> View on Map
                   </a>
-                  <a href="${alert.resolve_url}" class="btn btn-outline-light btn-sm py-1 px-2 rounded-pill">
+                  <a href="${alert.resolve_url}" class="btn btn-outline-light btn-sm py-1 px-2 rounded-pill" onclick="resolveSosItem(event, this.href)">
                     Resolve
                   </a>
                 </div>

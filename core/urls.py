@@ -50,6 +50,7 @@ urlpatterns = [
     path('admin-panel/drivers/register/', views.admin_driver_register, name='admin_driver_register'),
     path('admin-panel/drivers/<int:driver_id>/kyc/', views.admin_driver_kyc, name='admin_driver_kyc'),
     path('admin-panel/sos-monitoring/', views.admin_sos_monitoring, name='admin_sos_monitoring'),
+    path('admin-panel/sos/resolve-all/', views.admin_resolve_all_sos, name='admin_resolve_all_sos'),
     path('admin-panel/sos/<str:alert_id>/resolve/', views.admin_resolve_sos, name='admin_resolve_sos'),
     path('admin-panel/complaints/', views.admin_complaints_list, name='admin_complaints_list'),
     path('admin-panel/complaints/<str:complaint_id>/resolve/', views.admin_resolve_complaint, name='admin_resolve_complaint'),

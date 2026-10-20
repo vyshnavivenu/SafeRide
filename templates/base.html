@@ -115,9 +115,6 @@
             <a class="nav-link text-white text-nowrap {% if request.resolver_match.url_name == 'admin_driver_list' %}active{% endif %}" href="{% url 'admin_driver_list' %}"><i class="fa-solid fa-user-check me-1 text-success"></i> Driver KYC</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link text-white text-nowrap {% if request.resolver_match.url_name == 'admin_driver_register' %}active{% endif %}" href="{% url 'admin_driver_register' %}"><i class="fa-solid fa-user-plus me-1 text-primary"></i> Register Driver</a>
-          </li>
-          <li class="nav-item">
             <a class="nav-link text-white text-nowrap {% if request.resolver_match.url_name == 'admin_passenger_list' %}active{% endif %}" href="{% url 'admin_passenger_list' %}"><i class="fa-solid fa-users me-1 text-warning"></i> Passengers</a>
           </li>
           <li class="nav-item">
@@ -142,11 +139,6 @@
             <button type="button" class="btn btn-danger btn-sm rounded-pill fw-bold px-3 py-1 shadow-sm d-flex align-items-center gap-1 header-sos-btn" onclick="triggerHeaderSOS()" title="🚨 Broadcast Emergency SOS Beacon">
               <i class="fa-solid fa-triangle-exclamation fa-shake text-warning"></i> <span>SOS</span>
             </button>
-            {% elif user.is_admin_user and ACTIVE_SOS_COUNT > 0 %}
-            <!-- 🚨 Active Distress Alert Shortcut for Admin (Direct to Command Center) -->
-            <a href="{% url 'admin_sos_monitoring' %}" class="btn btn-danger btn-sm rounded-pill fw-bold px-2 px-md-3 py-1 shadow-sm d-flex align-items-center gap-1 header-sos-btn text-decoration-none" title="🚨 {{ ACTIVE_SOS_COUNT }} Active Distress Beacon(s)">
-              <i class="fa-solid fa-bell fa-shake text-warning"></i> <span>SOS: {{ ACTIVE_SOS_COUNT }} ACTIVE</span>
-            </a>
             {% endif %}
 
             <span class="text-white small d-none d-md-inline-flex align-items-center text-nowrap navbar-user-badge">
@@ -294,7 +286,7 @@
   <!-- ========================================================== -->
   <!-- 🚨 COMPONENT 1: GLOBAL ADMIN SOS ALARM FLOATING NOTIFICATION -->
   <!-- ========================================================== -->
-  {% if user.is_authenticated and user.is_admin_user and ACTIVE_SOS_COUNT > 0 %}
+  {% if user.is_authenticated and user.is_admin_user and ACTIVE_SOS_COUNT > 0 and request.resolver_match.url_name != 'admin_dashboard' and request.resolver_match.url_name != 'admin_panel_root' and request.resolver_match.url_name != 'admin_sos_monitoring' %}
   <a href="{% url 'admin_sos_monitoring' %}" id="admin-global-sos-alarm" class="admin-sos-floating-pill shadow-lg text-decoration-none" title="🚨 {{ ACTIVE_SOS_COUNT }} Active Distress Beacon(s)! Click to open SOS Command Center">
     <span class="admin-sos-bell-icon">
       <i class="fa-solid fa-bell text-white"></i>
