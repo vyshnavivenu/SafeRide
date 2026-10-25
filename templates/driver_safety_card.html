@@ -161,10 +161,10 @@
                   <div class="card rounded-3 p-3 text-start shadow-sm flex-grow-1" style="background-color: #0F172A; border: 1px solid #334155;">
                     <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
                       <label class="form-label fw-bold text-white small mb-0">
-                        <i class="fa-solid fa-map-pin text-warning me-1"></i> 1. Boarding / Pickup Point:
+                        <i class="fa-solid fa-map-pin text-warning me-1"></i> 1. Boarding / Pickup Point: <span class="text-danger">*</span>
                       </label>
-                      <span id="boarding-gps-status-pill" class="badge border font-monospace py-1 px-2" style="background-color: #131C2E; border-color: #334155 !important; color: #FF9800; font-size: 11px;">
-                        <i class="fa-solid fa-satellite-dish me-1"></i> Detecting GPS...
+                      <span id="boarding-point-badge" class="badge border font-monospace py-1 px-2" style="background-color: #131C2E; border-color: #334155 !important; color: #38BDF8; font-size: 11px;">
+                        <i class="fa-solid fa-person-walking me-1"></i> Pickup Spot
                       </span>
                     </div>
 
@@ -174,32 +174,18 @@
                         <span class="input-group-text border-end-0 text-white" style="background-color: #131C2E; border-color: #334155;">
                           <i class="fa-solid fa-circle-dot text-warning"></i>
                         </span>
-                        <input type="text" name="pickup_name" id="pickup_name" class="form-control text-white" style="background-color: #131C2E; border-color: #334155;" placeholder="Detecting your live GPS location..." value="" required autocomplete="off">
-                        <button class="btn btn-outline-secondary text-white-50" type="button" onclick="clearPickupInput()" title="Clear and type your exact address">
+                        <input type="text" name="pickup_name" id="pickup_name" class="form-control text-white" style="background-color: #131C2E; border-color: #334155;" placeholder="Enter boarding point (or select quick chips below)..." value="" required autocomplete="off">
+                        <button class="btn btn-outline-secondary text-white-50" type="button" onclick="clearPickupInput()" title="Clear boarding point">
                           <i class="fa-solid fa-xmark"></i>
-                        </button>
-                        <button class="btn btn-warning text-dark fw-bold px-3" type="button" onclick="recenterOnGps()" title="Lock to Live GPS">
-                          <i class="fa-solid fa-crosshairs me-1"></i> Live GPS
                         </button>
                       </div>
                       <!-- Auto-Caption Suggestions Dropdown for Boarding -->
                       <div id="pickup-suggestions-dropdown" class="place-suggestion-dropdown list-group position-absolute w-100 d-none" style="top: 100%; left: 0; z-index: 1050;"></div>
                     </div>
 
-                    <!-- Live Precision GPS Status Banner (Grouped with Boarding Point) -->
-                    <div id="gps-accuracy-alert" class="alert d-flex align-items-center gap-2 py-2 px-3 rounded-3 mb-2 small shadow-sm d-none" role="alert" style="border-width: 1px;">
-                      <i id="gps-accuracy-icon" class="fa-solid fa-satellite-dish fs-5 flex-shrink-0"></i>
-                      <div class="flex-grow-1" id="gps-accuracy-message">
-                        <strong>Acquiring high-precision GPS...</strong>
-                      </div>
-                      <button type="button" class="btn btn-sm btn-dark text-white rounded-pill px-2 py-0" onclick="detectUserLocation(false)" style="font-size: 0.72rem;">
-                        <i class="fa-solid fa-rotate me-1"></i> Refresh
-                      </button>
-                    </div>
-
-                    <input type="hidden" name="pickup_lat" id="pickup_lat" value="">
-                    <input type="hidden" name="pickup_lng" id="pickup_lng" value="">
-                    <input type="hidden" name="pickup_accuracy" id="pickup_accuracy" value="">
+                    <input type="hidden" name="pickup_lat" id="pickup_lat" value="9.6843">
+                    <input type="hidden" name="pickup_lng" id="pickup_lng" value="76.6853">
+                    <input type="hidden" name="pickup_accuracy" id="pickup_accuracy" value="10">
 
                     <!-- 2. Destination / Drop-off Location -->
                     <div class="mt-3 pt-2 border-top" style="border-color: #334155 !important;">
@@ -292,27 +278,27 @@
                   <div class="card rounded-3 p-3 shadow-sm h-100 d-flex flex-column" style="background-color: #0F172A; border: 1px solid #334155;">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                       <label class="form-label fw-bold text-white small mb-0">
-                        <i class="fa-solid fa-map-location-dot text-warning me-1"></i> Live Pickup & Route Map:
+                        <i class="fa-solid fa-map-location-dot text-warning me-1"></i> Boarding & Route Map:
                       </label>
-                      <button type="button" class="btn btn-sm btn-outline-warning text-warning rounded-pill py-0 px-2" style="font-size: 0.72rem;" onclick="recenterOnGps()" title="Center map on live GPS">
-                        <i class="fa-solid fa-crosshairs me-1"></i> Recenter
+                      <button type="button" class="btn btn-sm btn-outline-secondary text-white-50 rounded-pill py-0 px-2" style="font-size: 0.72rem;" onclick="resetMapView()" title="Reset map view">
+                        <i class="fa-solid fa-arrows-rotate me-1"></i> Reset View
                       </button>
                     </div>
 
                     <div id="boarding-map-container" class="rounded-3 overflow-hidden border mb-2 position-relative shadow-sm flex-grow-1" style="min-height: 350px; border-color: #334155 !important; background: #090D16;">
                       <div id="map-loading-spinner" class="position-absolute top-50 start-50 translate-middle text-white small opacity-75 text-center">
-                        <span class="spinner-border spinner-border-sm text-warning mb-1"></span><br>Detecting high-precision GPS & loading map...
+                        <span class="spinner-border spinner-border-sm text-warning mb-1"></span><br>Loading map...
                       </div>
                     </div>
 
-                    <!-- Real-Time GPS Precision Telemetry Bar -->
+                    <!-- Boarding Location & Map Info Bar -->
                     <div class="d-flex align-items-center justify-content-between text-muted small flex-wrap gap-2 pt-1 mt-auto">
                       <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <span id="coords-status" class="badge bg-dark border text-warning font-monospace py-1 px-2">
-                          <i class="fa-solid fa-crosshairs text-warning me-1"></i> Lat: --, Lng: --
+                        <span id="coords-status" class="badge bg-dark border text-info font-monospace py-1 px-2">
+                          <i class="fa-solid fa-map-pin me-1"></i> Boarding: 9.6843, 76.6853
                         </span>
-                        <span id="accuracy-pill" class="badge bg-secondary bg-opacity-25 text-white border border-secondary py-1 px-2">
-                          <i class="fa-solid fa-bullseye me-1"></i> Accuracy: -- m
+                        <span class="badge bg-secondary bg-opacity-25 text-white-50 border border-secondary py-1 px-2" style="font-size: 11px;">
+                          <i class="fa-solid fa-hand-pointer me-1"></i> Tap map or drag orange pin to adjust
                         </span>
                       </div>
                     </div>
@@ -464,14 +450,14 @@
       input.value = '';
       input.focus();
     }
-    userManuallyMovedPin = true;
-    followGps = false;
-    const pinIndicator = document.getElementById('pin-status-indicator');
-    if (pinIndicator) {
-      pinIndicator.className = 'badge bg-primary bg-opacity-25 text-info border border-primary font-monospace';
-      pinIndicator.innerHTML = '<i class="fa-solid fa-location-crosshairs me-1"></i> Custom Pin';
+    const badge = document.getElementById('boarding-point-badge');
+    if (badge) {
+      badge.className = 'badge border font-monospace py-1 px-2';
+      badge.style.backgroundColor = '#131C2E';
+      badge.style.borderColor = '#334155';
+      badge.style.color = '#38BDF8';
+      badge.innerHTML = '<i class="fa-solid fa-person-walking me-1"></i> Pickup Spot';
     }
-    showGpsStatus("info", `<strong>Manual Search:</strong> Type your exact street, building or landmark name, or drag the orange marker on the map.`);
   }
 
   function setupLivePlaceSearch(inputId, dropdownId, onSelectCallback) {
@@ -484,30 +470,12 @@
     let currentResults = [];
 
     input.addEventListener('focus', function () {
-      if (inputId === 'pickup_name') {
-        userManuallyMovedPin = true;
-        followGps = false;
-        const pinIndicator = document.getElementById('pin-status-indicator');
-        if (pinIndicator) {
-          pinIndicator.className = 'badge bg-primary bg-opacity-25 text-info border border-primary font-monospace';
-          pinIndicator.innerHTML = '<i class="fa-solid fa-location-crosshairs me-1"></i> Custom Pin';
-        }
-      }
       if (input.value.trim().length >= 2 && currentResults.length > 0) {
         dropdown.classList.remove('d-none');
       }
     });
 
     input.addEventListener('input', function () {
-      if (inputId === 'pickup_name') {
-        userManuallyMovedPin = true;
-        followGps = false;
-        const pinIndicator = document.getElementById('pin-status-indicator');
-        if (pinIndicator) {
-          pinIndicator.className = 'badge bg-primary bg-opacity-25 text-info border border-primary font-monospace';
-          pinIndicator.innerHTML = '<i class="fa-solid fa-location-crosshairs me-1"></i> Custom Pin';
-        }
-      }
       const query = input.value.trim();
       clearTimeout(debounceTimer);
 
@@ -579,7 +547,31 @@
     });
   }
 
+  const LOCAL_PRESET_PLACES = [
+    { name: "SJCET Campus Gate", subtitle: "Choondacherry, Palai, Kottayam", fullName: "SJCET Campus Gate, Choondacherry, Palai", lat: 9.6843, lng: 76.6853 },
+    { name: "Palai Private Bus Stand", subtitle: "Kottayam Road, Palai Town", fullName: "Palai Private Bus Stand, Palai", lat: 9.7118, lng: 76.6826 },
+    { name: "KSRTC Bus Station Palai", subtitle: "Main Road, Palai", fullName: "KSRTC Bus Station, Palai", lat: 9.7135, lng: 76.6811 },
+    { name: "Palai Main Town Junction", subtitle: "Central Palai, Kottayam", fullName: "Palai Main Town Junction, Palai", lat: 9.7105, lng: 76.6845 },
+    { name: "Mar Sleeva Medicity", subtitle: "Cherpumkal, Palai", fullName: "Mar Sleeva Medicity, Cherpumkal, Palai", lat: 9.7340, lng: 76.6690 },
+    { name: "St. Thomas College Gate", subtitle: "Arunapuram, Palai", fullName: "St. Thomas College Gate, Arunapuram, Palai", lat: 9.7042, lng: 76.6780 },
+    { name: "Alphonsa College Gate", subtitle: "Arunapuram, Palai", fullName: "Alphonsa College, Arunapuram, Palai", lat: 9.7015, lng: 76.6755 },
+    { name: "Civil Station Palai", subtitle: "Revenue Tower, Palai", fullName: "Civil Station, Palai", lat: 9.7122, lng: 76.6852 },
+    { name: "Pravithanam Junction", subtitle: "Pravithanam, Palai", fullName: "Pravithanam Junction, Palai", lat: 9.7285, lng: 76.7112 },
+    { name: "Bharananganam Shrine", subtitle: "Bharananganam, Palai", fullName: "St. Alphonsa Shrine, Bharananganam", lat: 9.7058, lng: 76.7324 },
+    { name: "Kottayam Railway Station", subtitle: "Nagampadam, Kottayam", fullName: "Kottayam Railway Station, Nagampadam", lat: 9.5916, lng: 76.5222 },
+    { name: "KSRTC Bus Station Kottayam", subtitle: "Baker Hill, Kottayam", fullName: "KSRTC Bus Station, Kottayam", lat: 9.5890, lng: 76.5260 },
+    { name: "Ettumanoor Mahadeva Temple", subtitle: "Temple Road, Ettumanoor", fullName: "Ettumanoor Mahadeva Temple, Ettumanoor", lat: 9.6695, lng: 76.5620 },
+    { name: "Kanjirappally Town", subtitle: "NH 183, Kottayam", fullName: "Kanjirappally Town Junction, Kottayam", lat: 9.5552, lng: 76.7770 },
+  ];
+
   async function fetchPlaceSuggestions(query, callback) {
+    const qLower = query.toLowerCase().trim();
+    const localMatches = LOCAL_PRESET_PLACES.filter(p =>
+      p.name.toLowerCase().includes(qLower) ||
+      p.subtitle.toLowerCase().includes(qLower) ||
+      p.fullName.toLowerCase().includes(qLower)
+    );
+
     const pickupLat = parseFloat(document.getElementById('pickup_lat')?.value) || 9.6843;
     const pickupLng = parseFloat(document.getElementById('pickup_lng')?.value) || 76.6853;
 
@@ -589,8 +581,9 @@
     fetch(photonUrl)
       .then(res => res.json())
       .then(data => {
+        let externalResults = [];
         if (data && data.features && data.features.length > 0) {
-          const results = data.features.map(f => {
+          externalResults = data.features.map(f => {
             const p = f.properties;
             const coords = f.geometry.coordinates; // [lon, lat]
             const name = p.name || p.street || query;
@@ -604,40 +597,49 @@
               lng: coords[0]
             };
           });
-          callback(results);
+        }
+        const combined = [...localMatches];
+        externalResults.forEach(ext => {
+          if (!combined.some(c => c.name.toLowerCase() === ext.name.toLowerCase())) {
+            combined.push(ext);
+          }
+        });
+        if (combined.length > 0) {
+          callback(combined);
         } else {
-          fallbackNominatimPlaceSearch(query, callback);
+          fallbackNominatimPlaceSearch(query, localMatches, callback);
         }
       })
       .catch(() => {
-        fallbackNominatimPlaceSearch(query, callback);
+        fallbackNominatimPlaceSearch(query, localMatches, callback);
       });
   }
 
-  function fallbackNominatimPlaceSearch(query, callback) {
+  function fallbackNominatimPlaceSearch(query, localMatches, callback) {
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=in`;
     fetch(url)
       .then(res => res.json())
       .then(data => {
+        const results = [...localMatches];
         if (data && data.length > 0) {
-          const results = data.map(item => {
+          data.forEach(item => {
             const parts = item.display_name.split(',');
             const name = parts[0].trim();
             const subtitle = parts.slice(1, 4).join(',').trim();
-            return {
-              name: name,
-              subtitle: subtitle,
-              fullName: item.display_name,
-              lat: parseFloat(item.lat),
-              lng: parseFloat(item.lon)
-            };
+            if (!results.some(r => r.name.toLowerCase() === name.toLowerCase())) {
+              results.push({
+                name: name,
+                subtitle: subtitle,
+                fullName: item.display_name,
+                lat: parseFloat(item.lat),
+                lng: parseFloat(item.lon)
+              });
+            }
           });
-          callback(results);
-        } else {
-          callback([]);
         }
+        callback(results);
       })
-      .catch(() => callback([]));
+      .catch(() => callback(localMatches));
   }
 
   function renderSuggestions(results, dropdown, onSelect) {
@@ -693,85 +695,21 @@
   let accuracyCircle = null;
   let userManuallyMovedPin = false;
   let isGpsLocked = false;
-  let followGps = true;
-
-  // Helper: Update Top Boarding Telemetry Status Pill
-  function updateBoardingGpsStatusPill(accuracy, isManualPin = false) {
-    const pill = document.getElementById('boarding-gps-status-pill');
-    if (!pill) return;
-
-    if (isManualPin) {
-      pill.className = 'badge border font-monospace py-1 px-2';
-      pill.style.backgroundColor = '#1E3A8A';
-      pill.style.borderColor = '#3B82F6';
-      pill.style.color = '#FFFFFF';
-      pill.innerHTML = '<i class="fa-solid fa-location-crosshairs me-1"></i> Custom Pin';
-    } else if (accuracy > 0 && accuracy <= 25) {
-      pill.className = 'badge border font-monospace py-1 px-2';
-      pill.style.backgroundColor = '#065F46';
-      pill.style.borderColor = '#10B981';
-      pill.style.color = '#FFFFFF';
-      pill.innerHTML = `<i class="fa-solid fa-bullseye me-1"></i> ±${Math.round(accuracy)}m Exact`;
-    } else if (accuracy > 25 && accuracy <= 65) {
-      pill.className = 'badge border font-monospace py-1 px-2';
-      pill.style.backgroundColor = '#1E3A8A';
-      pill.style.borderColor = '#3B82F6';
-      pill.style.color = '#FFFFFF';
-      pill.innerHTML = `<i class="fa-solid fa-bullseye me-1"></i> ±${Math.round(accuracy)}m Good`;
-    } else if (accuracy > 65) {
-      pill.className = 'badge border font-monospace py-1 px-2';
-      pill.style.backgroundColor = '#92400E';
-      pill.style.borderColor = '#FF9800';
-      pill.style.color = '#FFFFFF';
-      pill.innerHTML = `<i class="fa-solid fa-triangle-exclamation me-1"></i> ±${Math.round(accuracy)}m Coarse`;
-    } else {
-      pill.className = 'badge border font-monospace py-1 px-2';
-      pill.style.backgroundColor = '#0F172A';
-      pill.style.borderColor = '#334155';
-      pill.style.color = '#FF9800';
-      pill.innerHTML = '<i class="fa-solid fa-satellite-dish me-1"></i> Live GPS';
-    }
-  }
-
-  // Helper: Build Rich Formatted Dark Theme Boarding Popup HTML (Matching SafeRide Design System)
-  function buildBoardingPopupHtml(address, accuracy, isManualPin = false) {
-    const roundedAcc = Math.round(accuracy || 0);
-    let title = '<span style="color:#FF9800;"><i class="fa-solid fa-person-walking me-1"></i> Boarding Point</span>';
-    let badgeHtml = '';
-
-    if (isManualPin) {
-      title = '<span style="color:#FF9800;"><i class="fa-solid fa-location-crosshairs me-1"></i> Boarding Spot</span>';
-      badgeHtml = '<span class="badge border" style="background-color: #1E3A8A; color: #FFFFFF; border-color: #3B82F6 !important; font-size: 11px;"><i class="fa-solid fa-location-crosshairs me-1"></i> Custom Pin</span>';
-    } else if (roundedAcc > 0 && roundedAcc <= 25) {
-      title = '<span style="color:#FF9800;"><i class="fa-solid fa-satellite-dish me-1"></i> Boarding Spot</span>';
-      badgeHtml = `<span class="badge border" style="background-color: #065F46; color: #FFFFFF; border-color: #10B981 !important; font-size: 11px;"><i class="fa-solid fa-bullseye me-1"></i> ±${roundedAcc}m Exact</span>`;
-    } else if (roundedAcc > 25 && roundedAcc <= 65) {
-      title = '<span style="color:#FF9800;"><i class="fa-solid fa-location-dot me-1"></i> Boarding Spot</span>';
-      badgeHtml = `<span class="badge border" style="background-color: #1E3A8A; color: #FFFFFF; border-color: #3B82F6 !important; font-size: 11px;"><i class="fa-solid fa-bullseye me-1"></i> ±${roundedAcc}m Good</span>`;
-    } else {
-      title = '<span style="color:#FF9800;"><i class="fa-solid fa-triangle-exclamation me-1"></i> Boarding Area</span>';
-      badgeHtml = `<span class="badge border" style="background-color: #92400E; color: #FFFFFF; border-color: #FF9800 !important; font-size: 11px;"><i class="fa-solid fa-triangle-exclamation me-1"></i> ±${roundedAcc}m Coarse</span>`;
-    }
-
-    const helperText = isManualPin
-      ? '<span style="color:#10B981;"><i class="fa-solid fa-circle-check me-1"></i> Pickup spot locked. Ready to proceed.</span>'
-      : (roundedAcc > 65
-        ? '<span style="color:#FFB74D;"><i class="fa-solid fa-hand-pointer me-1"></i> Drag pin to pickup location.</span>'
-        : '<span style="color:#E2E8F0;"><i class="fa-solid fa-hand-pointer me-1 text-warning"></i> Drag orange pin to refine spot.</span>');
-
+  // Helper: Build Formatted Dark Theme Boarding Popup HTML
+  function buildBoardingPopupHtml(address) {
     return `
-      <div style="font-family: 'Inter', system-ui, sans-serif; color: #FFFFFF; min-width: 230px; max-width: 290px;">
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; border-bottom: 1px solid #334155; padding-bottom: 6px; padding-right: 28px;">
+      <div style="font-family: 'Inter', system-ui, sans-serif; color: #FFFFFF; min-width: 220px; max-width: 280px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; border-bottom: 1px solid #334155; padding-bottom: 5px; padding-right: 28px;">
           <strong style="font-size: 13px; color: #FFFFFF; display: flex; align-items: center; gap: 4px;">
-            ${title}
+            <i class="fa-solid fa-person-walking text-warning me-1"></i> Boarding Point
           </strong>
-          ${badgeHtml}
+          <span class="badge border" style="background-color: #065F46; color: #FFFFFF; border-color: #10B981 !important; font-size: 11px;">Pickup</span>
         </div>
-        <div style="font-size: 13px; font-weight: 600; color: #FFFFFF; margin-bottom: 8px; line-height: 1.4; word-break: break-word;">
-          ${escapeHtml(address || 'Detecting street address...')}
+        <div style="font-size: 13px; font-weight: 600; color: #FFFFFF; line-height: 1.4; word-break: break-word;">
+          ${escapeHtml(address || 'Selected Boarding Point')}
         </div>
-        <div style="font-size: 11px; border-top: 1px dashed #334155; padding-top: 6px;">
-          ${helperText}
+        <div style="font-size: 11px; color: #94A3B8; border-top: 1px dashed #334155; padding-top: 5px; margin-top: 6px;">
+          <i class="fa-solid fa-hand-pointer text-warning me-1"></i> Drag pin or tap map to change spot.
         </div>
       </div>
     `;
@@ -794,9 +732,9 @@
     `;
   }
 
-  function updateBoardingMarkerPopup(address, accuracy, isManualPin = false) {
+  function updateBoardingMarkerPopup(address) {
     if (!leafletMarker) return;
-    const popupHtml = buildBoardingPopupHtml(address, accuracy, isManualPin);
+    const popupHtml = buildBoardingPopupHtml(address);
     leafletMarker.bindPopup(popupHtml, { autoPan: false }).openPopup();
   }
 
@@ -843,43 +781,22 @@
 
       leafletMarker = L.marker([lat, lng], { icon: customIcon, draggable: true }).addTo(leafletMap);
 
-      if (!isDefaultFallback) {
-        updateBoardingMarkerPopup(document.getElementById('pickup_name')?.value || "Current Boarding Spot", lastGpsAccuracy, userManuallyMovedPin);
+      const currentName = document.getElementById('pickup_name')?.value || "Palai (Tap map or drag pin to adjust)";
+      updateBoardingMarkerPopup(currentName);
 
-        if (!document.getElementById('pickup_name').value) {
-          reverseGeocodeCoordinates(lat, lng);
-        }
-        if (!document.getElementById('pickup_lat').value) {
-          document.getElementById('pickup_lat').value = lat;
-          document.getElementById('pickup_lng').value = lng;
-          const coordsStatus = document.getElementById('coords-status');
-          if (coordsStatus) {
-            coordsStatus.innerHTML = `<i class="fa-solid fa-location-dot text-info me-1"></i> Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}`;
-          }
-        }
-      } else {
-        const coordsStatus = document.getElementById('coords-status');
-        if (coordsStatus && !document.getElementById('pickup_lat').value) {
-          coordsStatus.innerHTML = `<i class="fa-solid fa-satellite-dish fa-fade text-warning me-1"></i> Acquiring live GPS...`;
-        }
+      const coordsStatus = document.getElementById('coords-status');
+      if (coordsStatus) {
+        coordsStatus.innerHTML = `<i class="fa-solid fa-map-pin text-info me-1"></i> Boarding: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
       }
 
-      leafletMarker.on('dragstart', function () {
-        userManuallyMovedPin = true;
-        followGps = false;
-        updateBoardingGpsStatusPill(0, true);
-      });
-
       leafletMarker.on('dragend', function (e) {
-        userManuallyMovedPin = true;
-        followGps = false;
         const coord = e.target.getLatLng();
         document.getElementById('pickup_lat').value = coord.lat;
         document.getElementById('pickup_lng').value = coord.lng;
         reverseGeocodeCoordinates(coord.lat, coord.lng);
-        showGpsStatus("info", `<strong>Pickup Pin Placed:</strong> Boarding spot locked at ${coord.lat.toFixed(5)}, ${coord.lng.toFixed(5)}. <a href="javascript:recenterOnGps()" class="alert-link ms-2"><i class="fa-solid fa-crosshairs me-1"></i>Click refresh to resume Live GPS.</a>`);
-        updateGpsAccuracyDisplay(coord.lat, coord.lng, 0);
-        updateBoardingGpsStatusPill(0, true);
+        if (coordsStatus) {
+          coordsStatus.innerHTML = `<i class="fa-solid fa-map-pin text-info me-1"></i> Boarding: ${coord.lat.toFixed(4)}, ${coord.lng.toFixed(4)}`;
+        }
         if (leafletRouteLine && leafletDestMarker) {
           leafletRouteLine.setLatLngs([coord, leafletDestMarker.getLatLng()]);
           updateLiveRouteEstimate(leafletDestMarker.getLatLng().lat, leafletDestMarker.getLatLng().lng);
@@ -887,22 +804,20 @@
       });
 
       leafletMap.on('click', function (e) {
-        userManuallyMovedPin = true;
-        followGps = false;
         leafletMarker.setLatLng(e.latlng);
         document.getElementById('pickup_lat').value = e.latlng.lat;
         document.getElementById('pickup_lng').value = e.latlng.lng;
-        updateBoardingGpsStatusPill(0, true);
         reverseGeocodeCoordinates(e.latlng.lat, e.latlng.lng);
-        showGpsStatus("info", `<strong>Pickup Pin Placed:</strong> Boarding spot locked at ${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}. <a href="javascript:recenterOnGps()" class="alert-link ms-2"><i class="fa-solid fa-crosshairs me-1"></i>Click refresh to resume Live GPS.</a>`);
-        updateGpsAccuracyDisplay(e.latlng.lat, e.latlng.lng, 0);
+        if (coordsStatus) {
+          coordsStatus.innerHTML = `<i class="fa-solid fa-map-pin text-info me-1"></i> Boarding: ${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`;
+        }
         if (leafletRouteLine && leafletDestMarker) {
           leafletRouteLine.setLatLngs([e.latlng, leafletDestMarker.getLatLng()]);
           updateLiveRouteEstimate(leafletDestMarker.getLatLng().lat, leafletDestMarker.getLatLng().lng);
         }
       });
     } else {
-      leafletMap.setView([lat, lng], isDefaultFallback ? 14 : 17);
+      leafletMap.setView([lat, lng], isDefaultFallback ? 14 : 15);
       if (leafletMarker) leafletMarker.setLatLng([lat, lng]);
     }
   }
@@ -911,13 +826,10 @@
   function reverseGeocodeCoordinates(lat, lng) {
     const coordsStatus = document.getElementById('coords-status');
     const input = document.getElementById('pickup_name');
+    const badge = document.getElementById('boarding-point-badge');
 
     if (coordsStatus) {
-      if (userManuallyMovedPin) {
-        coordsStatus.innerHTML = `<i class="fa-solid fa-location-dot text-info me-1"></i> Pin: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-      } else {
-        coordsStatus.innerHTML = `<i class="fa-solid fa-crosshairs text-warning me-1"></i> Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}`;
-      }
+      coordsStatus.innerHTML = `<i class="fa-solid fa-map-pin text-info me-1"></i> Boarding: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
     }
 
     // Try high-speed Photon reverse geocoder first
@@ -969,44 +881,49 @@
 
         if (exactAddress) {
           if (input) input.value = exactAddress;
-          updateBoardingMarkerPopup(exactAddress, lastGpsAccuracy, userManuallyMovedPin);
+          updateBoardingMarkerPopup(exactAddress);
         } else {
-          const fallback = `Boarding Point (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
+          const fallback = `Boarding Point (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
           if (input && !input.value) input.value = fallback;
-          updateBoardingMarkerPopup(fallback, lastGpsAccuracy, userManuallyMovedPin);
+          updateBoardingMarkerPopup(fallback);
+        }
+        if (badge) {
+          badge.className = 'badge border font-monospace py-1 px-2';
+          badge.style.backgroundColor = '#065F46';
+          badge.style.borderColor = '#10B981';
+          badge.style.color = '#FFFFFF';
+          badge.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i> Pin Placed';
         }
       })
       .catch(() => {
-        const fallback = `Boarding Point (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
+        const fallback = `Boarding Point (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
         if (input && !input.value) input.value = fallback;
-        updateBoardingMarkerPopup(input ? input.value : fallback, lastGpsAccuracy, userManuallyMovedPin);
+        updateBoardingMarkerPopup(input ? input.value : fallback);
       });
   }
 
   // 4. Update Boarding Location on Map and Inputs
   function setBoardingLocation(lat, lng, addressName) {
-    userManuallyMovedPin = true;
-    followGps = false;
-
-    document.getElementById('pickup_lat').value = lat;
-    document.getElementById('pickup_lng').value = lng;
+    const latInput = document.getElementById('pickup_lat');
+    const lngInput = document.getElementById('pickup_lng');
     const input = document.getElementById('pickup_name');
+    const coordsStatus = document.getElementById('coords-status');
+    const badge = document.getElementById('boarding-point-badge');
+
+    if (latInput) latInput.value = lat;
+    if (lngInput) lngInput.value = lng;
     if (input && addressName) input.value = addressName;
 
-    const coordsStatus = document.getElementById('coords-status');
     if (coordsStatus) {
-      coordsStatus.innerHTML = `<i class="fa-solid fa-circle-check text-info me-1"></i> Pin: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      coordsStatus.innerHTML = `<i class="fa-solid fa-map-pin text-info me-1"></i> Boarding: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
     }
-
-    updateBoardingGpsStatusPill(0, true);
-
-    const accPill = document.getElementById('accuracy-pill');
-    if (accPill) {
-      accPill.innerHTML = `<i class="fa-solid fa-location-crosshairs text-info me-1"></i> Pinpointed Pickup`;
-      accPill.className = 'badge bg-primary bg-opacity-25 text-info border border-primary py-1 px-2';
+    if (badge) {
+      badge.className = 'badge border font-monospace py-1 px-2';
+      badge.style.backgroundColor = '#065F46';
+      badge.style.borderColor = '#10B981';
+      badge.style.color = '#FFFFFF';
+      badge.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i> Boarding Set';
     }
-
-    showGpsStatus("info", `<strong>Pickup Pin Placed:</strong> Boarding spot locked at ${escapeHtml(addressName || 'selected location')}. <a href="javascript:recenterOnGps()" class="alert-link ms-2"><i class="fa-solid fa-crosshairs me-1"></i>Click refresh to resume Live GPS.</a>`);
 
     if (leafletMap) {
       if (!leafletMarker) {
@@ -1015,7 +932,7 @@
         leafletMarker.setLatLng([lat, lng]);
         leafletMap.panTo([lat, lng]);
       }
-      updateBoardingMarkerPopup(addressName || `${lat.toFixed(5)}, ${lng.toFixed(5)}`, 0, true);
+      updateBoardingMarkerPopup(addressName || `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
 
       if (leafletDestMarker) {
         if (leafletRouteLine) {
@@ -1209,414 +1126,62 @@
     }
   }
 
-  // 5. Intelligent Multi-Tier GPS Engine (High-Accuracy GPS -> Network Location -> IP City Fallback)
-  function startContinuousGpsTracking() {
-    showGpsStatus("info", `<strong><i class="fa-solid fa-satellite-dish fa-fade me-1 text-warning"></i> Acquiring Live GPS:</strong> Detecting your exact pickup location...`);
+  // 5. Boarding Map Controls
+  function resetMapView() {
+    if (!leafletMap) return;
+    const pLat = parseFloat(document.getElementById('pickup_lat')?.value) || 9.6843;
+    const pLng = parseFloat(document.getElementById('pickup_lng')?.value) || 76.6853;
+    const dLat = parseFloat(document.getElementById('destination_lat')?.value);
+    const dLng = parseFloat(document.getElementById('destination_lng')?.value);
 
-    if (!("geolocation" in navigator)) {
-      showGpsStatus("warning", "<strong>Device GPS Unavailable:</strong> Geolocation not supported by browser. Centering using network location...");
-      fetchIpLocationFallback();
-      return;
-    }
-
-    // Proactively monitor Permission state
-    if (navigator.permissions && navigator.permissions.query) {
-      navigator.permissions.query({ name: 'geolocation' }).then((permissionStatus) => {
-        handlePermissionState(permissionStatus.state);
-        permissionStatus.onchange = () => {
-          handlePermissionState(permissionStatus.state);
-        };
-      }).catch(() => { });
-    }
-
-    let initialFixReceived = false;
-
-    // Tier 1: Fast High-Accuracy check (6s timeout)
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        initialFixReceived = true;
-        handleGpsPositionUpdate(pos, true);
-      },
-      (err) => {
-        console.warn("High-accuracy GPS request error, trying standard network location...", err);
-        if (!initialFixReceived && !userManuallyMovedPin) {
-          // Tier 2: Standard accuracy (fast Wi-Fi / cell triangulation, 5s timeout)
-          navigator.geolocation.getCurrentPosition(
-            (pos) => {
-              initialFixReceived = true;
-              handleGpsPositionUpdate(pos, true);
-            },
-            (err2) => {
-              console.warn("Standard geolocation error, attempting IP geolocation fallback...", err2);
-              if (!initialFixReceived && !userManuallyMovedPin) {
-                // Tier 3: IP Geolocation Fallback
-                fetchIpLocationFallback(err);
-              }
-            },
-            { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
-          );
-        }
-      },
-      { enableHighAccuracy: true, timeout: 6000, maximumAge: 5000 }
-    );
-
-    // Tier 4: Background Continuous GPS Watch for continuous refinement as satellite fix improves
-    if (gpsWatchId !== null) {
-      navigator.geolocation.clearWatch(gpsWatchId);
-      gpsWatchId = null;
-    }
-
-    gpsWatchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        initialFixReceived = true;
-        handleGpsPositionUpdate(pos, false);
-      },
-      (err) => {
-        if (!initialFixReceived && !userManuallyMovedPin) {
-          handleGpsError(err);
-        }
-      },
-      { enableHighAccuracy: true, timeout: 25000, maximumAge: 3000 }
-    );
-  }
-
-  function fetchIpLocationFallback(originalGpsErr = null) {
-    if (isGpsLocked && !userManuallyMovedPin) return;
-
-    fetch('https://ipapi.co/json/')
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.latitude && data.longitude && !userManuallyMovedPin && !isGpsLocked) {
-          const lat = parseFloat(data.latitude);
-          const lng = parseFloat(data.longitude);
-          const city = data.city || data.region || 'your area';
-
-          lastGpsLat = lat;
-          lastGpsLng = lng;
-          lastGpsAccuracy = 2000;
-
-          if (gMap) {
-            gMap.panTo({ lat, lng });
-            gMap.setZoom(14);
-            if (gMarker) gMarker.position = { lat, lng };
-          }
-          document.getElementById('pickup_lat').value = lat;
-          document.getElementById('pickup_lng').value = lng;
-          reverseGeocodeCoordinates(lat, lng);
-
-          const coordsStatus = document.getElementById('coords-status');
-          if (coordsStatus) {
-            coordsStatus.style.backgroundColor = '#0F172A';
-            coordsStatus.style.borderColor = '#3B82F6';
-            coordsStatus.style.color = '#93C5FD';
-            coordsStatus.innerHTML = `<i class="fa-solid fa-network-wired text-info me-1"></i> ${city} (~${lat.toFixed(4)}, ${lng.toFixed(4)})`;
-          }
-          const accPill = document.getElementById('accuracy-pill');
-          if (accPill) {
-            accPill.style.backgroundColor = '#1E3A8A';
-            accPill.style.borderColor = '#3B82F6';
-            accPill.style.color = '#FFFFFF';
-            accPill.innerHTML = `<i class="fa-solid fa-tower-broadcast text-info me-1"></i> Network Approx Location`;
-          }
-          showGpsStatus("info", `<strong>Location Detected:</strong> Centered near ${city}. Tap anywhere on the map or drag the orange pin to lock your exact pickup spot.`);
-        }
-      })
-      .catch(e => {
-        console.warn("IP location fallback error:", e);
-        if (originalGpsErr) handleGpsError(originalGpsErr);
-      });
-  }
-
-  function handleGpsPositionUpdate(pos, isInitial = false) {
-    const lat = pos.coords.latitude;
-    const lng = pos.coords.longitude;
-    const accuracy = pos.coords.accuracy || 10;
-
-    lastGpsLat = lat;
-    lastGpsLng = lng;
-    lastGpsAccuracy = accuracy;
-    isGpsLocked = true;
-
-    // Update GPS status banner & accuracy pill
-    updateGpsAccuracyDisplay(lat, lng, accuracy);
-
-    // If user has not manually pinned somewhere else, follow live GPS
-    if (!userManuallyMovedPin) {
-      document.getElementById('pickup_lat').value = lat;
-      document.getElementById('pickup_lng').value = lng;
-      const accInput = document.getElementById('pickup_accuracy');
-      if (accInput) accInput.value = Math.round(accuracy);
-
-      if (!leafletMap) {
-        initBoardingMap(lat, lng, false);
-      } else {
-        if (leafletMarker) leafletMarker.setLatLng([lat, lng]);
-        if (isInitial || followGps) {
-          leafletMap.setView([lat, lng], 17);
-        }
-      }
-
-      updateAccuracyCircle(lat, lng, accuracy);
-
-      // Recalculate nearest street address if moved > 15m or address is empty
-      const movedDist = (lastGeocodedLat && lastGeocodedLng)
-        ? calculateHaversineKm(lastGeocodedLat, lastGeocodedLng, lat, lng) * 1000
-        : 999;
-
-      if (movedDist >= 15 || !document.getElementById('pickup_name').value.trim()) {
-        lastGeocodedLat = lat;
-        lastGeocodedLng = lng;
-        reverseGeocodeCoordinates(lat, lng);
-      } else {
-        const currentAddr = document.getElementById('pickup_name').value;
-        updateBoardingMarkerPopup(currentAddr, accuracy, false);
-      }
-
-      if (leafletDestMarker) {
-        const dCoord = leafletDestMarker.getLatLng();
-        if (leafletRouteLine) {
-          leafletRouteLine.setLatLngs([[lat, lng], dCoord]);
-        }
-        updateLiveRouteEstimate(dCoord.lat, dCoord.lng);
-      }
+    if (dLat && dLng && leafletDestMarker && leafletMarker) {
+      leafletMap.fitBounds(L.latLngBounds([[pLat, pLng], [dLat, dLng]]), { padding: [40, 40] });
     } else {
-      updateAccuracyCircle(lat, lng, accuracy);
+      leafletMap.setView([pLat, pLng], 15);
     }
-
-    updateBoardingGpsStatusPill(accuracy, userManuallyMovedPin);
-  }
-
-  function updateAccuracyCircle(lat, lng, accuracy) {
-    if (!leafletMap || typeof L === 'undefined') return;
-    const circleColor = accuracy <= 25 ? '#10B981' : (accuracy <= 65 ? '#3B82F6' : '#F59E0B');
-    if (!accuracyCircle) {
-      accuracyCircle = L.circle([lat, lng], {
-        radius: accuracy,
-        color: circleColor,
-        fillColor: circleColor,
-        fillOpacity: 0.12,
-        weight: 1.5,
-        dashArray: '4, 4'
-      }).addTo(leafletMap);
-    } else {
-      accuracyCircle.setLatLng([lat, lng]);
-      accuracyCircle.setRadius(accuracy);
-      accuracyCircle.setStyle({ color: circleColor, fillColor: circleColor });
-    }
-  }
-
-  function updateGpsAccuracyDisplay(lat, lng, accuracy) {
-    const coordsStatus = document.getElementById('coords-status');
-    const accPill = document.getElementById('accuracy-pill');
-    const roundedAcc = Math.round(accuracy);
-
-    if (coordsStatus) {
-      if (userManuallyMovedPin) {
-        const pLat = parseFloat(document.getElementById('pickup_lat')?.value) || lat;
-        const pLng = parseFloat(document.getElementById('pickup_lng')?.value) || lng;
-        coordsStatus.style.backgroundColor = '#0F172A';
-        coordsStatus.style.borderColor = '#3B82F6';
-        coordsStatus.style.color = '#93C5FD';
-        coordsStatus.innerHTML = `<i class="fa-solid fa-location-dot text-info me-1"></i> Pin: ${pLat.toFixed(5)}, ${pLng.toFixed(5)}`;
-      } else {
-        coordsStatus.style.backgroundColor = '#0F172A';
-        coordsStatus.style.borderColor = '#334155';
-        coordsStatus.style.color = '#FF9800';
-        coordsStatus.innerHTML = `<i class="fa-solid fa-crosshairs text-warning me-1"></i> Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}`;
-      }
-    }
-
-    if (accPill) {
-      if (userManuallyMovedPin) {
-        accPill.style.backgroundColor = '#1E3A8A';
-        accPill.style.borderColor = '#3B82F6';
-        accPill.style.color = '#FFFFFF';
-        accPill.innerHTML = `<i class="fa-solid fa-location-crosshairs text-info me-1"></i> Custom Pickup Pin`;
-      } else if (accuracy <= 25) {
-        accPill.style.backgroundColor = '#065F46';
-        accPill.style.borderColor = '#10B981';
-        accPill.style.color = '#FFFFFF';
-        accPill.innerHTML = `<i class="fa-solid fa-bullseye text-success me-1"></i> ±${roundedAcc}m (High Precision)`;
-      } else if (accuracy <= 65) {
-        accPill.style.backgroundColor = '#1E3A8A';
-        accPill.style.borderColor = '#3B82F6';
-        accPill.style.color = '#FFFFFF';
-        accPill.innerHTML = `<i class="fa-solid fa-bullseye text-info me-1"></i> ±${roundedAcc}m (Good Signal)`;
-      } else {
-        accPill.style.backgroundColor = '#92400E';
-        accPill.style.borderColor = '#FF9800';
-        accPill.style.color = '#FFFFFF';
-        accPill.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-warning me-1"></i> ±${roundedAcc}m (Coarse Signal)`;
-      }
-    }
-
-    if (userManuallyMovedPin) {
-      return;
-    }
-
-    const alertBox = document.getElementById('gps-accuracy-alert');
-    if (alertBox) {
-      alertBox.classList.add('d-none');
-    }
-  }
-
-  function handleGpsError(err) {
-    console.warn("GPS request warning:", err);
-    isGpsLocked = false;
-    let msg = "GPS satellite request delayed.";
-    let type = "warning";
-
-    if (err.code === err.PERMISSION_DENIED) {
-      type = "danger";
-      msg = `<strong>Location Permission Denied:</strong> Please allow location access in your browser or search your address below.`;
-    } else if (err.code === err.POSITION_UNAVAILABLE) {
-      type = "warning";
-      msg = `<strong>GPS Fix Unavailable:</strong> Satellite fix could not be acquired directly. Drag the orange marker or tap the map to lock your pickup spot.`;
-    } else if (err.code === err.TIMEOUT) {
-      type = "warning";
-      msg = `<strong>GPS Fix Delayed:</strong> Satellite lock is taking longer than expected. You can tap the map or search your street address.`;
-    }
-
-    showGpsStatus(type, msg);
-
-    const coordsStatus = document.getElementById('coords-status');
-    if (coordsStatus && !userManuallyMovedPin && !document.getElementById('pickup_lat').value) {
-      coordsStatus.style.backgroundColor = '#0F172A';
-      coordsStatus.style.borderColor = '#DC2626';
-      coordsStatus.style.color = '#FCA5A5';
-      coordsStatus.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-warning me-1"></i> GPS Unavailable`;
-    }
-
-    const spinner = document.getElementById('map-loading-spinner');
-    if (spinner) spinner.style.display = 'none';
-    if (!leafletMap) {
-      initBoardingMap(9.6843, 76.6853, true);
-    }
-  }
-
-  function handlePermissionState(state) {
-    if (state === 'denied') {
-      showGpsStatus("danger", `<strong>Location Access Blocked:</strong> Location permission is blocked in your browser. Tap the site settings icon next to the address bar URL to allow location, or search your street address.`);
-    } else if (state === 'prompt') {
-      showGpsStatus("info", `<strong>Location Access Required:</strong> Please tap "Allow" when prompted by your browser to capture your exact live boarding coordinates.`);
-    }
-  }
-
-  function showGpsStatus(type, htmlMessage) {
-    const alertBox = document.getElementById('gps-accuracy-alert');
-    const msgEl = document.getElementById('gps-accuracy-message');
-    const iconEl = document.getElementById('gps-accuracy-icon');
-    if (!alertBox || !msgEl) return;
-
-    let bg = '#131C2E';
-    let border = '#334155';
-    let textColor = '#FFFFFF';
-    let iconClass = 'fa-solid fa-satellite-dish fs-5 flex-shrink-0 text-success';
-
-    if (type === 'danger') {
-      bg = '#450A0A';
-      border = '#DC2626';
-      textColor = '#FFFFFF';
-      iconClass = 'fa-solid fa-circle-exclamation fs-5 flex-shrink-0 text-danger';
-    } else if (type === 'warning') {
-      bg = '#92400E';
-      border = '#FF9800';
-      textColor = '#FFFFFF';
-      iconClass = 'fa-solid fa-triangle-exclamation fs-5 flex-shrink-0 text-warning';
-    } else if (type === 'info') {
-      bg = '#1E293B';
-      border = '#3B82F6';
-      textColor = '#FFFFFF';
-      iconClass = 'fa-solid fa-circle-info fs-5 flex-shrink-0 text-info';
-    } else if (type === 'success') {
-      bg = '#022C22';
-      border = '#10B981';
-      textColor = '#FFFFFF';
-      iconClass = 'fa-solid fa-circle-check fs-5 flex-shrink-0 text-success';
-    }
-
-    alertBox.style.backgroundColor = bg;
-    alertBox.style.borderColor = border;
-    alertBox.style.color = textColor;
-    alertBox.style.borderWidth = '1px';
-    alertBox.className = 'alert d-flex align-items-center gap-2 py-2 px-3 rounded-3 mb-2 small shadow-sm';
-
-    if (iconEl) iconEl.className = iconClass;
-    msgEl.style.color = textColor;
-    msgEl.innerHTML = htmlMessage;
-    alertBox.classList.remove('d-none');
-  }
-
-  function recenterOnGps() {
-    userManuallyMovedPin = false;
-    followGps = true;
-    updateBoardingGpsStatusPill(lastGpsAccuracy || 10, false);
-
-    if (lastGpsLat && lastGpsLng) {
-      document.getElementById('pickup_lat').value = lastGpsLat;
-      document.getElementById('pickup_lng').value = lastGpsLng;
-      if (leafletMarker) leafletMarker.setLatLng([lastGpsLat, lastGpsLng]);
-      if (leafletMap) leafletMap.setView([lastGpsLat, lastGpsLng], 17);
-      reverseGeocodeCoordinates(lastGpsLat, lastGpsLng);
-      updateGpsAccuracyDisplay(lastGpsLat, lastGpsLng, lastGpsAccuracy || 10);
-      showGpsStatus("success", `<strong>Recentered on Live GPS:</strong> Real-time satellite tracking resumed.`);
-    } else {
-      detectUserLocation(false);
-    }
-  }
-
-  function detectUserLocation(isAuto = false) {
-    userManuallyMovedPin = false;
-    followGps = true;
-    startContinuousGpsTracking();
   }
 
   document.addEventListener('DOMContentLoaded', function () {
     initPlacesAutocomplete();
 
-    // 1. Immediately initialize Boarding Map viewfinder
-    const existingLat = parseFloat(document.getElementById('pickup_lat')?.value);
-    const existingLng = parseFloat(document.getElementById('pickup_lng')?.value);
-    if (existingLat && existingLng) {
-      initBoardingMap(existingLat, existingLng, false);
-    } else {
-      // Default initial view without hardcoding fake boarding coordinates
-      initBoardingMap(9.6843, 76.6853, true);
-    }
+    // 1. Immediately initialize Boarding Map viewfinder with Palai defaults
+    const defaultLat = 9.6843;
+    const defaultLng = 76.6853;
 
-    // 2. Start fast real-time GPS tracking with network IP fallback in parallel
-    startContinuousGpsTracking();
+    const latInput = document.getElementById('pickup_lat');
+    const lngInput = document.getElementById('pickup_lng');
+    const initialLat = parseFloat(latInput?.value) || defaultLat;
+    const initialLng = parseFloat(lngInput?.value) || defaultLng;
 
-    // Client-side exact GPS validation guard before ride initiation
+    if (latInput && !latInput.value) latInput.value = initialLat;
+    if (lngInput && !lngInput.value) lngInput.value = initialLng;
+
+    initBoardingMap(initialLat, initialLng);
+
+    // 2. Client-side validation guard before ride initiation
     const startTripForm = document.getElementById('start-trip-form');
     if (startTripForm) {
       startTripForm.addEventListener('submit', function (e) {
-        const lat = parseFloat(document.getElementById('pickup_lat')?.value);
-        const lng = parseFloat(document.getElementById('pickup_lng')?.value);
         const pickupName = document.getElementById('pickup_name')?.value?.trim();
+        const destInput = document.getElementById('destination_name');
+        const destName = destInput ? destInput.value.trim() : '';
 
-        if (!lat || !lng || isNaN(lat) || isNaN(lng) || !pickupName || pickupName === 'Current Boarding Point') {
+        if (!pickupName) {
           e.preventDefault();
           document.getElementById('pickup_name')?.focus();
-          alert("⚠️ Exact boarding location required. Please allow location or drag the orange marker to your pickup spot.");
+          alert("⚠️ Please enter or select your boarding / pickup point before starting the trip.");
           return false;
         }
 
-        // If user hasn't manually pinned and signal is very coarse (> 100m)
-        if (!userManuallyMovedPin && lastGpsAccuracy && lastGpsAccuracy > 100) {
-          if (!confirm(`⚠️ Your device GPS accuracy is approximate (±${Math.round(lastGpsAccuracy)}m). Do you want to proceed with this approximate boarding spot, or cancel and drag the pin to your exact pickup location?`)) {
-            e.preventDefault();
-            return false;
-          }
-        }
-
-        const destInput = document.getElementById('destination_name');
-        if (!destInput || !destInput.value.trim()) {
+        if (!destName) {
           e.preventDefault();
-          destInput.focus();
+          if (destInput) destInput.focus();
           alert("⚠️ Please enter or select your destination drop-off location before starting the trip.");
           return false;
         }
+
+        if (!latInput.value || isNaN(parseFloat(latInput.value))) latInput.value = defaultLat;
+        if (!lngInput.value || isNaN(parseFloat(lngInput.value))) lngInput.value = defaultLng;
       });
     }
   });

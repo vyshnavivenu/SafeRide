@@ -708,9 +708,13 @@ def start_trip(request, driver_id):
         messages.info(request, "You already have an ongoing trip. Resuming active trip session.")
         return redirect('active_trip', trip_id=existing.trip_id)
 
-    pickup_lat = float(request.POST.get('pickup_lat', 9.6843))
-    pickup_lng = float(request.POST.get('pickup_lng', 76.6853))
-    pickup_name = request.POST.get('pickup_name', 'Current Boarding Point')
+    try:
+        pickup_lat = float(request.POST.get('pickup_lat') or 9.6843)
+        pickup_lng = float(request.POST.get('pickup_lng') or 76.6853)
+    except (ValueError, TypeError):
+        pickup_lat = 9.6843
+        pickup_lng = 76.6853
+    pickup_name = (request.POST.get('pickup_name') or '').strip() or 'Boarding Point'
     destination_name = request.POST.get('destination_name', '').strip()
     destination_lat = request.POST.get('destination_lat')
     destination_lng = request.POST.get('destination_lng')
