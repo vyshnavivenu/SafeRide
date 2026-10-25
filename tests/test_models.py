@@ -455,7 +455,7 @@ class DriverUPIValidationTests(TestCase):
             license_number='KL-05-20220007812',
             vehicle_number='KL-05-AT-4455',
             vehicle_type='auto',
-            upi_id='sample.rajesh@oksbi'
+            upi_id='rajesh@oksbi'
         )
 
     def test_valid_upi_id_persists_successfully(self):
@@ -464,7 +464,7 @@ class DriverUPIValidationTests(TestCase):
             'rajesh@oksbi',
             '9847112233@paytm',
             'driver.safe@okhdfcbank',
-            'sample.rajeshkumar@okaxis',
+            'rajeshkumar@okaxis',
             'driver123@icici',
         ]
         for vpa in valid_upis:
@@ -517,7 +517,7 @@ class TripPaymentAndQRTests(TestCase):
             license_number='KL-05-20180004521',
             vehicle_number='KL-05-AT-4455',
             vehicle_type='auto',
-            upi_id='sample.rajeshkumar@oksbi'
+            upi_id='rajesh@oksbi'
         )
         self.trip = Trip.objects.create(
             passenger=self.passenger,

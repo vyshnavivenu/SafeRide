@@ -127,7 +127,7 @@ def run_seed():
             'rep_score': 96.5,
             'trips': 642,
             'avg_rating': 4.9,
-            'upi_id': 'sample.rajeshkumar@oksbi',
+            'upi_id': 'rajesh@oksbi',
         },
         {
             'username': 'driver_anand',
@@ -144,7 +144,7 @@ def run_seed():
             'rep_score': 94.0,
             'trips': 418,
             'avg_rating': 4.8,
-            'upi_id': 'sample.anandjoseph@okhdfcbank',
+            'upi_id': 'anand@okhdfcbank',
         },
         {
             'username': 'driver_suresh',
@@ -161,7 +161,7 @@ def run_seed():
             'rep_score': 89.5,
             'trips': 215,
             'avg_rating': 4.6,
-            'upi_id': 'sample.sureshbabu@okaxis',
+            'upi_id': 'suresh@okaxis',
         },
         {
             'username': 'driver_vinod',
@@ -178,7 +178,7 @@ def run_seed():
             'rep_score': 75.0,
             'trips': 12,
             'avg_rating': 4.2,
-            'upi_id': 'sample.vinodmohan@paytm',
+            'upi_id': 'vinod@paytm',
         },
         {
             'username': 'driver_varun',
@@ -195,7 +195,7 @@ def run_seed():
             'rep_score': 93.0,
             'trips': 310,
             'avg_rating': 4.85,
-            'upi_id': 'sample.varunmenon@icici',
+            'upi_id': 'varun@icici',
         }
     ]
 

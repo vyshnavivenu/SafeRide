@@ -12,9 +12,24 @@
         <div class="card-header p-4 border-bottom" style="background-color: #0F172A; border-color: #334155 !important;">
           <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div>
-              <span class="badge bg-primary px-3 py-1 rounded-pill mb-1">FORM 5</span>
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-primary px-3 py-1 rounded-pill">FORM 5</span>
+                {% if driver.verification_status == 'Verified' or driver.verification_status == 'VERIFIED' %}
+                <span class="badge bg-success bg-opacity-25 text-success border border-success px-3 py-1 rounded-pill fw-semibold">
+                  <i class="fa-solid fa-circle-check me-1"></i> CURRENTLY VERIFIED
+                </span>
+                {% elif driver.verification_status == 'Pending' or driver.verification_status == 'PENDING' %}
+                <span class="badge bg-warning text-dark px-3 py-1 rounded-pill fw-semibold">
+                  <i class="fa-solid fa-clock me-1"></i> AWAITING VERIFICATION
+                </span>
+                {% else %}
+                <span class="badge bg-danger px-3 py-1 rounded-pill fw-semibold">
+                  <i class="fa-solid fa-triangle-exclamation me-1"></i> {{ driver.get_verification_status_display|upper }}
+                </span>
+                {% endif %}
+              </div>
               <h4 class="fw-bold mb-0 text-white text-uppercase tracking-wide">DRIVER VERIFICATION FORM (ADMIN SIDE)</h4>
-              <p class="small text-white opacity-75 mb-0">Review driver documents, verify background KYC, and approve verification status.</p>
+              <p class="small text-white opacity-75 mb-0">Review driver documents, verify background KYC, and manage verification status.</p>
             </div>
             <a href="{% url 'admin_driver_list' %}" class="btn btn-outline-light rounded-pill btn-sm">
               <i class="fa-solid fa-arrow-left me-1"></i> Driver Directory
@@ -57,8 +72,23 @@
                 <input type="text" class="form-control text-white" style="background-color: #0F172A; border-color: #334155;" value="{{ driver.phone_number }}" readonly>
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-bold small text-light text-uppercase">Registered UPI ID (VPA) :</label>
-                <input type="text" class="form-control text-white font-monospace" style="background-color: #0F172A; border-color: #334155;" value="{{ driver.upi_id|default:'Not configured' }}" readonly>
+                <label class="form-label fw-bold small text-light text-uppercase d-flex justify-content-between align-items-center">
+                  <span><i class="fa-solid fa-money-bill-transfer text-success me-1"></i> Registered UPI ID (VPA) :</span>
+                  <span class="badge bg-dark border border-secondary text-info small" style="font-size: 0.68rem;">Editable</span>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text border-0 text-warning" style="background-color: #1E293B;">
+                    <i class="fa-solid fa-qrcode"></i>
+                  </span>
+                  <input type="text" name="upi_id" id="id_upi_id" class="form-control text-white font-monospace" style="background-color: #0F172A; border-color: #334155;" value="{{ form.upi_id.value|default:driver.upi_id|default:'' }}" placeholder="e.g. driver@oksbi or 9876543210@paytm">
+                </div>
+                <div class="form-text text-white-50 small mt-1" style="font-size: 0.75rem;">
+                  Used for passenger fare QR settlements. Format: <code>username@bank</code>.
+                </div>
+                {% if form.upi_id.errors %}
+                  <div class="text-danger small mt-1"><i class="fa-solid fa-circle-exclamation me-1"></i>{{ form.upi_id.errors.0 }}</div>
+                {% endif %}
+                <div id="kyc-upi-feedback" class="small mt-1 d-none"></div>
               </div>
             </div>
 
@@ -96,9 +126,12 @@
                   </span>
                 {% endif %}
 
-                {% if driver.qr_code %}
-                  <a href="{{ driver.qr_code }}" target="_blank" class="btn btn-sm btn-outline-success fw-semibold">
+                {% if driver.qr_code_url %}
+                  <button type="button" class="btn btn-sm btn-outline-success fw-semibold" data-bs-toggle="modal" data-bs-target="#driverQrModalKYC">
                     <i class="fa-solid fa-qrcode me-1"></i> [ View QR Badge ]
+                  </button>
+                  <a href="{% url 'verify_driver_token' driver.verification_token %}" target="_blank" class="btn btn-sm btn-outline-info fw-semibold">
+                    <i class="fa-solid fa-shield-halved me-1"></i> [ View Safety Card ]
                   </a>
                 {% endif %}
               </div>
@@ -139,9 +172,15 @@
 
             <!-- Action Buttons -->
             <div class="d-flex flex-column flex-sm-row gap-2 gap-sm-3">
+              {% if driver.verification_status == 'Verified' or driver.verification_status == 'VERIFIED' %}
               <button type="submit" class="btn btn-primary btn-lg fw-bold flex-grow-1 rounded-pill shadow">
-                <i class="fa-solid fa-circle-check me-1"></i> Update Status
+                <i class="fa-solid fa-pen-to-square me-1"></i> Update Status & Remarks
               </button>
+              {% else %}
+              <button type="submit" class="btn btn-success btn-lg fw-bold flex-grow-1 rounded-pill shadow">
+                <i class="fa-solid fa-circle-check me-1"></i> Approve & Verify Driver
+              </button>
+              {% endif %}
               <a href="{% url 'admin_driver_list' %}" class="btn btn-outline-light btn-lg rounded-pill fw-semibold px-4 text-center">
                 Cancel
               </a>
@@ -154,4 +193,88 @@
     </div>
   </div>
 </div>
+
+<!-- QR Code Preview Modal -->
+{% if driver.qr_code_url %}
+<div class="modal fade" id="driverQrModalKYC" tabindex="-1" aria-labelledby="driverQrModalKYCLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border shadow-lg" style="background-color: #111827; border-color: #1E293B;">
+      <div class="modal-header border-bottom py-3 px-4" style="background-color: #0F172A; border-color: #1E293B;">
+        <h5 class="modal-title text-white fw-bold d-flex align-items-center gap-2 mb-0" id="driverQrModalKYCLabel">
+          <i class="fa-solid fa-shield-halved text-cyan" style="color: #06B6D4;"></i> Official Vehicle QR Code
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center p-4">
+        <h5 class="fw-bold text-white mb-1">{{ driver.name|default:driver.user.get_full_name }}</h5>
+        <div class="small text-white opacity-75 mb-3 font-monospace">
+          <i class="fa-solid fa-id-card text-info me-1"></i> License: {{ driver.license_number }}
+        </div>
+
+        <div class="mb-3">
+          <span class="d-inline-flex align-items-center bg-warning text-dark font-monospace fw-bold px-3 py-1 rounded-3 border border-dark shadow-sm" style="letter-spacing: 1px; font-size: 1.15rem;">
+            <span class="bg-primary text-white rounded px-1 me-2" style="font-size: 0.65rem;">IND</span>
+            {{ driver.vehicle_number|default:vehicle.registration_number|default:"N/A" }}
+          </span>
+          <div class="small text-white opacity-75 mt-1">{{ driver.get_vehicle_type_display }} &bull; Reputation: <span class="text-success fw-bold">{{ driver.reputation_score }}/100</span></div>
+        </div>
+
+        <div class="d-inline-block p-3 bg-white rounded-3 shadow my-2" style="border: 3px solid #06B6D4;">
+          <img src="{{ driver.qr_code_url }}" alt="Driver QR Code" class="img-fluid" style="width: 240px; height: 240px; object-fit: contain; display: block;">
+        </div>
+        
+        <div class="mt-2 text-cyan fw-bold small">
+          <i class="fa-solid fa-qrcode me-1"></i> SCAN TO VERIFY & START RIDE
+        </div>
+        <div class="small text-white opacity-75 mt-1">
+          Passengers can scan this code with any phone camera to verify credentials & initiate journey.
+        </div>
+      </div>
+      <div class="modal-footer border-top d-flex justify-content-between flex-wrap gap-2 py-3 px-4" style="background-color: #0F172A; border-color: #1E293B;">
+        <a href="{{ driver.qr_code_url }}" download="SafeRide_QR_{{ driver.license_number }}.png" class="btn rounded-pill px-3 py-2 fw-bold shadow-sm" style="background: linear-gradient(135deg, #EA580C 0%, #C2410C 100%); border: 1px solid #F97316; color: #FFFFFF;">
+          <i class="fa-solid fa-download me-1"></i> Download PNG
+        </a>
+        <div class="d-flex gap-2">
+          <a href="{% url 'verify_driver_token' driver.verification_token %}" target="_blank" class="btn btn-outline-info rounded-pill px-3 py-2 fw-semibold">
+            <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Open Safety Card
+          </a>
+          <button type="button" class="btn btn-secondary rounded-pill px-3 py-2" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const upiInput = document.getElementById('id_upi_id');
+  const feedback = document.getElementById('kyc-upi-feedback');
+  const upiRegex = /^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z0-9]{2,64}$/;
+
+  if (upiInput && feedback) {
+    function validateUpi() {
+      const val = upiInput.value.trim();
+      if (!val) {
+        feedback.className = 'small mt-1 d-none';
+        feedback.innerHTML = '';
+        upiInput.style.borderColor = '#334155';
+        return true;
+      }
+      if (upiRegex.test(val)) {
+        feedback.className = 'small mt-1 text-success fw-semibold';
+        feedback.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i> Valid UPI ID (VPA) format';
+        upiInput.style.borderColor = '#10B981';
+        return true;
+      } else {
+        feedback.className = 'small mt-1 text-danger fw-semibold';
+        feedback.innerHTML = '<i class="fa-solid fa-circle-exclamation me-1"></i> Invalid format. Must be username@bank (e.g. driver@oksbi or 9876543210@paytm)';
+        upiInput.style.borderColor = '#EF4444';
+        return false;
+      }
+    }
+    upiInput.addEventListener('input', validateUpi);
+    upiInput.addEventListener('blur', validateUpi);
+    if (upiInput.value) validateUpi();
+  }
+});
+</script>
 {% endblock %}

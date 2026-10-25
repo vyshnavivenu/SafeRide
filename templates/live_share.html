@@ -3,11 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Live Tracking - SafeRide</title>
+    <title>Live Driver Tracking - SafeRide</title>
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome 6 Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Leaflet CSS for Crisp Esri World Street Map Vector Tiles -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
         body, html {
             margin: 0;
             padding: 0;
@@ -16,8 +23,10 @@
             overflow: hidden;
             background-color: #f8fafc;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #1e293b;
         }
-        
+
+        /* Full Screen Interactive Map */
         #map {
             position: absolute;
             top: 0;
@@ -25,44 +34,168 @@
             right: 0;
             bottom: 0;
             z-index: 1;
+            background: #f8fafc;
         }
 
         .leaflet-container {
             background: #f8fafc !important;
+            font-family: inherit !important;
         }
 
-        /* Bottom Sheet UI */
-        .bottom-sheet {
+        /* Leaflet Zoom Control Positioned Top Right Below Open Maps Button */
+        .leaflet-top.leaflet-right {
+            top: 76px !important;
+            right: 20px !important;
+        }
+        .leaflet-control-zoom {
+            border: none !important;
+            border-radius: 10px !important;
+            overflow: hidden;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+        }
+        .leaflet-control-zoom a {
+            background: #ffffff !important;
+            color: #334155 !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            width: 36px !important;
+            height: 36px !important;
+            line-height: 36px !important;
+            font-size: 18px !important;
+            transition: all 0.2s;
+        }
+        .leaflet-control-zoom a:hover {
+            background: #f8fafc !important;
+            color: #0d6efd !important;
+        }
+
+        /* Top Left Live Tracking Badge */
+        .top-left-badge {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #ffffff;
-            border-top-left-radius: 24px;
-            border-top-right-radius: 24px;
-            padding: 24px 24px 0 24px;
+            top: 20px;
+            left: 20px;
             z-index: 1000;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
-            transition: transform 0.3s ease-out;
-            max-height: calc(100vh - 100px);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 9px 20px;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #1e293b;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            pointer-events: auto;
         }
 
-        .sheet-content {
-            overflow-y: auto;
-            padding-bottom: 24px;
-            padding-top: 8px;
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        .sheet-content::-webkit-scrollbar {
-            display: none;
+        .live-dot {
+            width: 9px;
+            height: 9px;
+            background-color: #10b981;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: pulseLiveDot 1.8s infinite;
         }
 
-        .driver-avatar {
-            width: 60px;
-            height: 60px;
+        @keyframes pulseLiveDot {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        /* Top Right Open Maps Button */
+        .btn-open-maps {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background-color: #0d6efd;
+            color: #ffffff !important;
+            padding: 9px 20px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 14.5px;
+            box-shadow: 0 4px 14px rgba(13, 110, 253, 0.35);
+            text-decoration: none !important;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
+            pointer-events: auto;
+        }
+        .btn-open-maps:hover {
+            background-color: #0b5ed7;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(13, 110, 253, 0.42);
+        }
+
+        /* Floating Driver Info Card on the Left (Exact 360px match to screenshot) */
+        .floating-driver-card {
+            position: absolute;
+            top: 85px;
+            left: 20px;
+            width: 360px;
+            max-width: calc(100vw - 40px);
+            background: #ffffff;
+            border-radius: 22px;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            padding: 24px 18px 20px 18px;
+            z-index: 1000;
+            pointer-events: auto;
+            box-sizing: border-box;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* En Route Status Badge pinned to top-right of the card */
+        .card-status-badge {
+            position: absolute;
+            top: -14px;
+            right: 20px;
+            background: #059669;
+            color: #ffffff;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 0.2px;
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            z-index: 1001;
+            white-space: nowrap;
+        }
+        .card-status-badge.sos {
+            background: #dc2626;
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
+            animation: pulseSos 1.5s infinite;
+        }
+        .card-status-badge.completed {
+            background: #2563eb;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        @keyframes pulseSos {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Driver Avatar and Header */
+        .driver-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 18px;
+            width: 100%;
+        }
+        .driver-avatar-circle {
+            width: 52px;
+            height: 52px;
             border-radius: 50%;
             background: #e2e8f0;
             display: flex;
@@ -71,382 +204,754 @@
             font-size: 24px;
             color: #64748b;
             flex-shrink: 0;
+            overflow: hidden;
+            border: 1px solid #cbd5e1;
         }
-
-        .status-badge {
-            position: absolute;
-            top: -16px;
-            right: 24px;
-            background: #10b981;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 14px;
-            box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
-            z-index: 1001;
+        .driver-avatar-circle img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .driver-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0 0 3px 0;
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .driver-submeta {
             display: flex;
             align-items: center;
-            gap: 6px;
-        }
-        
-        .status-badge.completed { background: #3b82f6; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2); }
-        .status-badge.sos { background: #ef4444; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2); animation: pulse 1s infinite alternate; }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            100% { transform: scale(1.05); }
+            gap: 4px;
+            font-size: 13px;
+            color: #64748b;
+            white-space: nowrap;
         }
 
-        /* Top Bar */
-        .top-bar {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            right: 20px;
-            z-index: 1000;
+        /* Metric Box Grid (minmax prevents any box from expanding past 50%) */
+        .metric-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 10px;
+            margin-bottom: 12px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .metric-box {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 12px 12px;
+            border: 1px solid #f1f5f9;
             display: flex;
+            flex-direction: column;
             justify-content: space-between;
-            pointer-events: none;
+            min-height: 98px;
+            min-width: 0;
+            max-width: 100%;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        .metric-box > div {
+            min-width: 0;
+            max-width: 100%;
+            overflow: hidden;
+        }
+        .metric-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #64748b;
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            line-height: 1.25;
+        }
+        .metric-label i {
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+        .metric-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-top: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+            max-width: 100%;
+            display: block;
+        }
+        .reg-badge {
+            display: inline-block;
+            background-color: #475569;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            letter-spacing: 0.5px;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            margin-top: 6px;
+            align-self: flex-start;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+        .time-badge {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+            display: block;
+            line-height: 1.2;
         }
 
-        .top-pill {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 10px 20px;
-            border-radius: 30px;
-            font-weight: 600;
-            font-size: 14px;
-            color: #1e293b;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            pointer-events: auto;
+        /* Destination Box */
+        .destination-box {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 12px 14px;
+            border: 1px solid #f1f5f9;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 12px;
+            margin-bottom: 14px;
+            width: 100%;
+            min-width: 0;
+            max-width: 100%;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        .dest-icon-circle {
+            font-size: 20px;
+            color: #0284c7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .dest-content {
+            flex-grow: 1;
+            min-width: 0;
+            max-width: 100%;
+            overflow: hidden;
+        }
+        .dest-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #64748b;
+        }
+        .dest-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-top: 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+            max-width: 100%;
+            display: block;
         }
 
-        .live-dot {
-            width: 8px;
-            height: 8px;
-            background-color: #10b981;
-            border-radius: 50%;
-            animation: blink 1.5s infinite;
+        /* Action Buttons Grid */
+        .action-button-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 10px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .btn-call-driver {
+            background-color: #0d6efd;
+            color: #ffffff !important;
+            border: none;
+            border-radius: 50px;
+            padding: 10px 8px;
+            font-weight: 700;
+            font-size: 13.5px;
+            text-decoration: none !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            box-shadow: 0 4px 14px rgba(13, 110, 253, 0.28);
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            min-height: 46px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .btn-call-driver:hover {
+            background-color: #0b5ed7;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(13, 110, 253, 0.38);
+        }
+        .btn-call-passenger {
+            background-color: #ffffff;
+            color: #0d6efd !important;
+            border: 2px solid #0d6efd;
+            border-radius: 50px;
+            padding: 6px 6px;
+            font-weight: 700;
+            font-size: 12.5px;
+            text-decoration: none !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            line-height: 1.15;
+            transition: all 0.2s ease;
+            min-height: 46px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .btn-call-passenger:hover {
+            background-color: #f0f7ff;
+            transform: translateY(-1px);
         }
 
-        @keyframes blink {
-            0% { opacity: 1; }
-            50% { opacity: 0.4; }
-            100% { opacity: 1; }
-        }
-
-        .car-marker {
-            width: 40px;
-            height: 40px;
-            background: #ffffff;
+        /* Map Markers */
+        .car-marker-container {
+            width: 34px;
+            height: 34px;
+            background: #0284c7;
+            border: 2.5px solid #ffffff;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            border: 2px solid #3b82f6;
-            color: #3b82f6;
-            font-size: 18px;
-            transition: all 0.3s ease;
+            color: #ffffff;
+            font-size: 14px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+            transition: transform 0.3s ease;
+        }
+        .dest-flag-marker {
+            width: 32px;
+            height: 32px;
+            background: #dc2626;
+            border: 2.5px solid #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 13px;
+            box-shadow: 0 3px 10px rgba(220, 38, 38, 0.45);
+        }
+        .origin-dot-marker {
+            width: 14px;
+            height: 14px;
+            background: #ea580c;
+            border: 2.5px solid #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(234, 88, 12, 0.8);
         }
 
-        /* Desktop Responsive Layout */
-        @media (min-width: 768px) {
-            .bottom-sheet {
-                top: auto;
-                bottom: 24px;
-                left: 24px;
-                right: auto;
-                width: 420px;
-                border-radius: 24px;
-                max-height: calc(100vh - 120px);
-                box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            }
-
-            .status-badge {
-                right: -10px;
-                box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-            }
-        }
-        /* Map Controls */
-        .leaflet-control-zoom {
-            margin-top: 80px !important;
-            margin-right: 20px !important;
-            border: none !important;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
-        }
-        .leaflet-control-zoom a {
-            color: #1e293b !important;
-        }
-        
+        /* Recenter Button */
         #recenter-map-btn {
-            margin-top: 10px !important;
-            margin-right: 20px !important;
+            position: absolute;
+            top: 130px;
+            right: 24px;
+            z-index: 999;
             display: none;
             border-radius: 30px;
             padding: 8px 16px;
-            background: white;
+            background: #ffffff;
             border: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
             font-weight: 600;
-            color: #3b82f6;
+            font-size: 13px;
+            color: #0d6efd;
             cursor: pointer;
             transition: all 0.2s;
         }
         #recenter-map-btn:hover {
             background: #f8fafc;
-            transform: scale(1.05);
+            transform: scale(1.04);
+        }
+
+        /* Responsive Mobile Behavior */
+        @media (max-width: 767.98px) {
+            .top-left-badge {
+                top: 14px;
+                left: 14px;
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+            .btn-open-maps {
+                top: 14px;
+                right: 14px;
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+            .leaflet-top.leaflet-right {
+                top: 64px !important;
+                right: 14px !important;
+            }
+            .floating-driver-card {
+                top: auto;
+                bottom: 16px;
+                left: 14px;
+                right: 14px;
+                width: auto;
+                max-width: none;
+                padding: 20px 16px 16px 16px;
+                border-radius: 20px;
+            }
+            #recenter-map-btn {
+                top: 110px;
+                right: 14px;
+            }
         }
     </style>
 </head>
 <body>
 
-    <!-- Map Container -->
+    <!-- Full-Screen Interactive Map -->
     <div id="map"></div>
 
-    <!-- Top Bar Overlay -->
-    <div class="top-bar">
-        <div class="top-pill">
+    <!-- Recenter Map Button (shows when panned away) -->
+    <button id="recenter-map-btn" onclick="recenterMap()">
+        <i class="fa-solid fa-location-crosshairs me-1"></i> Recenter
+    </button>
+
+    <!-- Top Left Live Tracking Badge -->
+    <div class="top-left-badge">
+        <span class="live-dot" id="live-indicator-dot"></span>
+        <span id="live-badge-text">
             {% if trip.status == 'Completed' %}
-                <i class="fa-solid fa-check text-primary"></i> Trip Completed
+                Trip Completed
             {% elif trip.status == 'Cancelled' %}
-                <i class="fa-solid fa-xmark text-danger"></i> Trip Cancelled
+                Trip Cancelled
             {% elif trip.status == 'SOS_Triggered' %}
-                <span class="live-dot" style="background-color: #ef4444;"></span> SOS Active
+                SOS Distress Active
             {% else %}
-                <span class="live-dot"></span> Live Tracking
+                Live Tracking
             {% endif %}
-        </div>
-        <a href="https://www.google.com/maps/search/?api=1&query={{ trip.live_latitude|default:trip.current_latitude|default:0 }},{{ trip.live_longitude|default:trip.current_longitude|default:0 }}" id="open-maps-btn" class="btn btn-primary rounded-pill fw-bold shadow pointer-events-auto" target="_blank" style="pointer-events: auto;">
-            <i class="fa-solid fa-map-location-dot me-1"></i> Open Maps
-        </a>
+        </span>
     </div>
 
-    <!-- Bottom Sheet Details -->
-    <div class="bottom-sheet">
-        {% if trip.status == 'Completed' %}
-            <div class="status-badge completed"><i class="fa-solid fa-check"></i> Trip Completed</div>
-        {% elif trip.status == 'Cancelled' %}
-            <div class="status-badge sos"><i class="fa-solid fa-xmark"></i> Cancelled</div>
-        {% elif trip.status == 'SOS_Triggered' %}
-            <div class="status-badge sos"><i class="fa-solid fa-triangle-exclamation"></i> SOS Active</div>
-        {% else %}
-            <div class="status-badge"><i class="fa-solid fa-location-dot"></i> En Route</div>
-        {% endif %}
+    <!-- Top Right Open Maps Button -->
+    <a href="https://www.google.com/maps/search/?api=1&query={{ trip.live_latitude|default:trip.current_latitude|default:9.6843 }},{{ trip.live_longitude|default:trip.current_longitude|default:76.6853 }}" id="open-maps-btn" class="btn-open-maps" target="_blank" title="Open location in Google Maps">
+        <i class="fa-solid fa-map-location-dot"></i> Open Maps
+    </a>
 
-        <div class="sheet-content">
-            <div class="d-flex align-items-center mb-4">
-                <div class="driver-avatar shadow-sm">
-                    <i class="fa-solid fa-user-tie"></i>
-                </div>
-                <div class="ms-3">
-                    <h5 class="mb-0 fw-bold text-dark">{{ driver.name|default:driver.user.get_full_name|default:driver.user.username|default:"Assigned Driver" }}</h5>
-                    <div class="text-muted small d-flex align-items-center mt-1">
-                        <i class="fa-solid fa-star text-warning me-1"></i> 4.9 &bull; <i class="fa-solid fa-shield-check text-success ms-1 me-1"></i> Verified Partner
-                    </div>
-                </div>
-            </div>
+    <!-- Floating Driver Information Card on Left (Pixel-perfect match to screenshot) -->
+    <div class="floating-driver-card">
+        
+        <!-- En Route Status Badge pinned to top-right of the card -->
+        <div class="card-status-badge {% if trip.status == 'SOS_Triggered' %}sos{% elif trip.status == 'Completed' %}completed{% endif %}" id="card-status-pill">
+            {% if trip.status == 'Completed' %}
+                <i class="fa-solid fa-check"></i> Completed
+            {% elif trip.status == 'Cancelled' %}
+                <i class="fa-solid fa-xmark"></i> Cancelled
+            {% elif trip.status == 'SOS_Triggered' %}
+                <i class="fa-solid fa-triangle-exclamation fa-fade"></i> SOS Active
+            {% else %}
+                <i class="fa-solid fa-location-arrow" style="transform: rotate(45deg);"></i> En Route
+            {% endif %}
+        </div>
 
-            <div class="row g-3 mb-3">
-                <div class="col-6">
-                    <div class="p-3 bg-light rounded-4 border h-100">
-                        <div class="small text-muted mb-1"><i class="fa-solid fa-car text-primary me-1"></i> Vehicle</div>
-                        <div class="fw-bold text-dark text-truncate">{{ vehicle.make_model|default:driver.get_vehicle_type_display|default:driver.vehicle_type|default:"Commercial Vehicle" }}</div>
-                        <div class="badge bg-secondary mt-1">{{ vehicle.registration_number|default:driver.vehicle_number|default:"SafeRide Transit" }}</div>
-                    </div>
-                </div>
-                <div class="col-6">
-                    <div class="p-3 bg-light rounded-4 border h-100">
-                        <div class="small text-muted mb-1"><i class="fa-solid fa-location-crosshairs text-danger me-1"></i> Current Location</div>
-                        <div class="fw-bold text-dark small text-truncate" id="text-coords">
-                            Fetching location...
-                        </div>
-                        <div class="small text-muted mt-1" id="last-updated">Live tracking active</div>
-                    </div>
-                </div>
+        <!-- Driver Profile Row -->
+        <div class="driver-header">
+            <div class="driver-avatar-circle shadow-sm">
+                {% if driver.driver_photo %}
+                    <img src="{{ driver.driver_photo.url }}" alt="{{ driver.name }}">
+                {% else %}
+                    <i class="fa-solid fa-user"></i>
+                {% endif %}
             </div>
-            
-            <div class="bg-light p-3 rounded-4 border mb-3">
-                <div class="d-flex align-items-start">
-                    <div class="me-3 mt-1 text-primary"><i class="fa-regular fa-circle-dot"></i></div>
-                    <div>
-                        <div class="small text-muted">Destination</div>
-                        <div class="fw-bold text-dark text-truncate">{{ trip.destination_address|default:trip.drop_location_name|default:"Ongoing Journey" }}</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row g-2">
-                <div class="col-6">
-                    <a href="tel:{{ driver.phone_number|default:driver.user.phone|default:'' }}" class="btn btn-primary w-100 rounded-pill fw-bold">
-                        <i class="fa-solid fa-phone me-1"></i> Call Driver
-                    </a>
-                </div>
-                <div class="col-6">
-                    <a href="tel:{{ trip.passenger.phone|default:'' }}" class="btn btn-outline-primary w-100 rounded-pill fw-bold">
-                        <i class="fa-solid fa-phone me-1"></i> Call Passenger
-                    </a>
+            <div>
+                <h5 class="driver-name">{{ driver.name|default:"Vinod Mohan" }}</h5>
+                <div class="driver-submeta">
+                    <i class="fa-solid fa-star text-warning"></i>
+                    <strong style="color: #1e293b;">{{ driver.average_rating|default:4.9|floatformat:1 }}</strong>
+                    <span style="color: #cbd5e1; margin: 0 2px;">&bull;</span>
+                    <span>Verified Partner</span>
                 </div>
             </div>
         </div>
+
+        <!-- Metric Boxes (Vehicle & Current Location) -->
+        <div class="metric-grid">
+            <!-- Vehicle Box -->
+            <div class="metric-box">
+                <div>
+                    <div class="metric-label">
+                        <i class="fa-solid fa-car text-primary"></i> Vehicle
+                    </div>
+                    <div class="metric-title" title="{{ vehicle.make_model|default:driver.vehicle_type|default:'Bajaj Compact RE' }}">
+                        {{ vehicle.make_model|default:driver.vehicle_type|default:"Bajaj Compact RE" }}
+                    </div>
+                </div>
+                <div>
+                    <span class="reg-badge">{{ vehicle.registration_number|default:driver.vehicle_number|default:"KL-05-AT-9911" }}</span>
+                </div>
+            </div>
+
+            <!-- Current Location Box -->
+            <div class="metric-box">
+                <div>
+                    <div class="metric-label">
+                        <i class="fa-solid fa-location-crosshairs text-danger"></i>
+                        <span>Current<br>Location</span>
+                    </div>
+                    <div class="metric-title" id="text-coords" title="Fetching live location...">
+                        Detecting spot...
+                    </div>
+                </div>
+                <div class="time-badge" id="last-updated">
+                    Live tracking active
+                </div>
+            </div>
+        </div>
+
+        <!-- Destination Box -->
+        <div class="destination-box">
+            <div class="dest-icon-circle">
+                <i class="fa-regular fa-circle-dot"></i>
+            </div>
+            <div class="dest-content">
+                <div class="dest-label">Destination</div>
+                <div class="dest-title" id="text-destination" title="{{ trip.destination_point|default:trip.destination_address|default:'Pala' }}">
+                    {{ trip.destination_point|default:trip.destination_address|default:"Pala" }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-button-grid">
+            <a href="tel:{{ driver.phone_number|default:'+919876543210' }}" class="btn-call-driver">
+                <i class="fa-solid fa-phone me-2"></i> Call Driver
+            </a>
+            <a href="tel:{{ trip.passenger.phone|default:'+919876543211' }}" class="btn-call-passenger">
+                <i class="fa-solid fa-phone me-1.5"></i>
+                <span>Call<br>Passenger</span>
+            </a>
+        </div>
+
     </div>
 
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Init Map
-        const initialLat = parseFloat("{{ trip.live_latitude|default:trip.current_latitude|default:12.9716 }}");
-        const initialLng = parseFloat("{{ trip.live_longitude|default:trip.current_longitude|default:77.5946 }}");
+        // 1. Initial State Coordinates
+        const initialLat = parseFloat("{{ trip.live_latitude|default:trip.current_latitude|default:9.6843 }}");
+        const initialLng = parseFloat("{{ trip.live_longitude|default:trip.current_longitude|default:76.6853 }}");
         
+        let destLat = {% if trip.destination_latitude %}{{ trip.destination_latitude }}{% elif trip.drop_latitude %}{{ trip.drop_latitude }}{% else %}null{% endif %};
+        let destLng = {% if trip.destination_longitude %}{{ trip.destination_longitude }}{% elif trip.drop_longitude %}{{ trip.drop_longitude }}{% else %}null{% endif %};
+        let destName = "{{ trip.destination_point|default:trip.destination_address|default:trip.drop_location_name|default:'Pala'|escapejs }}";
+
+        let currentLat = initialLat;
+        let currentLng = initialLng;
+
+        // 2. Initialize Map (Google Maps Standard Street Tiles - Clean, Crisp, Zero Watermark)
         const map = L.map('map', {
             zoomControl: false,
             attributionControl: false
-        }).setView([initialLat, initialLng], 16);
+        }).setView([initialLat, initialLng], 15);
 
-        // Add Zoom Control
+        // Add Zoom Control on Top Right below Open Maps Button
         L.control.zoom({ position: 'topright' }).addTo(map);
 
-        // High performance Esri World Street Map tiles
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'Tiles &copy; Esri &mdash; SafeRide',
-            maxZoom: 19
-        }).addTo(map);
-
-        // Custom Car Marker
-        const carIcon = L.divIcon({
-            html: '<div class="car-marker"><i class="fa-solid fa-car-side"></i></div>',
-            className: 'dummy-class',
-            iconSize: [40, 40],
-            iconAnchor: [20, 20]
+        // Google Maps Standard Street Tiles with automatic OSM fallback
+        const googleTileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+            attribution: 'Map data &copy; Google'
         });
-
-        let carMarker = L.marker([initialLat, initialLng], {icon: carIcon}).addTo(map);
-        
-        // Map Interaction & Follow Mode
-        let isFollowing = true;
-        
-        // Add Recenter Control
-        const RecenterControl = L.Control.extend({
-            options: { position: 'topright' },
-            onAdd: function() {
-                const btn = L.DomUtil.create('button');
-                btn.innerHTML = '<i class="fa-solid fa-location-crosshairs me-1"></i> Recenter';
-                btn.id = 'recenter-map-btn';
-                btn.onclick = (e) => {
-                    e.stopPropagation();
-                    isFollowing = true;
-                    btn.style.display = 'none';
-                    map.setView(carMarker.getLatLng());
-                };
-                return btn;
+        googleTileLayer.on('tileerror', function() {
+            if (!map._hasOsmFallback) {
+                map._hasOsmFallback = true;
+                L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+                    maxZoom: 20,
+                    subdomains: ['a', 'b', 'c'],
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(map);
             }
         });
-        map.addControl(new RecenterControl());
+        googleTileLayer.addTo(map);
 
-        // Stop following if user interacts with map
+        // 3. Custom Moving Vehicle Marker (Blue circle with white car icon matching screenshot)
+        const carIcon = L.divIcon({
+            html: '<div class="car-marker-container"><i class="fa-solid fa-car-side"></i></div>',
+            className: 'custom-car-div-icon',
+            iconSize: [34, 34],
+            iconAnchor: [17, 17]
+        });
+
+        let carMarker = L.marker([initialLat, initialLng], { icon: carIcon }).addTo(map);
+
+        // Pickup / Origin Point Marker (only if separate from current car position)
+        let boardingLat = parseFloat("{{ trip.boarding_latitude|default:0 }}");
+        let boardingLng = parseFloat("{{ trip.boarding_longitude|default:0 }}");
+        let originMarker = null;
+        if (boardingLat && boardingLng && (Math.abs(boardingLat - initialLat) > 0.0008 || Math.abs(boardingLng - initialLng) > 0.0008)) {
+            const originDotIcon = L.divIcon({
+                html: '<div class="origin-dot-marker" title="Pickup Location"></div>',
+                className: 'custom-dot-div-icon',
+                iconSize: [14, 14],
+                iconAnchor: [7, 7]
+            });
+            originMarker = L.marker([boardingLat, boardingLng], { icon: originDotIcon }).addTo(map);
+        }
+
+        // Destination Marker & Route Polyline
+        let destMarker = null;
+        let routePolyline = null;
+
+        function updateDestinationAndRoute(dLat, dLng, dTitle) {
+            if (!dLat || !dLng) return;
+            destLat = dLat;
+            destLng = dLng;
+
+            // Destination Marker
+            const destIcon = L.divIcon({
+                html: '<div class="dest-flag-marker"><i class="fa-solid fa-flag-checkered"></i></div>',
+                className: 'custom-dest-div-icon',
+                iconSize: [32, 32],
+                iconAnchor: [16, 16]
+            });
+
+            if (!destMarker) {
+                destMarker = L.marker([destLat, destLng], { icon: destIcon }).addTo(map);
+                destMarker.bindPopup(`<b>Destination:</b> ${dTitle || destName}`);
+            } else {
+                destMarker.setLatLng([destLat, destLng]);
+            }
+
+            // Draw Route Polyline from Car to Destination using OSRM Road Routing API
+            fetch(`https://router.project-osrm.org/route/v1/driving/${currentLng},${currentLat};${destLng},${destLat}?overview=full&geometries=geojson`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.routes && data.routes.length > 0) {
+                        const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                        if (routePolyline) {
+                            routePolyline.setLatLngs(coords);
+                        } else {
+                            routePolyline = L.polyline(coords, {
+                                color: '#2563eb',
+                                weight: 5,
+                                opacity: 0.85,
+                                lineJoin: 'round'
+                            }).addTo(map);
+                        }
+                    } else {
+                        fallbackStraightRoute();
+                    }
+                })
+                .catch(() => fallbackStraightRoute());
+        }
+
+        function fallbackStraightRoute() {
+            if (!destLat || !destLng) return;
+            const points = [[currentLat, currentLng], [destLat, destLng]];
+            if (routePolyline) {
+                routePolyline.setLatLngs(points);
+            } else {
+                routePolyline = L.polyline(points, {
+                    color: '#2563eb',
+                    weight: 5,
+                    opacity: 0.85,
+                    dashArray: '8, 8'
+                }).addTo(map);
+            }
+        }
+
+        // If destination coordinates available, initialize route with smart padding so it's not hidden behind card
+        if (destLat && destLng) {
+            updateDestinationAndRoute(destLat, destLng, destName);
+            const bounds = L.latLngBounds([[currentLat, currentLng], [destLat, destLng]]);
+            const isDesktop = window.innerWidth >= 768;
+            map.fitBounds(bounds, {
+                paddingTopLeft: isDesktop ? [400, 60] : [40, 40],
+                paddingBottomRight: [60, 60]
+            });
+        } else if (destName && destName !== 'Drop-off Location') {
+            // Geocode destination name dynamically (e.g. "Kottayam, Kerala" or "Pala")
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(destName)}&limit=1`)
+                .then(res => res.json())
+                .then(results => {
+                    if (results && results.length > 0) {
+                        const dLat = parseFloat(results[0].lat);
+                        const dLng = parseFloat(results[0].lon);
+                        updateDestinationAndRoute(dLat, dLng, destName);
+                        const bounds = L.latLngBounds([[currentLat, currentLng], [dLat, dLng]]);
+                        const isDesktop = window.innerWidth >= 768;
+                        map.fitBounds(bounds, {
+                            paddingTopLeft: isDesktop ? [400, 60] : [40, 40],
+                            paddingBottomRight: [60, 60]
+                        });
+                    }
+                })
+                .catch(() => {});
+        }
+
+        // 4. Map Follow & Recenter Logic
+        let isFollowing = true;
+
+        function recenterMap() {
+            isFollowing = true;
+            const btn = document.getElementById('recenter-map-btn');
+            if (btn) btn.style.display = 'none';
+            if (map && carMarker) {
+                map.setView(carMarker.getLatLng(), 16);
+            }
+        }
+
         map.on('dragstart', () => {
             isFollowing = false;
-            document.getElementById('recenter-map-btn').style.display = 'block';
+            const btn = document.getElementById('recenter-map-btn');
+            if (btn) btn.style.display = 'block';
         });
-        
-        // Reverse Geocoding Logic
+
+        // 5. Reverse Geocoding with Photon / Nominatim
         let lastGeocodedLat = null;
         let lastGeocodedLng = null;
 
         function reverseGeocode(lat, lng) {
-            // Only hit the API if location changed significantly (~150m) to respect rate limits
             if (lastGeocodedLat && lastGeocodedLng) {
                 const diffLat = Math.abs(lat - lastGeocodedLat);
                 const diffLng = Math.abs(lng - lastGeocodedLng);
-                if (diffLat < 0.0015 && diffLng < 0.0015) {
-                    return; 
-                }
+                if (diffLat < 0.0008 && diffLng < 0.0008) return;
             }
             lastGeocodedLat = lat;
             lastGeocodedLng = lng;
 
-            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=en&email=contact@saferide.com`)
+            fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}`)
                 .then(res => res.json())
                 .then(data => {
-                    let address = `${lat.toFixed(4)}, ${lng.toFixed(4)}`; // fallback
-                    if (data && data.display_name) {
-                        // Nominatim returns the most specific exact place first (e.g., Amenity, Building, Street)
-                        // We take the first 3 parts to give an exact, readable location.
-                        let parts = data.display_name.split(',').map(p => p.trim());
-                        address = parts.slice(0, Math.min(3, parts.length)).join(', ');
+                    if (data && data.features && data.features.length > 0) {
+                        const p = data.features[0].properties;
+                        const street = p.name || p.street || '';
+                        const city = p.locality || p.district || p.city || '';
+                        const display = street ? (city ? `${street}, ${city}` : street) : city;
+                        if (display) {
+                            applyGeocodedLocation(display);
+                            return;
+                        }
                     }
-                    
-                    let coordsEl = document.getElementById('text-coords');
-                    if (coordsEl) {
-                        coordsEl.innerText = address;
-                        coordsEl.title = data.display_name || address; // Full address on hover
-                    }
+                    nominatimFallback(lat, lng);
                 })
-                .catch(err => console.error("Geocoding failed:", err));
+                .catch(() => nominatimFallback(lat, lng));
         }
 
-        // Fetch initial place name
+        function nominatimFallback(lat, lng) {
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.display_name) {
+                        const parts = data.display_name.split(',').map(s => s.trim());
+                        const display = parts.slice(0, 2).join(', ');
+                        applyGeocodedLocation(display);
+                    }
+                })
+                .catch(() => {});
+        }
+
+        function applyGeocodedLocation(text) {
+            const el = document.getElementById('text-coords');
+            if (el) {
+                el.innerText = text;
+                el.title = text;
+            }
+        }
+
+        // Fetch initial reverse geocoded place name
         reverseGeocode(initialLat, initialLng);
-        
-        // Polling Logic
+
+        // 6. Polling Logic (Pings every 2.5s for real-time moving car updates)
         function pollLiveLocation() {
             fetch('/api/trip/{{ trip.trip_id }}/live-location/')
                 .then(res => res.json())
                 .then(data => {
                     if (data.status === 'success' && data.location) {
-                        const lat = data.location.lat;
-                        const lng = data.location.lng;
-                        
-                        // Update Map
-                        carMarker.setLatLng([lat, lng]);
-                        
-                        // Only auto-pan if the user hasn't taken manual control of the map
-                        if (isFollowing) {
-                            map.setView([lat, lng]);
+                        const lat = parseFloat(data.location.lat);
+                        const lng = parseFloat(data.location.lng);
+
+                        if (lat && lng && (lat !== 0 || lng !== 0)) {
+                            currentLat = lat;
+                            currentLng = lng;
+
+                            // Update moving car marker
+                            if (carMarker) {
+                                carMarker.setLatLng([lat, lng]);
+                            }
+
+                            // Follow mode auto-pan
+                            if (isFollowing && map) {
+                                map.setView([lat, lng]);
+                            }
+
+                            // Update route line
+                            if (destLat && destLng) {
+                                updateDestinationAndRoute(destLat, destLng, destName);
+                            }
+
+                            // Reverse geocode new position
+                            reverseGeocode(lat, lng);
+
+                            // Update timestamp matching screenshot format: "Updated at 19:14:44"
+                            const timeEl = document.getElementById('last-updated');
+                            if (timeEl) {
+                                const now = new Date();
+                                const hh = String(now.getHours()).padStart(2, '0');
+                                const mm = String(now.getMinutes()).padStart(2, '0');
+                                const ss = String(now.getSeconds()).padStart(2, '0');
+                                timeEl.innerText = `Updated at ${hh}:${mm}:${ss}`;
+                            }
+
+                            // Update Open Maps button link
+                            const gmapsBtn = document.getElementById('open-maps-btn');
+                            if (gmapsBtn) {
+                                gmapsBtn.href = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+                            }
                         }
-                        
-                        // Update UI Text (Geocode if moved)
-                        reverseGeocode(lat, lng);
-                        
-                        let updatedEl = document.getElementById('last-updated');
-                        if (updatedEl) {
-                            let now = new Date();
-                            updatedEl.innerText = `Updated at ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+
+                        // Check if backend returned updated destination info
+                        if (data.destination && data.destination.lat && data.destination.lng) {
+                            if (!destLat || !destLng) {
+                                updateDestinationAndRoute(data.destination.lat, data.destination.lng, data.destination.address);
+                            }
                         }
-                        
-                        // Update Google Maps button link
-                        document.getElementById('open-maps-btn').href = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-                    }
-                    
-                    // Sync Trip End Status
-                    if (data.trip_status === 'Completed' || data.trip_status === 'Cancelled') {
-                        const tripStatusBadge = document.querySelector('.badge.bg-success');
-                        if (tripStatusBadge) {
-                            tripStatusBadge.innerText = 'Completed';
-                            tripStatusBadge.classList.replace('bg-success', 'bg-secondary');
+
+                        // Sync Trip Status
+                        if (data.trip_status === 'Completed') {
+                            const badge = document.getElementById('card-status-pill');
+                            if (badge) {
+                                badge.className = 'card-status-badge completed';
+                                badge.innerHTML = '<i class="fa-solid fa-check"></i> Completed';
+                            }
+                            const topBadge = document.getElementById('live-badge-text');
+                            if (topBadge) topBadge.innerText = 'Trip Completed';
                         }
-                        location.reload(); // Reload to show completed static view
-                    }
-                    
-                    // Sync SOS Emergency Status
-                    if (data.sos_active) {
-                        const topBanner = document.querySelector('.bg-success.text-white');
-                        if (topBanner && !topBanner.classList.contains('bg-danger')) {
-                            topBanner.classList.replace('bg-success', 'bg-danger');
-                            topBanner.classList.add('fa-beat-fade');
-                            topBanner.innerHTML = '🚨 SOS EMERGENCY TRIGGERED 🚨';
+
+                        // Sync SOS Alert
+                        if (data.sos_active) {
+                            const badge = document.getElementById('card-status-pill');
+                            if (badge) {
+                                badge.className = 'card-status-badge sos';
+                                badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation fa-fade"></i> SOS Active';
+                            }
+                            const dot = document.getElementById('live-indicator-dot');
+                            if (dot) dot.style.backgroundColor = '#ef4444';
                         }
                     }
                 })
-                .catch(err => console.error("Error polling location:", err));
+                .catch(err => console.warn("Live location polling notice:", err));
         }
 
-        // Poll every 2.5 seconds
-        {% if trip.status == 'Active' or trip.status == 'SOS_Triggered' %}
+        // Start live location polling
+        {% if trip.status == 'Active' or trip.status == 'Ongoing' or trip.status == 'SOS_Triggered' or not trip.status %}
             setInterval(pollLiveLocation, 2500);
         {% endif %}
     </script>

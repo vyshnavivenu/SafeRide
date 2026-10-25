@@ -2,6 +2,22 @@
 
 {% block title %}INCIDENT REPORT - SafeRide{% endblock %}
 
+{% block extra_css %}
+<style>
+  #incidentReportForm select option {
+    background-color: #0F172A;
+    color: #FFFFFF;
+  }
+  #noTripsAlert {
+    background-color: rgba(245, 158, 11, 0.12) !important;
+    border: 1px solid rgba(245, 158, 11, 0.4) !important;
+  }
+  #noTripsAlert span, #noTripsAlert i {
+    color: #FBBF24 !important;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-5">
   <div class="row justify-content-center">
@@ -10,126 +26,137 @@
         
         <!-- Form Header -->
         <div class="text-center mb-4 border-bottom pb-3" style="border-color: rgba(255, 255, 255, 0.1) !important;">
-          <h2 class="fw-bold text-white mb-0 text-uppercase tracking-wider">INCIDENT REPORT</h2>
+          <h2 class="fw-bold text-white mb-0 text-uppercase tracking-wider">
+            <i class="fa-solid fa-triangle-exclamation text-warning me-2"></i>INCIDENT REPORT
+          </h2>
         </div>
+
+        {% if messages %}
+        <div class="mb-3">
+          {% for message in messages %}
+          <div class="alert alert-{{ message.tags|default:'info' }} rounded-3 py-2 px-3 small mb-2">
+            {{ message }}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if form.errors %}
+        <div class="alert alert-danger rounded-3 py-2 px-3 small mb-3">
+          <ul class="mb-0 ps-3">
+            {% for field, errors in form.errors.items %}
+              {% for error in errors %}
+                <li><strong>{{ field|capfirst }}:</strong> {{ error }}</li>
+              {% endfor %}
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
 
         <form method="POST" id="incidentReportForm">
           {% csrf_token %}
 
-          <!-- Passenger Name -->
+          <!-- Hidden inputs for validation & data relationship -->
+          <input type="hidden" name="passenger_id" id="hiddenPassengerId" value="{{ selected_passenger.id }}">
+          <input type="hidden" name="passenger_name" id="hiddenPassengerName" value="{{ selected_passenger.get_full_name|default:selected_passenger.username }}">
+
+          <!-- ========================================== -->
+          <!-- 1. PASSENGER NAME                          -->
+          <!-- ========================================== -->
           <div class="mb-3">
-            <label class="form-label fw-bold text-light">Passenger Name :</label>
-            <input type="text" name="passenger_name" class="form-control py-2 text-white" style="background-color: #0F172A; border-color: rgba(255,255,255,0.15);" placeholder="Passenger Name" value="{{ user.get_full_name|default:user.username }}" pattern="[a-zA-Z\s\.\'\-]+" minlength="2" maxlength="100" title="Letters and spaces only" required>
+            <label class="form-label fw-bold text-light mb-1" for="passengerDisplayName">Passenger Name :</label>
+
+            <div class="input-group">
+              <span class="input-group-text text-primary" style="background-color: #0F172A; border-color: rgba(255,255,255,0.15);">
+                <i class="fa-solid fa-user"></i>
+              </span>
+              <input type="text" id="passengerDisplayName" class="form-control py-2 text-white" style="background-color: #0F172A; border-color: rgba(255,255,255,0.15); font-size: 1rem;" value="{{ selected_passenger.get_full_name|default:selected_passenger.username }}" readonly>
+            </div>
           </div>
 
-          <!-- Trip Selection (Required) -->
-          {% if recent_trips %}
+          <!-- ========================================== -->
+          <!-- 2. DYNAMIC TRIP ID DROPDOWN                -->
+          <!-- ========================================== -->
           <div class="mb-3">
-            <label class="form-label fw-bold text-light" for="recentTripSelector">
-              Trip :
-            </label>
-            <select id="recentTripSelector" name="trip_id" class="form-select py-2 text-white" style="background-color: #0F172A; border-color: rgba(255, 152, 0, 0.4); font-size: 1rem;" required>
-              <option value="" selected disabled>-- Select Trip ▼ --</option>
-              {% for t in recent_trips %}
-                <option value="TRP-{{ t.trip_id }}"
-                        data-trip-code="TRP-{{ t.trip_id }}"
-                        data-time="{{ t.start_time|date:'Y-m-d\TH:i' }}"
-                        data-driver="{% if t.driver %}{{ t.driver.user.get_full_name|default:t.driver.user.username }}{% endif %}"
-                        {% if form.trip_id.value == 'TRP-'|add:t.trip_id or form.trip_id.value == t.trip_id %}selected{% endif %}>
-                  Trip #{{ t.trip_id }} &bull; {{ t.start_time|date:"M d, Y - h:i A" }}{% if t.driver %} &bull; Driver: {{ t.driver.user.get_full_name|default:t.driver.user.username }}{% endif %}
-                </option>
-              {% endfor %}
-              <option value="__MANUAL__">Enter Another Trip ID Manually...</option>
+            <label class="form-label fw-bold text-light mb-1" for="tripIdSelect">Trip ID :</label>
+
+            <!-- Trip ID Select Dropdown (Visible only when trips exist) -->
+            <select id="tripIdSelect" name="trip_id" class="form-select py-2 text-white font-monospace {% if not passenger_trips %}d-none{% endif %}" style="background-color: #0F172A; border-color: rgba(255, 152, 0, 0.4); font-size: 1rem;">
+              {% if passenger_trips %}
+                {% for t in passenger_trips %}
+                  <option value="{{ t.formatted_trip_id }}"
+                          data-trip-id="{{ t.trip_id }}"
+                          data-formatted-id="{{ t.formatted_trip_id }}"
+                          data-date="{{ t.start_time|date:'M d, Y - h:i A' }}"
+                          data-iso-date="{{ t.start_time|date:'Y-m-d\TH:i' }}"
+                          data-source="{{ t.boarding_point }}"
+                          data-destination="{{ t.destination_point }}"
+                          data-driver="{% if t.driver %}{{ t.driver.user.get_full_name|default:t.driver.name|default:t.driver.user.username }}{% else %}Verified Driver{% endif %}"
+                          data-vehicle="{% if t.driver %}{{ t.driver.vehicle_number|default:t.driver.vehicle.registration_number|default:'Not Available' }}{% else %}Not Available{% endif %}"
+                          data-vehicle-type="{% if t.driver %}{{ t.driver.get_vehicle_type_display|default:t.driver.vehicle_type|title }}{% else %}Vehicle{% endif %}"
+                          data-fare="₹{{ t.fare_amount|default:'0.00' }}"
+                          data-status="{{ t.status }}"
+                          {% if selected_trip and selected_trip.trip_id == t.trip_id %}selected{% elif forloop.first and not selected_trip %}selected{% endif %}>
+                    {{ t.formatted_trip_id }} &bull; {{ t.start_time|date:"M d, Y - h:i A" }} &bull; Driver: {% if t.driver %}{{ t.driver.user.get_full_name|default:t.driver.name|default:t.driver.user.username }}{% else %}Driver{% endif %}{% if forloop.first %} (Latest){% endif %}
+                  </option>
+                {% endfor %}
+              {% else %}
+                <option value="" disabled selected>No trips available for this passenger</option>
+              {% endif %}
             </select>
 
-            <!-- Manual Trip ID input (Shown if passenger picks manual) -->
-            <div id="manualTripIdWrapper" class="mt-2 d-none">
-              <label class="form-label text-secondary small mb-1">Enter Trip ID :</label>
-              <input type="text" id="manualTripIdInput" class="form-control py-2 text-white font-monospace" style="background-color: #0F172A; border-color: rgba(255,255,255,0.15);" placeholder="e.g. TRP-12345678">
-            </div>
-
-            <div id="tripSelectedNotice" class="small text-success mt-2 d-none">
-              <span id="tripNoticeText">Trip selected and date auto-filled!</span>
+            <!-- Message Alert when passenger has no trips (Requirement 6) -->
+            <div id="noTripsAlert" class="py-2 px-3 small rounded-3 mt-2 d-flex align-items-center {% if passenger_trips %}d-none{% endif %}" style="background-color: rgba(245, 158, 11, 0.12) !important; border: 1px solid rgba(245, 158, 11, 0.4) !important;">
+              <i class="fa-solid fa-triangle-exclamation me-2 fs-6" style="color: #FBBF24 !important;"></i>
+              <span class="fw-semibold" style="color: #FDE047 !important;">No trips available for this passenger.</span>
             </div>
           </div>
-          {% else %}
-          <!-- Trip ID Input (Required) -->
-          <div class="mb-3">
-            <label class="form-label fw-bold text-light" for="tripIdInput">Trip ID :</label>
-            <input type="text" id="tripIdInput" name="trip_id" class="form-control py-2 text-white font-monospace" style="background-color: #0F172A; border-color: rgba(255,255,255,0.15);" placeholder="e.g. TRP-12345678" value="{{ form.trip_id.value|default:'' }}" required>
-          </div>
-          {% endif %}
 
-          <!-- Select Incident Type ▼ -->
+          <!-- ========================================== -->
+          <!-- 4. INCIDENT TYPE SELECTION                 -->
+          <!-- ========================================== -->
           <div class="mb-3">
-            <label class="form-label fw-bold text-light">Incident Type :</label>
-            <select name="incident_type" class="form-select py-2 text-white" style="background-color: #0F172A; border-color: rgba(255,255,255,0.15);" required>
+            <label class="form-label fw-bold text-light">Incident Type : <span class="text-danger">*</span></label>
+            <select name="incident_type" id="incidentTypeSelect" class="form-select py-2 text-white" style="background-color: #0F172A; border-color: rgba(255,255,255,0.15);" onchange="handleIncidentTypeChange(this.value)" required>
               <option value="" selected disabled>Select Incident Type ▼</option>
-              <option value="ACCIDENT">Accident / Vehicle Collision</option>
-              <option value="HARASSMENT">Harassment / Threat / Verbal Abuse</option>
-              <option value="PHYSICAL_ASSAULT">Physical Assault / Violence / Safety Threat</option>
-              <option value="RECKLESS_DRIVING">Unsafe Driving / Overspeeding / Reckless Maneuvers</option>
-              <option value="INTOXICATED_DRIVER">Driver Suspected Impaired / Alcohol or Drug Use</option>
-              <option value="MISCONDUCT">Driver Misconduct / Inappropriate Behavior</option>
-              <option value="WRONG_VEHICLE">Driver or Vehicle Did Not Match Profile</option>
-              <option value="ROUTE_DEVIATION">Unauthorized Route Deviation / Unknown Direction</option>
-              <option value="REFUSED_DROP">Refusal to Complete Trip / Forced Drop-Off</option>
-              <option value="UNAUTHORIZED_PERSON">Unauthorized Passenger or Co-Rider in Vehicle</option>
-              <option value="OVERCHARGING">Overcharging / Fare Extortion / Meter Tampering</option>
-              <option value="VEHICLE_BREAKDOWN">Vehicle Breakdown / Mechanical Failure / Flat Tire</option>
-              <option value="THEFT_LOST_ITEM">Theft / Withheld Luggage / Property Dispute</option>
-              <option value="MEDICAL_EMERGENCY">Medical Emergency During Journey</option>
-              <option value="OTHER">Other Emergency Safety Incident</option>
+              <option value="ACCIDENT" {% if form.incident_type.value == 'ACCIDENT' %}selected{% endif %}>Accident / Vehicle Collision</option>
+              <option value="HARASSMENT" {% if form.incident_type.value == 'HARASSMENT' %}selected{% endif %}>Harassment / Threat / Verbal Abuse</option>
+              <option value="PHYSICAL_ASSAULT" {% if form.incident_type.value == 'PHYSICAL_ASSAULT' %}selected{% endif %}>Physical Assault / Violence / Safety Threat</option>
+              <option value="RECKLESS_DRIVING" {% if form.incident_type.value == 'RECKLESS_DRIVING' %}selected{% endif %}>Unsafe Driving / Overspeeding / Reckless Maneuvers</option>
+              <option value="INTOXICATED_DRIVER" {% if form.incident_type.value == 'INTOXICATED_DRIVER' %}selected{% endif %}>Driver Suspected Impaired / Alcohol or Drug Use</option>
+              <option value="MISCONDUCT" {% if form.incident_type.value == 'MISCONDUCT' %}selected{% endif %}>Driver Misconduct / Inappropriate Behavior</option>
+              <option value="WRONG_VEHICLE" {% if form.incident_type.value == 'WRONG_VEHICLE' %}selected{% endif %}>Driver or Vehicle Did Not Match Profile</option>
+              <option value="ROUTE_DEVIATION" {% if form.incident_type.value == 'ROUTE_DEVIATION' %}selected{% endif %}>Unauthorized Route Deviation / Unknown Direction</option>
+              <option value="REFUSED_DROP" {% if form.incident_type.value == 'REFUSED_DROP' %}selected{% endif %}>Refusal to Complete Trip / Forced Drop-Off</option>
+              <option value="UNAUTHORIZED_PERSON" {% if form.incident_type.value == 'UNAUTHORIZED_PERSON' %}selected{% endif %}>Unauthorized Passenger or Co-Rider in Vehicle</option>
+              <option value="OVERCHARGING" {% if form.incident_type.value == 'OVERCHARGING' %}selected{% endif %}>Overcharging / Fare Extortion / Meter Tampering</option>
+              <option value="VEHICLE_BREAKDOWN" {% if form.incident_type.value == 'VEHICLE_BREAKDOWN' %}selected{% endif %}>Vehicle Breakdown / Mechanical Failure / Flat Tire</option>
+              <option value="THEFT_LOST_ITEM" {% if form.incident_type.value == 'THEFT_LOST_ITEM' %}selected{% endif %}>Theft / Withheld Luggage / Property Dispute</option>
+              <option value="MEDICAL_EMERGENCY" {% if form.incident_type.value == 'MEDICAL_EMERGENCY' %}selected{% endif %}>Medical Emergency During Journey</option>
+              <option value="OTHER" {% if form.incident_type.value == 'OTHER' %}selected{% endif %}>Other Emergency Safety Incident</option>
             </select>
           </div>
 
-          <!-- Describe the incident... -->
-          <div class="mb-3">
-            <label class="form-label fw-bold text-light">Description :</label>
-            <textarea name="description" id="incidentDescription" class="form-control text-white" style="background-color: #0F172A; border-color: rgba(255,255,255,0.15);" rows="3" minlength="10" placeholder="Describe what happened in detail (min 10 characters)..." required>{{ form.description.value|default:'' }}</textarea>
-          </div>
-
-          <!-- Date & Time of Incident as Dropdown -->
-          <div class="mb-4">
-            <div class="mb-2">
-              <label class="form-label fw-bold text-light mb-0" for="incidentTimeOption">
-                Date & Time of Incident :
+          <!-- ========================================== -->
+          <!-- 5. INCIDENT DESCRIPTION (Only for Other)   -->
+          <!-- ========================================== -->
+          <div class="mb-3 {% if form.incident_type.value != 'OTHER' %}d-none{% endif %}" id="descriptionContainer">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label class="form-label fw-bold text-light mb-0" id="descriptionLabel">
+                Description : <span id="descRequiredAsterisk" class="text-danger">*</span>
               </label>
+              <span id="descBadgeNotice" class="badge bg-warning bg-opacity-25 text-warning small">Required for 'Other'</span>
             </div>
-
-            <!-- Date & Time Dropdown with 'Don't Know' -->
-            <select id="incidentTimeOption" name="incident_time_option" class="form-select py-2 text-white" style="background-color: #0F172A; border-color: rgba(255, 152, 0, 0.4); font-size: 1rem;" required>
-              <option value="now" selected>Just Now / Occurred Recently</option>
-              <option value="dont_know">I Don't Know / Not Sure (Record as Approximate)</option>
-              <option value="1h">Approximately 1 Hour Ago</option>
-              <option value="today">Earlier Today</option>
-              <option value="yesterday">Yesterday</option>
-              <option value="this_week">Earlier This Week</option>
-              <option value="custom">Specific Date & Time (Choose from calendar...)</option>
-            </select>
-
-            <!-- Friendly Notice when "I Don't Know" is selected -->
-            <div id="dontKnowBanner" class="p-3 rounded-3 mt-2 d-none" style="background-color: rgba(255, 152, 0, 0.12); border: 1px dashed #FF9800;">
-              <div>
-                <div class="text-warning fw-bold small mb-1">Don't know the exact date and time? No problem!</div>
-                <div class="text-secondary small">SafeRide will automatically log this report with the current timestamp and flag it as an approximate timeframe. Our safety investigation team will correlate this with your vehicle and GPS logs.</div>
-              </div>
+            <textarea name="description" id="incidentDescription" class="form-control text-white" style="background-color: #0F172A; border-color: rgba(255,255,255,0.15);" rows="3" placeholder="Please describe what happened in detail (required when selecting Other, min 10 characters)...">{% if form.incident_type.value == 'OTHER' %}{{ form.description.value|default:'' }}{% endif %}</textarea>
+            <div class="form-text text-white-50 small mt-1" id="descHelpText">
+              <i class="fa-solid fa-circle-info text-info me-1"></i> Since 'Other' was selected, please provide specific details (min 10 characters).
             </div>
-
-            <!-- Specific Date & Time Input (Shown when "Specific Date & Time" is selected) -->
-            <div id="customDateTimeWrapper" class="mt-2 d-none">
-              <label class="form-label text-secondary small mb-1">Pick Exact Date & Time :</label>
-              <input type="datetime-local" id="incidentDateTime" name="incident_date_time" class="form-control py-2 text-white" style="background-color: #0F172A; border-color: rgba(255,255,255,0.15);" value="{{ form.incident_date_time.value|default:'' }}">
-            </div>
-
-            <!-- Hidden input for approximate flag -->
-            <input type="hidden" id="approxTimeCheck" name="is_approximate" value="false">
           </div>
 
           <!-- Action Buttons -->
           <div class="d-flex flex-column flex-sm-row gap-2">
             <button type="submit" class="btn btn-danger btn-lg fw-bold flex-grow-1 rounded-pill shadow-sm text-uppercase">
-              SUBMIT
+              <i class="fa-solid fa-paper-plane me-2"></i> SUBMIT INCIDENT REPORT
             </button>
             <a href="{% url 'passenger_dashboard' %}" class="btn btn-outline-light btn-lg rounded-pill fw-semibold px-4 text-center">
               Cancel
@@ -144,131 +171,116 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  const timeOption = document.getElementById('incidentTimeOption');
-  const dtInput = document.getElementById('incidentDateTime');
-  const customWrapper = document.getElementById('customDateTimeWrapper');
-  const dontKnowBanner = document.getElementById('dontKnowBanner');
-  const approxCheck = document.getElementById('approxTimeCheck');
-  const tripSelector = document.getElementById('recentTripSelector');
-  const tripNotice = document.getElementById('tripSelectedNotice');
-  const tripNoticeText = document.getElementById('tripNoticeText');
+// ==========================================================
+// DYNAMIC PASSENGER & TRIP ID POPULATION VIA DATABASE / AJAX
+// ==========================================================
 
-  // Helper to format Date into YYYY-MM-DDTHH:MM for datetime-local
-  function formatLocalDate(d) {
-    const pad = (n) => String(n).padStart(2, '0');
-    const year = d.getFullYear();
-    const month = pad(d.getMonth() + 1);
-    const day = pad(d.getDate());
-    const hours = pad(d.getHours());
-    const minutes = pad(d.getMinutes());
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
+function handlePassengerSelectionChange(passengerId) {
+  const hiddenId = document.getElementById('hiddenPassengerId');
+  const hiddenName = document.getElementById('hiddenPassengerName');
+  const displayNameElem = document.getElementById('passengerDisplayName');
+  if (hiddenId) hiddenId.value = passengerId;
+  if (hiddenName && displayNameElem) {
+    hiddenName.value = displayNameElem.value || '';
   }
 
-  // Set default datetime to current time
-  if (dtInput && !dtInput.value) {
-    dtInput.value = formatLocalDate(new Date());
+  const tripSelect = document.getElementById('tripIdSelect');
+  const noTripsAlert = document.getElementById('noTripsAlert');
+
+  if (tripSelect) {
+    tripSelect.innerHTML = '<option value="" disabled selected>Loading trips from database...</option>';
+    tripSelect.disabled = true;
   }
 
-  // Handle Dropdown Selection Changes
-  if (timeOption) {
-    timeOption.addEventListener('change', function() {
-      const val = this.value;
-      const now = new Date();
-
-      if (val === 'dont_know') {
-        dontKnowBanner.classList.remove('d-none');
-        customWrapper.classList.add('d-none');
-        approxCheck.value = 'true';
-        dtInput.value = formatLocalDate(now);
-      } else if (val === 'custom') {
-        dontKnowBanner.classList.add('d-none');
-        customWrapper.classList.remove('d-none');
-        approxCheck.value = 'false';
-        if (!dtInput.value) {
-          dtInput.value = formatLocalDate(now);
-        }
-      } else if (val === 'now') {
-        dontKnowBanner.classList.add('d-none');
-        customWrapper.classList.add('d-none');
-        approxCheck.value = 'false';
-        dtInput.value = formatLocalDate(now);
-      } else if (val === '1h') {
-        dontKnowBanner.classList.add('d-none');
-        customWrapper.classList.add('d-none');
-        approxCheck.value = 'true';
-        now.setHours(now.getHours() - 1);
-        dtInput.value = formatLocalDate(now);
-      } else if (val === 'today') {
-        dontKnowBanner.classList.add('d-none');
-        customWrapper.classList.add('d-none');
-        approxCheck.value = 'true';
-        now.setHours(Math.max(9, now.getHours() - 3));
-        dtInput.value = formatLocalDate(now);
-      } else if (val === 'yesterday') {
-        dontKnowBanner.classList.add('d-none');
-        customWrapper.classList.add('d-none');
-        approxCheck.value = 'true';
-        now.setDate(now.getDate() - 1);
-        dtInput.value = formatLocalDate(now);
-      } else if (val === 'this_week') {
-        dontKnowBanner.classList.add('d-none');
-        customWrapper.classList.add('d-none');
-        approxCheck.value = 'true';
-        now.setDate(now.getDate() - 3);
-        dtInput.value = formatLocalDate(now);
+  // Asynchronous API call to retrieve passenger's trips from database
+  fetch(`/api/passenger/${passengerId}/trips/`)
+    .then(response => response.json())
+    .then(data => {
+      if (tripSelect) {
+        tripSelect.disabled = false;
+        tripSelect.innerHTML = '';
       }
-    });
-  }
 
-  // Recent Trip Selector auto-fill handler (Required, Not Optional)
-  const manualWrapper = document.getElementById('manualTripIdWrapper');
-  const manualInput = document.getElementById('manualTripIdInput');
+      if (data.trips && data.trips.length > 0) {
+        if (tripSelect) tripSelect.classList.remove('d-none');
+        if (noTripsAlert) noTripsAlert.classList.add('d-none');
+        data.trips.forEach((t, idx) => {
+          const opt = document.createElement('option');
+          opt.value = t.formatted_trip_id;
+          opt.setAttribute('data-trip-id', t.trip_id);
+          opt.setAttribute('data-formatted-id', t.formatted_trip_id);
+          opt.setAttribute('data-date', t.date);
+          opt.setAttribute('data-iso-date', t.iso_date);
+          opt.setAttribute('data-source', t.source);
+          opt.setAttribute('data-destination', t.destination);
+          opt.setAttribute('data-driver', t.driver_name);
+          opt.setAttribute('data-vehicle', t.vehicle_number);
+          opt.setAttribute('data-vehicle-type', t.vehicle_type);
+          opt.setAttribute('data-fare', '₹' + t.fare);
+          opt.setAttribute('data-status', t.status);
+          opt.textContent = `${t.formatted_trip_id} \u2022 ${t.date} \u2022 Driver: ${t.driver_name}`;
+          if (idx === 0) opt.selected = true;
+          tripSelect.appendChild(opt);
+        });
 
-  if (tripSelector) {
-    tripSelector.addEventListener('change', function() {
-      const selectedOption = this.options[this.selectedIndex];
-      if (this.value === '__MANUAL__') {
-        if (manualWrapper) manualWrapper.classList.remove('d-none');
-        if (manualInput) {
-          manualInput.setAttribute('required', 'required');
-          manualInput.setAttribute('name', 'trip_id');
-          manualInput.focus();
-        }
-        this.removeAttribute('name');
-        if (tripNotice) tripNotice.classList.add('d-none');
-      } else if (selectedOption && selectedOption.value) {
-        if (manualWrapper) manualWrapper.classList.add('d-none');
-        if (manualInput) {
-          manualInput.removeAttribute('required');
-          manualInput.removeAttribute('name');
-        }
-        this.setAttribute('name', 'trip_id');
-
-        const tripCode = selectedOption.getAttribute('data-trip-code');
-        const tripTime = selectedOption.getAttribute('data-time');
-        const driverName = selectedOption.getAttribute('data-driver');
-
-        if (dtInput && tripTime) {
-          dtInput.value = tripTime;
-          approxCheck.value = 'false';
-          // Switch dropdown to custom and show exact trip timestamp
-          if (timeOption) {
-            timeOption.value = 'custom';
-            if (customWrapper) customWrapper.classList.remove('d-none');
-            if (dontKnowBanner) dontKnowBanner.classList.add('d-none');
-          }
-        }
-
-        if (tripNotice && tripNoticeText) {
-          tripNotice.classList.remove('d-none');
-          tripNoticeText.textContent = `Auto-filled details for ${tripCode}${driverName ? ' (Driver: ' + driverName + ')' : ''}! Date & time set from trip log.`;
-        }
+        // Trigger selection update
+        handleTripSelectionChange(tripSelect.value);
       } else {
-        if (manualWrapper) manualWrapper.classList.add('d-none');
-        if (tripNotice) tripNotice.classList.add('d-none');
+        // No trips available for this passenger (Requirement 6)
+        if (tripSelect) {
+          tripSelect.classList.add('d-none');
+          tripSelect.innerHTML = '';
+        }
+
+        if (noTripsAlert) noTripsAlert.classList.remove('d-none');
       }
+    })
+    .catch(err => {
+      console.error("Error fetching trips:", err);
+      if (tripSelect) {
+        tripSelect.disabled = false;
+        tripSelect.classList.add('d-none');
+        tripSelect.innerHTML = '';
+      }
+      if (noTripsAlert) noTripsAlert.classList.remove('d-none');
     });
+}
+
+function handleTripSelectionChange(tripValue) {
+  // Trip details are displayed directly inside the Trip ID dropdown options
+}
+
+function handleIncidentTypeChange(value) {
+  const descContainer = document.getElementById('descriptionContainer');
+  const descInput = document.getElementById('incidentDescription');
+  const asterisk = document.getElementById('descRequiredAsterisk');
+  const badge = document.getElementById('descBadgeNotice');
+
+  if (value === 'OTHER') {
+    if (descContainer) descContainer.classList.remove('d-none');
+    if (descInput) {
+      descInput.required = true;
+      descInput.setAttribute('minlength', '10');
+      descInput.placeholder = "Please describe what happened in detail (required when selecting Other, min 10 characters)...";
+      descInput.focus();
+    }
+    if (asterisk) asterisk.classList.remove('d-none');
+    if (badge) badge.classList.remove('d-none');
+  } else {
+    // For standard incident types, description is not needed
+    if (descContainer) descContainer.classList.add('d-none');
+    if (descInput) {
+      descInput.required = false;
+      descInput.removeAttribute('minlength');
+      descInput.value = '';
+    }
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const typeSelect = document.getElementById('incidentTypeSelect');
+  if (typeSelect && typeSelect.value) {
+    handleIncidentTypeChange(typeSelect.value);
   }
 });
 </script>

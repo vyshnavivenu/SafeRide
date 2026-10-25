@@ -3,7 +3,7 @@
 {% block title %}Central Admin Command Center - SafeRide{% endblock %}
 
 {% block content %}
-<div class="container py-4">
+<div class="container-fluid py-4 px-3 px-xl-5" style="max-width: 1720px;">
 
   <!-- Dynamic Real-Time SOS Alert Banner (Updated every 5 seconds by AJAX Poller) -->
   <div id="admin-live-sos-container" class="mb-4 {% if not active_sos %}d-none{% endif %}">
@@ -86,9 +86,15 @@
                     <span class="small text-white opacity-75">{{ d.get_vehicle_type_display }}</span>
                   </td>
                   <td>
-                    <a href="{% url 'admin_driver_kyc' d.id %}" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold">
+                    <a href="{% url 'admin_driver_kyc' d.id %}" class="btn btn-sm btn-warning text-dark rounded-pill px-3 fw-bold shadow-sm">
                       <i class="fa-solid fa-user-check me-1"></i> Verify Driver
                     </a>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="3" class="text-center py-4 text-white opacity-75">
+                    <i class="fa-solid fa-circle-check text-success me-1"></i> All drivers are verified. No pending KYC applications.
                   </td>
                 </tr>
                 {% endfor %}
@@ -113,9 +119,13 @@
                 <span class="badge bg-dark border text-warning font-monospace">{{ d.vehicle_number|default:d.vehicle.registration_number|default:"No Vehicle" }} ({{ d.get_vehicle_type_display }})</span>
               </div>
 
-              <a href="{% url 'admin_driver_kyc' d.id %}" class="btn btn-sm btn-primary w-100 rounded-pill fw-bold py-2">
-                <i class="fa-solid fa-user-check me-1"></i> Verify & Audit KYC
+              <a href="{% url 'admin_driver_kyc' d.id %}" class="btn btn-sm btn-warning text-dark w-100 rounded-pill fw-bold py-2 shadow-sm text-center">
+                <i class="fa-solid fa-user-check me-1"></i> Verify Driver
               </a>
+            </div>
+            {% empty %}
+            <div class="p-3 text-center text-white rounded-3" style="background-color: #0F172A;">
+              <i class="fa-solid fa-circle-check text-success me-1"></i> All drivers are verified. No pending KYC applications.
             </div>
             {% endfor %}
           </div>

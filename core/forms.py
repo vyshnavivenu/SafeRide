@@ -3,7 +3,7 @@ from django import forms
 from django.core.validators import RegexValidator, MinValueValidator, MaxValueValidator
 from django.contrib.auth.forms import UserCreationForm
 from .models import (
-    User, Passenger, Driver, VehicleDocuments, RatingReview, Complaint, IncidentReport
+    User, Passenger, Driver, VehicleDocuments, Trip, RatingReview, Complaint, IncidentReport
 )
 
 # Standardized Regex Validators
@@ -228,14 +228,14 @@ class AdminDriverRegistrationForm(forms.Form):
     # Driver User Account Info
     username = forms.CharField(max_length=50, min_length=3, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. driver_rajesh'}))
     password = forms.CharField(min_length=4, widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Initial Password for Driver'}))
-    first_name = forms.CharField(max_length=50, min_length=2, validators=[name_validator], widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Driver First Name', 'pattern': NAME_REGEX}))
-    last_name = forms.CharField(max_length=50, min_length=1, validators=[name_validator], widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Driver Last Name', 'pattern': NAME_REGEX}))
+    first_name = forms.CharField(max_length=50, min_length=2, validators=[name_validator], widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Driver First Name'}))
+    last_name = forms.CharField(max_length=50, min_length=1, validators=[name_validator], widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Driver Last Name'}))
     phone = forms.CharField(max_length=20, validators=[phone_validator], widget=forms.TextInput(attrs={'class': 'form-control', 'type': 'tel', 'placeholder': 'Driver Mobile (e.g. 9876543210)'}))
     email = forms.EmailField(required=False, widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Driver Email (Optional)'}))
     
     # Driver KYC
     license_number = forms.CharField(max_length=50, validators=[license_validator], widget=forms.TextInput(attrs={'class': 'form-control font-monospace text-uppercase', 'placeholder': 'e.g. KL-05-2021000892'}))
-    experience_years = forms.IntegerField(min_value=0, max_value=60, initial=3, widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 60}))
+    experience_years = forms.IntegerField(required=False, min_value=0, max_value=60, initial=3, widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 60}))
     driver_photo = forms.ImageField(required=False, widget=forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}))
     license_doc = forms.FileField(required=False, widget=forms.FileInput(attrs={'class': 'form-control', 'accept': '.pdf,image/*'}))
     id_proof_doc = forms.FileField(required=False, widget=forms.FileInput(attrs={'class': 'form-control', 'accept': '.pdf,image/*'}))
@@ -282,25 +282,38 @@ class AdminDriverRegistrationForm(forms.Form):
         return ln
 
     def clean_username(self):
-        username = self.cleaned_data.get('username', '').strip()
+        username = self.cleaned_data.get('username', '').strip().lower()
         if User.objects.filter(username__iexact=username).exists():
             raise forms.ValidationError(f"Username '{username}' is already taken.")
         return username
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email', '').strip().lower()
+        if email:
+            if User.objects.filter(email__iexact=email).exists():
+                raise forms.ValidationError(f"The email '{email}' is already registered to a user.")
+            if Driver.objects.filter(email__iexact=email).exists():
+                raise forms.ValidationError(f"A driver with email '{email}' is already registered.")
+        return email
 
     def clean_license_number(self):
         lic = self.cleaned_data.get('license_number', '').strip().upper()
         if not re.match(LICENSE_REGEX, lic):
             raise forms.ValidationError("Please enter a valid license number format (e.g. KL-05-2021000892).")
-        if Driver.objects.filter(license_number__iexact=lic).exists():
-            raise forms.ValidationError(f"A driver with license number '{lic}' is already registered.")
+        clean_lic = lic.replace('-', '').replace(' ', '').replace('/', '')
+        for d in Driver.objects.all():
+            if d.license_number and d.license_number.upper().replace('-', '').replace(' ', '').replace('/', '') == clean_lic:
+                raise forms.ValidationError(f"A driver with license number '{lic}' is already registered.")
         return lic
 
     def clean_registration_number(self):
         reg = self.cleaned_data.get('registration_number', '').strip().upper()
         if not re.match(VEHICLE_PLATE_REGEX, reg):
             raise forms.ValidationError("Please enter a valid vehicle plate format (e.g. KL-05-AT-4455).")
-        if Driver.objects.filter(vehicle_number__iexact=reg).exists():
-            raise forms.ValidationError(f"A vehicle with registration number '{reg}' is already registered.")
+        clean_reg = reg.replace('-', '').replace(' ', '')
+        for d in Driver.objects.all():
+            if d.vehicle_number and d.vehicle_number.upper().replace('-', '').replace(' ', '') == clean_reg:
+                raise forms.ValidationError(f"A vehicle with registration number '{reg}' is already registered.")
         return reg
 
     def clean_phone(self):
@@ -310,14 +323,20 @@ class AdminDriverRegistrationForm(forms.Form):
             digits = digits[2:]
         if len(digits) != 10:
             raise forms.ValidationError("Please enter a valid 10-digit mobile number.")
-        if Driver.objects.filter(phone_number=phone).exists() or Driver.objects.filter(phone_number__endswith=digits).exists():
-            raise forms.ValidationError(f"A driver with phone number '{phone}' is already registered.")
-        return phone
+        if Driver.objects.filter(phone_number=digits).exists() or Driver.objects.filter(phone_number__endswith=digits).exists():
+            raise forms.ValidationError(f"A driver with mobile number '{digits}' is already registered.")
+        if User.objects.filter(phone=digits).exists() or User.objects.filter(phone__endswith=digits).exists():
+            raise forms.ValidationError(f"A user with mobile number '{digits}' is already registered.")
+        return digits
+
+    def clean_experience_years(self):
+        return self.cleaned_data.get('experience_years') or 3
 
     def clean_upi_id(self):
         upi = self.cleaned_data.get('upi_id', '').strip()
         if not upi:
             return None
+        upi = upi.lower()
         if not re.match(UPI_ID_REGEX, upi):
             raise forms.ValidationError("Please enter a valid Virtual Payment Address (e.g. driver@oksbi or 9876543210@paytm).")
         return upi
@@ -339,13 +358,34 @@ class AdminDriverRegistrationForm(forms.Form):
 
 
 class DriverKYCReviewForm(forms.ModelForm):
+    upi_id = forms.CharField(
+        max_length=100,
+        required=False,
+        validators=[upi_id_validator],
+        label="Registered UPI ID (VPA)",
+        widget=forms.TextInput(attrs={
+            'class': 'form-control font-monospace text-white',
+            'placeholder': 'e.g. driver@oksbi or 9876543210@paytm',
+            'style': 'background-color: #0F172A; border-color: #334155;'
+        })
+    )
+
     class Meta:
         model = Driver
-        fields = ['verification_status', 'verification_notes']
+        fields = ['verification_status', 'verification_notes', 'upi_id']
         widgets = {
             'verification_status': forms.Select(attrs={'class': 'form-select'}),
             'verification_notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Add administrative remarks, document check notes, or rejection reasons...'}),
         }
+
+    def clean_upi_id(self):
+        upi = self.cleaned_data.get('upi_id', '').strip()
+        if not upi:
+            return None
+        upi = upi.lower()
+        if not re.match(UPI_ID_REGEX, upi):
+            raise forms.ValidationError("Please enter a valid Virtual Payment Address (e.g. driver@oksbi or 9876543210@paytm).")
+        return upi
 
 
 class TripRatingForm(forms.ModelForm):
@@ -476,19 +516,23 @@ class ResetPasswordForm(forms.Form):
 
 
 class IncidentReportForm(forms.Form):
+    passenger_id = forms.IntegerField(
+        required=False,
+        widget=forms.HiddenInput()
+    )
     passenger_name = forms.CharField(
         max_length=100, 
         min_length=2,
-        required=True,
+        required=False,
         validators=[name_validator],
         label="Passenger Name",
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Full Passenger Name', 'pattern': NAME_REGEX})
     )
     trip_id = forms.CharField(
         max_length=100, 
-        required=True, 
+        required=False, 
         label="Trip ID",
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. TRP-88231'})
+        widget=forms.TextInput(attrs={'class': 'form-control font-monospace', 'placeholder': 'Select Trip ID from dropdown or e.g. TRIP001'})
     )
     incident_type = forms.ChoiceField(
         choices=[
@@ -514,25 +558,51 @@ class IncidentReportForm(forms.Form):
     )
     description = forms.CharField(
         label="Description",
-        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'minlength': 10, 'placeholder': 'Provide full description of the incident (min 10 characters)...'})
-    )
-    incident_date_time = forms.DateTimeField(
         required=False,
-        label="Date & Time",
-        widget=forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'})
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Provide description of the incident...'})
     )
 
-    def clean_passenger_name(self):
-        name = self.cleaned_data.get('passenger_name', '').strip()
-        if not re.match(NAME_REGEX, name):
-            raise forms.ValidationError("Passenger name must contain only letters and spaces.")
-        return name
+    def clean(self):
+        cleaned_data = super().clean()
+        incident_type = cleaned_data.get('incident_type')
+        desc = (cleaned_data.get('description') or '').strip()
 
-    def clean_description(self):
-        desc = self.cleaned_data.get('description', '').strip()
-        if len(desc) < 10:
-            raise forms.ValidationError("Incident description must be at least 10 characters.")
-        return desc
+        if incident_type == 'OTHER':
+            if not desc:
+                self.add_error('description', "Description is required when selecting 'Other Emergency Safety Incident'.")
+            elif len(desc) < 10:
+                self.add_error('description', "Incident description must be at least 10 characters when selecting Other.")
+        else:
+            if not desc:
+                choice_dict = dict(self.fields['incident_type'].choices)
+                cleaned_data['description'] = choice_dict.get(incident_type, incident_type) or "Reported incident"
+            elif len(desc) > 0 and len(desc) < 5:
+                # If short note provided
+                pass
+
+        passenger_id = cleaned_data.get('passenger_id')
+        trip_id_str = (cleaned_data.get('trip_id') or '').strip()
+
+        passenger_user = None
+        if passenger_id:
+            passenger_user = User.objects.filter(pk=passenger_id).first()
+            if not passenger_user:
+                self.add_error('passenger_id', "Selected passenger does not exist.")
+            else:
+                cleaned_data['passenger_user'] = passenger_user
+
+        if trip_id_str:
+            clean_trip = str(trip_id_str).upper().replace('TRIP', '').replace('TRP-', '').replace('TRP', '').replace('#', '').strip()
+            if clean_trip.isdigit():
+                trip_obj = Trip.objects.filter(trip_id=int(clean_trip)).select_related('passenger', 'driver', 'driver__user').first()
+                if not trip_obj:
+                    self.add_error('trip_id', f"Trip '{trip_id_str}' was not found in the database.")
+                elif passenger_user and trip_obj.passenger_id != passenger_user.id:
+                    self.add_error('trip_id', f"Validation Error: Trip {trip_id_str} does not belong to selected passenger ({passenger_user.get_full_name() or passenger_user.username}).")
+                else:
+                    cleaned_data['trip_obj'] = trip_obj
+
+        return cleaned_data
 
 
 class DriverProfileManagementForm(forms.Form):
@@ -632,6 +702,7 @@ class DriverProfileManagementForm(forms.Form):
         upi = self.cleaned_data.get('upi_id', '').strip()
         if not upi:
             return None
+        upi = upi.lower()
         if not re.match(UPI_ID_REGEX, upi):
             raise forms.ValidationError("Please enter a valid Virtual Payment Address (e.g. driver@oksbi or 9876543210@paytm).")
         return upi

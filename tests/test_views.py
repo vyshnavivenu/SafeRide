@@ -221,7 +221,7 @@ class DriverUPIFormsAndProfileViewTests(TestCase):
             vehicle_number='KL-05-AT-7777',
             vehicle_type='auto',
             verification_status=Driver.VerificationStatus.VERIFIED,
-            upi_id='sample.testdriver@oksbi'
+            upi_id='testdriver@oksbi'
         )
 
     def test_driver_profile_view_updates_upi_id(self):
@@ -270,7 +270,7 @@ class TripFareQRViewTests(TestCase):
             license_number='KL-05-20210005555',
             vehicle_number='KL-05-TX-5555',
             vehicle_type='taxi',
-            upi_id='sample.recipient@oksbi'
+            upi_id='recipient@oksbi'
         )
         self.trip = Trip.objects.create(
             passenger=self.passenger,
@@ -286,7 +286,7 @@ class TripFareQRViewTests(TestCase):
         response = self.client.get(reverse('rate_trip', kwargs={'trip_id': self.trip.trip_id}))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Official Fare Receipt')
-        self.assertEqual(response.context['driver_upi'], 'sample.recipient@oksbi')
+        self.assertEqual(response.context['driver_upi'], 'recipient@oksbi')
         self.assertIn('upi://pay', response.context['upi_pay_str'])
         self.assertIn(f"am={response.context['trip'].fare_amount}", response.context['upi_pay_str'])
 

@@ -35,7 +35,7 @@
               <div class="col-12 pt-2 border-top mt-2" style="border-color: #1E293B !important;">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-1 small text-white opacity-75">
                   <span><i class="fa-solid fa-calendar-day text-info me-1"></i> {{ trip.start_time|date:"F d, Y &bull; h:i A" }}</span>
-                  <span class="font-monospace text-muted">Trip #TRP-{{ trip.trip_id|stringformat:'s'|slice:':8' }}</span>
+                  <span class="badge-trip-id">{{ trip.formatted_trip_id }}</span>
                 </div>
               </div>
             </div>
@@ -226,6 +226,13 @@
               <a href="{% url 'passenger_dashboard' %}" class="btn btn-outline-light rounded-pill py-2 fw-semibold text-center opacity-75 hover-opacity">
                 <i class="fa-solid fa-forward me-1"></i> Skip for Now
               </a>
+
+              <div class="text-center pt-2">
+                <span class="text-secondary small">Experienced harassment, misconduct, or overcharging?</span>
+                <a href="{% url 'report_incident' %}?trip_id={{ trip.trip_id }}" class="small fw-bold text-danger text-decoration-none ms-1">
+                  <i class="fa-solid fa-triangle-exclamation me-1"></i> File Official Incident Report &rarr;
+                </a>
+              </div>
             </div>
 
           </form>

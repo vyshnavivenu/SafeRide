@@ -28,7 +28,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
   
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="/static/css/style.css?v=4.0">
+  <link rel="stylesheet" href="/static/css/style.css?v=7.0">
   {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -101,6 +101,9 @@
 
           <li class="nav-item">
             <a class="nav-link text-white text-nowrap {% if request.resolver_match.url_name == 'driver_id_badge' %}active{% endif %}" href="{% url 'driver_id_badge' %}"><i class="fa-solid fa-qrcode me-1 text-warning"></i> My QR Code</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-white text-nowrap {% if request.resolver_match.url_name == 'driver_trip_logs' %}active{% endif %}" href="{% url 'driver_trip_logs' %}"><i class="fa-solid fa-route me-1 text-primary"></i> Trip Logs</a>
           </li>
           <li class="nav-item">
             <a class="nav-link text-white text-nowrap {% if request.resolver_match.url_name == 'driver_profile' %}active{% endif %}" href="{% url 'driver_profile' %}"><i class="fa-solid fa-user-pen me-1 text-info"></i> Profile</a>
@@ -265,15 +268,19 @@
   </div>
   {% endblock %}
 
-  <!-- Flash Messages Alert Box -->
-  <div class="container mt-3">
+  <!-- Flash Messages Alert Box (SafeRide Dark Theme High-Contrast) -->
+  <div class="container mt-3" id="flash-messages-container">
     {% if messages %}
       {% for message in messages %}
-      <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show d-flex align-items-center shadow-sm" role="alert">
-        <i class="fa-solid fa-circle-info me-2 fs-5"></i>
-        <div class="flex-grow-1">{{ message }}</div>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      {% with tag=message.tags|default:'info' %}
+      <div class="alert alert-dismissible fade show d-flex align-items-center shadow-lg rounded-3 border py-3 px-4 mb-3" 
+           role="alert" 
+           style="{% if tag == 'error' or tag == 'danger' %}background-color: #450A0A !important; border-color: #EF4444 !important; color: #FEE2E2 !important;{% elif tag == 'success' %}background-color: #064E3B !important; border-color: #10B981 !important; color: #ECFDF5 !important;{% elif tag == 'warning' %}background-color: #3B1C05 !important; border-color: #F59E0B !important; color: #FEF3C7 !important;{% else %}background-color: #082F49 !important; border-color: #0284C7 !important; color: #E0F2FE !important;{% endif %}">
+        <i class="fa-solid {% if tag == 'success' %}fa-circle-check text-success{% elif tag == 'warning' %}fa-triangle-exclamation text-warning{% elif tag == 'error' or tag == 'danger' %}fa-circle-xmark text-danger{% else %}fa-circle-info text-info{% endif %} me-3 fs-5 flex-shrink-0"></i>
+        <div class="flex-grow-1 fw-semibold" style="color: inherit;">{{ message }}</div>
+        <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="alert" aria-label="Close"></button>
       </div>
+      {% endwith %}
       {% endfor %}
     {% endif %}
   </div>
@@ -427,6 +434,23 @@
         }
       }
     }
+
+    // Auto-dismiss flash alert messages after 5 seconds
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(function() {
+        const flashAlerts = document.querySelectorAll('#flash-messages-container .alert');
+        flashAlerts.forEach(function(alertEl) {
+          if (typeof bootstrap !== 'undefined' && bootstrap.Alert) {
+            const bsAlert = bootstrap.Alert.getOrCreateInstance(alertEl);
+            bsAlert.close();
+          } else {
+            alertEl.style.transition = 'opacity 0.5s ease';
+            alertEl.style.opacity = '0';
+            setTimeout(() => alertEl.remove(), 500);
+          }
+        });
+      }, 5000);
+    });
   </script>
   {% block extra_js %}{% endblock %}
 </body>

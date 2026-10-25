@@ -37,7 +37,7 @@ class DriverSerializer(serializers.ModelSerializer):
             'license_number', 'vehicle_number', 'vehicle_type',
             'verification_status', 'reputation_score', 'average_rating',
             'total_trips', 'experience_years', 'verification_token',
-            'qr_code', 'verified_at'
+            'qr_code', 'verified_at', 'upi_id'
         ]
 
 

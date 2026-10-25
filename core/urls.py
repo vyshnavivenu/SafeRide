@@ -55,7 +55,8 @@ urlpatterns = [
     path('admin-panel/complaints/', views.admin_complaints_list, name='admin_complaints_list'),
     path('admin-panel/complaints/<str:complaint_id>/resolve/', views.admin_resolve_complaint, name='admin_resolve_complaint'),
     path('admin-panel/passengers/', views.admin_passenger_list, name='admin_passenger_list'),
-    path('admin-panel/passengers/<int:passenger_id>/toggle-status/', views.admin_toggle_passenger_status, name='admin_toggle_passenger_status'),
+    path('admin-panel/passengers/<int:passenger_id>/delete/', views.admin_delete_passenger, name='admin_delete_passenger'),
+    path('admin-panel/passengers/<int:passenger_id>/toggle-status/', views.admin_delete_passenger, name='admin_toggle_passenger_status'),
 
     # AJAX & Location Endpoints
     path('api/sos/trigger/', views.trigger_sos_alert, name='trigger_sos_alert'),
@@ -65,8 +66,12 @@ urlpatterns = [
     path('api/trip/<str:trip_id>/live-location/', views.get_live_location, name='get_live_location'),
     path('api/trip/<str:trip_id>/qr-fallback/', views.serve_trip_fare_qr, name='serve_trip_fare_qr'),
     path('media/fare_qrcodes/<str:filename>', views.serve_media_fare_qr, name='serve_media_fare_qr'),
+    path('media/driver_docs/license/<str:filename>', views.serve_license_doc, name='serve_license_doc'),
+    path('media/vehicle_docs/rc/<str:filename>', views.serve_rc_doc, name='serve_rc_doc'),
     path('api/admin/sos/active/', views.check_active_sos_alerts, name='check_active_sos_alerts'),
     path('track/<str:token>/', views.live_share_view, name='live_share_trip_track_alias'),
+    path('api/passenger/<int:passenger_id>/trips/', views.get_passenger_trips, name='api_passenger_trips'),
+    path('api/trip/<str:trip_id>/details/', views.get_trip_details, name='api_trip_details'),
 
     # Django REST Framework (DRF) Endpoints
     path('api/v1/drivers/', api_views.DriverListAPIView.as_view(), name='api_driver_list'),

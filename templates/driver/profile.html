@@ -60,11 +60,15 @@
                 <span class="input-group-text border-0 text-white" style="background-color: #1E293B;">
                   <i class="fa-solid fa-qrcode text-warning"></i>
                 </span>
-                <input type="text" name="upi_id" class="form-control py-2 text-white font-monospace" style="background-color: #0F172A; border-color: #334155;" placeholder="e.g. driver@oksbi or 9876543210@paytm" pattern="^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z0-9]{2,64}$" title="Enter a valid UPI ID (e.g. yourname@oksbi)" value="{{ form.upi_id.value|default:driver.upi_id|default:'' }}">
+                <input type="text" name="upi_id" id="id_driver_upi_id" class="form-control py-2 text-white font-monospace" style="background-color: #0F172A; border-color: #334155;" placeholder="e.g. driver@oksbi or 9876543210@paytm" title="Enter a valid UPI ID (e.g. yourname@oksbi)" value="{{ form.upi_id.value|default:driver.upi_id|default:'' }}">
               </div>
               <div class="form-text text-white-50 small mt-1" style="font-size: 0.78rem;">
                 <i class="fa-solid fa-shield-check text-success me-1"></i> Passengers scan your ride QR code to pay the exact fare directly into this UPI account.
               </div>
+              {% if form.upi_id.errors %}
+                <div class="text-danger small mt-1"><i class="fa-solid fa-circle-exclamation me-1"></i>{{ form.upi_id.errors.0 }}</div>
+              {% endif %}
+              <div id="driver-upi-feedback" class="small mt-1 d-none"></div>
             </div>
 
             <!-- Profile Photo -->
@@ -126,6 +130,40 @@
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const upiInput = document.getElementById('id_driver_upi_id');
+  const feedback = document.getElementById('driver-upi-feedback');
+  const upiRegex = /^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z0-9]{2,64}$/;
+
+  if (upiInput && feedback) {
+    function validateUpi() {
+      const val = upiInput.value.trim();
+      if (!val) {
+        feedback.className = 'small mt-1 d-none';
+        feedback.innerHTML = '';
+        upiInput.style.borderColor = '#334155';
+        return true;
+      }
+      if (upiRegex.test(val)) {
+        feedback.className = 'small mt-1 text-success fw-semibold';
+        feedback.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i> Valid UPI ID (VPA) format';
+        upiInput.style.borderColor = '#10B981';
+        return true;
+      } else {
+        feedback.className = 'small mt-1 text-danger fw-semibold';
+        feedback.innerHTML = '<i class="fa-solid fa-circle-exclamation me-1"></i> Invalid format. Must be username@bank (e.g. driver@oksbi or 9876543210@paytm)';
+        upiInput.style.borderColor = '#EF4444';
+        return false;
+      }
+    }
+    upiInput.addEventListener('input', validateUpi);
+    upiInput.addEventListener('blur', validateUpi);
+    if (upiInput.value) validateUpi();
+  }
+});
+</script>
 {% endblock %}
 
 {% block floating_sos %}{% endblock %}

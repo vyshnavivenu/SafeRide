@@ -207,8 +207,8 @@
 <!-- Hero Section -->
 <section class="hero-gradient py-5">
   <div class="container py-4">
-    <div class="row align-items-center g-5">
-      <div class="col-lg-7">
+    <div class="row align-items-center g-5 justify-content-center">
+      <div class="col-lg-10 col-xl-9">
         <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-white bg-opacity-10 border border-white border-opacity-10 text-warning mb-3">
           <i class="fa-solid fa-shield-halved text-warning"></i>
           <span class="small fw-semibold text-white">Driver Verification & Passenger Safety System</span>
@@ -285,46 +285,6 @@
         </div>
         {% endif %}
 
-      </div>
-
-      <div class="col-lg-5">
-        <!-- 🛡️ Interactive Quick Driver Verification Card (Replaces Redundant Static List) -->
-        <div class="card rounded-4 p-4 shadow-lg border text-white" style="background-color: #131C2E !important; border: 1px solid #334155 !important;">
-          <div class="d-flex align-items-center justify-content-between mb-3 border-bottom border-secondary pb-3">
-            <div class="d-flex align-items-center gap-2">
-              <span class="p-2 rounded-circle text-white" style="background-color: #FF9800;"><i class="fa-solid fa-shield-halved"></i></span>
-              <span class="fw-bold text-white">VERIFY DRIVER NOW</span>
-            </div>
-            <span class="badge bg-success px-3 py-1 rounded-pill"><i class="fa-solid fa-circle-check me-1"></i> INSTANT KYC</span>
-          </div>
-
-          <p class="small text-muted mb-3">
-            Verify official police-approved KYC credentials, vehicle registration, and driver safety score before boarding.
-          </p>
-
-          <!-- Quick Vehicle Search Form -->
-          <form action="{% url 'verify_driver_search' %}" method="GET" class="mb-3">
-            <label class="form-label fw-bold text-light small">
-              <i class="fa-solid fa-car-side text-warning me-1"></i> Vehicle Registration Number:
-            </label>
-            <div class="input-group mb-3 shadow-sm">
-              <span class="input-group-text border-end-0 text-white rounded-start-3" style="background-color: #0F172A; border-color: #334155;">
-                <i class="fa-solid fa-id-card text-warning"></i>
-              </span>
-              <input type="text" name="query" class="form-control text-uppercase fw-bold text-white rounded-end-3" style="background-color: #0F172A; border-color: #334155;" placeholder="e.g. KL 05 AT 4455" required>
-            </div>
-            <button type="submit" class="btn btn-warning w-100 fw-bold py-2 rounded-3 text-white shadow-sm d-flex align-items-center justify-content-center gap-2" style="background-color: #FF9800; border-color: #FF9800;">
-              <i class="fa-solid fa-shield-halved"></i> Check Vehicle & Driver Safety
-            </button>
-          </form>
-
-          <div class="p-2 rounded-3 text-center" style="background-color: #0F172A; border: 1px solid #1E293B;">
-            <small class="text-muted d-flex align-items-center justify-content-center gap-2">
-              <i class="fa-solid fa-qrcode text-warning"></i> Or scan vehicle QR badge:
-              <a href="{% url 'verify_driver_search' %}" class="fw-bold text-decoration-none" style="color: #FF9800;">Open QR Scanner &rarr;</a>
-            </small>
-          </div>
-        </div>
       </div>
     </div>
   </div>

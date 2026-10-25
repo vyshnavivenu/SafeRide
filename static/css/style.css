@@ -53,6 +53,30 @@
   box-sizing: border-box;
 }
 
+/* Universal Sleek Dark Scrollbar Across All Pages, Tables, and Containers */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #334155 #0F172A;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0F172A;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #334155;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #475569;
+}
+
 /* Eliminate 300ms Tap Delay & Enhance Mobile Touch Responsiveness */
 html, body, button, a, input, select, textarea, .btn, .floating-sos-btn, [role="button"] {
   touch-action: manipulation;
@@ -82,7 +106,7 @@ body {
   overflow-x: hidden;
   width: 100%;
   margin: 0;
-  padding-bottom: 90px; /* Add safe space for bottom floating SOS button */
+  padding-bottom: 24px;
   padding-left: var(--sal);
   padding-right: var(--sar);
 }
@@ -107,6 +131,12 @@ p, span, label, td, th, div, li, strong {
   color: #FFFFFF !important;
 }
 
+/* Ensure Amber/Warning Badges and Buttons Always Have Sharp High Contrast Dark Text */
+.badge.bg-warning, .badge.text-dark, .btn-warning, .btn-warning.text-dark, .badge.bg-warning * {
+  color: #0F172A !important;
+  font-weight: 700 !important;
+}
+
 .text-white {
   color: #FFFFFF !important;
 }
@@ -123,6 +153,27 @@ code {
   border-radius: 6px;
   font-weight: 700;
   border: 1px solid #334155;
+}
+
+/* 🏷️ Universal Standardized Trip & Entity ID Badges */
+.badge-trip-id {
+  background-color: #0F172A !important;
+  color: #38BDF8 !important;
+  border: 1px solid rgba(56, 189, 248, 0.4) !important;
+  font-family: 'SF Mono', Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace !important;
+  font-weight: 700 !important;
+  font-size: 0.85rem !important;
+  padding: 4px 9px !important;
+  border-radius: 6px !important;
+  letter-spacing: 0.5px !important;
+  display: inline-block !important;
+  white-space: nowrap !important;
+  line-height: 1.2 !important;
+}
+
+.badge-trip-id:hover {
+  border-color: #38BDF8 !important;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.25) !important;
 }
 
 /* 🟠 Amber Links */
@@ -304,14 +355,37 @@ img, svg, canvas, iframe, video {
   height: auto;
 }
 
-/* Leaflet Map Specific Media Shield Override */
-.leaflet-container img, 
-.leaflet-container svg, 
-.leaflet-container canvas, 
-.leaflet-container iframe, 
-.leaflet-container video {
+/* Google Maps Specific Media Shield Override */
+.gm-style img, 
+.gm-style svg, 
+.gm-style canvas, 
+.gm-style iframe, 
+.gm-style video,
+#map img, #live-trip-map img, #admin-sos-map img, #boarding-map-container img {
   max-width: none !important;
   height: auto;
+}
+
+/* Google Maps Development Watermark, Dimmer & Dialog Suppression */
+.gm-style-pbc {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+.gm-err-container, 
+.gm-err-autocomplete, 
+.dismissButton {
+  display: none !important;
+  visibility: hidden !important;
+}
+div[style*="z-index: 1000001"] {
+  display: none !important;
+}
+.gm-style > div:first-child + div[style*="rgba(0, 0, 0"] {
+  background-color: transparent !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 .row {
@@ -608,11 +682,70 @@ button,
   vertical-align: middle;
 }
 
-.alert-danger {
-  background-color: var(--color-dark-red-bg) !important;
-  border: 1.5px solid var(--color-dark-red) !important;
-  color: #FFFFFF !important;
+/* Universal Alert Styles for Dark Theme (100% Readable High-Contrast) */
+.alert {
+  border-radius: 12px !important;
+  font-weight: 500;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.alert div, .alert p, .alert span, .alert strong, .alert li {
+  color: inherit !important;
+}
+
+.alert .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
+  opacity: 0.75;
+}
+
+.alert .btn-close:hover {
+  opacity: 1;
+}
+
+.alert-info {
+  background-color: #071E36 !important;
+  border: 1.5px solid #0284C7 !important;
+  color: #E0F2FE !important;
+}
+.alert-info i {
+  color: #38BDF8 !important;
+}
+
+.alert-warning {
+  background-color: #2D1A04 !important;
+  border: 1.5px solid #D97706 !important;
+  color: #FEF3C7 !important;
+}
+.alert-warning i {
+  color: #FBBF24 !important;
+}
+
+.alert-success {
+  background-color: #022C22 !important;
+  border: 1.5px solid #059669 !important;
+  color: #ECFDF5 !important;
+}
+.alert-success i {
+  color: #34D399 !important;
+}
+
+.alert-danger, .alert-error {
+  background-color: #450A0A !important;
+  border: 1.5px solid #991B1B !important;
+  color: #FEF2F2 !important;
   font-weight: 600;
+}
+.alert-danger i, .alert-error i {
+  color: #F87171 !important;
+}
+
+.alert-primary {
+  background-color: #0F1D38 !important;
+  border: 1.5px solid #2563EB !important;
+  color: #EFF6FF !important;
+}
+.alert-primary i {
+  color: #60A5FA !important;
 }
 
 .text-danger {
@@ -649,13 +782,6 @@ button,
   background-color: var(--color-dark-green) !important;
   color: #FFFFFF !important;
   border: 1px solid #059669;
-}
-
-.alert-success {
-  background-color: var(--color-dark-green-bg) !important;
-  border: 1.5px solid var(--color-dark-green) !important;
-  color: #FFFFFF !important;
-  font-weight: 600;
 }
 
 .text-success {
@@ -872,10 +998,11 @@ button,
 /* Official Driver Vehicle QR Code Card */
 .driver-qr-card,
 .driver-id-card {
-  max-width: 460px;
+  max-width: 680px;
+  width: 100%;
   margin: 0 auto;
   border: 2px solid var(--color-dark-border-light);
-  border-radius: 20px;
+  border-radius: 24px;
   overflow: hidden;
   background-color: var(--color-dark-card);
   box-shadow: var(--box-shadow-card);
@@ -960,7 +1087,7 @@ button,
   }
 
   /* Responsive Map on Mobile (< 768px): min-height 50vh */
-  #map, #live-trip-map, #admin-sos-map, .leaflet-container {
+  #map, #live-trip-map, #admin-sos-map, .gm-style {
     width: 100% !important;
     min-height: 50vh !important;
     min-height: 50dvh !important;
@@ -1021,7 +1148,7 @@ button,
     padding: 24px !important;
   }
 
-  #map, #live-trip-map, #admin-sos-map, .leaflet-container {
+  #map, #live-trip-map, #admin-sos-map, .gm-style {
     width: 100% !important;
     min-height: 55vh !important;
     min-height: 55dvh !important;
@@ -1036,11 +1163,9 @@ button,
   }
 }
 
-
-
 /* 💻 Large Screens (Desktop >= 992px): Responsive Map min-height 70vh */
 @media (min-width: 992px) {
-  #map, #live-trip-map, #admin-sos-map, .leaflet-container {
+  #map, #live-trip-map, #admin-sos-map, .gm-style {
     width: 100% !important;
     min-height: 70vh !important;
     min-height: 70dvh !important;
@@ -1055,14 +1180,14 @@ button,
 
 /* 📱 Responsive Platform Container Widths */
 .app-max-container {
-  max-width: 1320px !important;
+  max-width: 1400px !important;
   margin-left: auto !important;
   margin-right: auto !important;
   width: 100% !important;
 }
 
-.app-wide-container {
-  max-width: 1320px !important;
+.app-wide-container, .app-table-container {
+  max-width: 1720px !important;
   margin-left: auto !important;
   margin-right: auto !important;
   width: 100% !important;
@@ -1489,10 +1614,43 @@ button,
 
 @media (max-width: 768px) {
   body {
-    padding-bottom: 74px !important;
+    padding-bottom: 84px !important;
   }
   .floating-sos-btn {
-    bottom: 78px !important;
+    bottom: 84px !important;
+  }
+  .driver-details-table th {
+    width: 42% !important;
+    font-size: 0.82rem !important;
+    padding: 8px 6px !important;
+    white-space: normal !important;
+  }
+  .driver-details-table td {
+    font-size: 0.85rem !important;
+    padding: 8px 6px !important;
+  }
+  .border-md-start {
+    border-left: none !important;
+  }
+  #boarding-map-container {
+    min-height: 260px !important;
+    height: 260px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .border-md-start {
+    border-left: 1px solid var(--color-dark-border-light) !important;
+  }
+  .border-md-top-0 {
+    border-top: none !important;
+  }
+  .driver-details-table th {
+    width: 200px !important;
+  }
+  #boarding-map-container {
+    min-height: 350px !important;
+    height: 100% !important;
   }
 }
 
@@ -1538,5 +1696,44 @@ button,
   .w-lg-auto {
     width: auto !important;
   }
+}
+
+/* ==========================================================================
+   🗺️ GOOGLE MAPS PLATFORM - UNIVERSAL MEDIA SHIELD & SUPPRESSION RULES
+   ========================================================================== */
+.gm-style {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+.gm-style img,
+.gm-style svg,
+.gm-style canvas,
+.gm-style iframe {
+  max-width: none !important;
+}
+
+/* Auto-suppress Google Maps Development Watermark, Dark Shroud, and Modal Dialogs */
+.gm-style-pbc {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.gm-err-container,
+.gm-err-autocomplete,
+.dismissButton {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+div[style*="z-index: 1000001"] {
+  display: none !important;
+}
+
+.gm-style > div:first-child + div[style*="rgba(0, 0, 0"] {
+  background-color: transparent !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 

@@ -3,7 +3,7 @@
 {% block title %}Passenger Management - SafeRide Admin{% endblock %}
 
 {% block content %}
-<div class="container py-4">
+<div class="container-fluid py-4 px-3 px-xl-5" style="max-width: 1720px;">
   <div class="card rounded-4 border shadow-sm p-4" style="background-color: #131C2E !important; border-color: #1E293B !important;">
     
     <!-- Header -->
@@ -106,17 +106,11 @@
                   <button type="button" class="btn btn-sm btn-outline-info rounded-pill px-2" title="View Safety Details" data-bs-toggle="modal" data-bs-target="#passengerModal{{ p.passenger_id }}">
                     <i class="fa-solid fa-eye"></i> Details
                   </button>
-                  <form action="{% url 'admin_toggle_passenger_status' p.passenger_id %}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to {% if p.user.is_active %}suspend{% else %}activate{% endif %} this passenger account?');">
+                  <form action="{% url 'admin_delete_passenger' p.passenger_id %}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to permanently delete passenger account for {{ p.user.get_full_name|default:p.user.username }}? This action cannot be undone.');">
                     {% csrf_token %}
-                    {% if p.user.is_active %}
-                      <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2" title="Suspend Account">
-                        <i class="fa-solid fa-user-slash"></i> Suspend
-                      </button>
-                    {% else %}
-                      <button type="submit" class="btn btn-sm btn-outline-success rounded-pill px-2" title="Activate Account">
-                        <i class="fa-solid fa-user-check"></i> Activate
-                      </button>
-                    {% endif %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2" title="Delete Passenger Account">
+                      <i class="fa-solid fa-trash-can me-1"></i> Delete
+                    </button>
                   </form>
                 </div>
               </td>
@@ -165,17 +159,11 @@
             <button type="button" class="btn btn-sm btn-outline-info flex-grow-1 rounded-pill py-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#passengerModal{{ p.passenger_id }}">
               <i class="fa-solid fa-eye me-1"></i> Details
             </button>
-            <form action="{% url 'admin_toggle_passenger_status' p.passenger_id %}" method="POST" class="d-inline flex-grow-1" onsubmit="return confirm('Are you sure you want to {% if p.user.is_active %}suspend{% else %}activate{% endif %} this passenger account?');">
+            <form action="{% url 'admin_delete_passenger' p.passenger_id %}" method="POST" class="d-inline flex-grow-1" onsubmit="return confirm('Are you sure you want to permanently delete passenger account for {{ p.user.get_full_name|default:p.user.username }}? This action cannot be undone.');">
               {% csrf_token %}
-              {% if p.user.is_active %}
-                <button type="submit" class="btn btn-sm btn-outline-danger w-100 rounded-pill py-2 fw-semibold">
-                  <i class="fa-solid fa-user-slash me-1"></i> Suspend
-                </button>
-              {% else %}
-                <button type="submit" class="btn btn-sm btn-outline-success w-100 rounded-pill py-2 fw-semibold">
-                  <i class="fa-solid fa-user-check me-1"></i> Activate
-                </button>
-              {% endif %}
+              <button type="submit" class="btn btn-sm btn-outline-danger w-100 rounded-pill py-2 fw-semibold" title="Delete Passenger Account">
+                <i class="fa-solid fa-trash-can me-1"></i> Delete
+              </button>
             </form>
           </div>
         </div>
@@ -204,7 +192,7 @@
             </div>
             <div class="small mb-2"><strong class="text-white opacity-75">Email:</strong> <span class="text-white">{{ p.user.email|default:"Not listed" }}</span></div>
             <div class="small mb-2"><strong class="text-white opacity-75">Phone:</strong> <span class="text-white">{{ p.user.phone|default:"Not listed" }}</span></div>
-            <div class="small mb-2"><strong class="text-white opacity-75">Account Status:</strong> {% if p.user.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-danger">Suspended</span>{% endif %}</div>
+            <div class="small mb-2"><strong class="text-white opacity-75">Account Status:</strong> {% if p.user.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-secondary">Inactive</span>{% endif %}</div>
             <div class="small mb-2"><strong class="text-white opacity-75">Date Registered:</strong> <span class="text-white">{{ p.user.date_joined|date:"M d, Y, h:i A" }}</span></div>
             <hr style="border-color: #334155;">
             <h6 class="fw-bold text-warning small mb-2"><i class="fa-solid fa-phone-volume me-1"></i> Trusted Emergency Contact</h6>

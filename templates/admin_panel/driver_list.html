@@ -2,8 +2,20 @@
 
 {% block title %}Driver Management Directory - SafeRide Admin{% endblock %}
 
+{% block extra_css %}
+<style>
+  .qr-thumb-zoom {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .qr-thumb-zoom:hover {
+    transform: scale(1.12);
+    box-shadow: 0 0 12px rgba(6, 182, 212, 0.7) !important;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container py-5">
+<div class="container-fluid py-4 px-3 px-xl-5" style="max-width: 1720px;">
   <div class="card rounded-4 border shadow-sm p-4" style="background-color: #131C2E !important;">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
       <div>
@@ -11,6 +23,9 @@
         <p class="text-white opacity-75 small mb-0">Review driver credentials, inspect licence & RC documents, and issue QR verification status.</p>
       </div>
       <div class="d-flex gap-2">
+        <a href="{% url 'admin_driver_register' %}" class="btn btn-success rounded-pill btn-sm fw-semibold shadow-sm">
+          <i class="fa-solid fa-user-plus me-1"></i> Register New Driver
+        </a>
         <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-light rounded-pill btn-sm fw-semibold">
           <i class="fa-solid fa-arrow-left me-1"></i> Dashboard
         </a>
@@ -86,16 +101,33 @@
                 {% endif %}
               </td>
               <td>
-                {% if d.qr_code %}
-                <img src="{{ d.qr_code }}" style="width: 40px; height: 40px; object-fit: contain;" class="border rounded bg-white p-1" alt="QR">
+                {% if d.qr_code_url %}
+                <div class="d-flex align-items-center gap-2">
+                  <a href="javascript:void(0)" role="button" data-bs-toggle="modal" data-bs-target="#qrModal{{ d.driver_id }}" title="Click to view full QR code" class="d-inline-block text-decoration-none">
+                    <img src="{{ d.qr_code_url }}" style="width: 44px; height: 44px; object-fit: contain; cursor: pointer;" class="border border-info rounded bg-white p-1 shadow-sm qr-thumb-zoom" alt="QR Code">
+                  </a>
+                  <button type="button" class="btn btn-sm btn-outline-info rounded-pill px-2 py-1 fw-semibold" style="font-size: 0.78rem;" data-bs-toggle="modal" data-bs-target="#qrModal{{ d.driver_id }}" title="View full QR code">
+                    <i class="fa-solid fa-qrcode me-1"></i> View
+                  </button>
+                </div>
                 {% else %}
-                <span class="small text-white opacity-50">No QR</span>
+                <span class="badge bg-secondary bg-opacity-50 text-white-50">Pending</span>
                 {% endif %}
               </td>
               <td>
-                <a href="{% url 'admin_driver_kyc' d.id %}" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold">
+                {% if d.verification_status == 'VERIFIED' or d.verification_status == 'Verified' %}
+                <a href="{% url 'admin_driver_kyc' d.id %}" class="btn btn-sm btn-outline-light rounded-pill px-3 py-1 fw-semibold">
+                  <i class="fa-solid fa-eye me-1 text-info"></i> View Details
+                </a>
+                {% elif d.verification_status == 'PENDING' or d.verification_status == 'Pending' %}
+                <a href="{% url 'admin_driver_kyc' d.id %}" class="btn btn-sm btn-warning text-dark rounded-pill px-3 py-1 fw-bold shadow-sm">
                   <i class="fa-solid fa-user-check me-1"></i> Verify KYC
                 </a>
+                {% else %}
+                <a href="{% url 'admin_driver_kyc' d.id %}" class="btn btn-sm btn-outline-danger rounded-pill px-3 py-1 fw-semibold">
+                  <i class="fa-solid fa-pen-to-square me-1"></i> Review
+                </a>
+                {% endif %}
               </td>
             </tr>
             {% empty %}
@@ -143,9 +175,26 @@
           </div>
           {% endif %}
 
-          <a href="{% url 'admin_driver_kyc' d.id %}" class="btn btn-sm btn-primary w-100 rounded-pill fw-bold py-2 shadow-sm">
-            <i class="fa-solid fa-user-check me-1"></i> Verify & Audit KYC
-          </a>
+          <div class="d-flex gap-2 mt-2">
+            {% if d.qr_code_url %}
+            <button type="button" class="btn btn-sm btn-outline-info rounded-pill fw-semibold py-2 px-3" data-bs-toggle="modal" data-bs-target="#qrModal{{ d.driver_id }}">
+              <i class="fa-solid fa-qrcode me-1"></i> View QR
+            </button>
+            {% endif %}
+            {% if d.verification_status == 'VERIFIED' or d.verification_status == 'Verified' %}
+            <a href="{% url 'admin_driver_kyc' d.id %}" class="btn btn-sm btn-outline-light flex-grow-1 rounded-pill fw-semibold py-2 text-center">
+              <i class="fa-solid fa-eye me-1 text-info"></i> View Details
+            </a>
+            {% elif d.verification_status == 'PENDING' or d.verification_status == 'Pending' %}
+            <a href="{% url 'admin_driver_kyc' d.id %}" class="btn btn-sm btn-warning text-dark flex-grow-1 rounded-pill fw-bold py-2 shadow-sm text-center">
+              <i class="fa-solid fa-user-check me-1"></i> Verify Driver
+            </a>
+            {% else %}
+            <a href="{% url 'admin_driver_kyc' d.id %}" class="btn btn-sm btn-outline-danger flex-grow-1 rounded-pill fw-semibold py-2 text-center">
+              <i class="fa-solid fa-pen-to-square me-1"></i> Review Status
+            </a>
+            {% endif %}
+          </div>
         </div>
         {% empty %}
         <div class="text-center py-4 text-white opacity-75 p-3 rounded-3" style="background-color: #0F172A;">
@@ -156,4 +205,59 @@
     </div>
   </div>
 </div>
+
+<!-- QR Code View Modals for All Drivers -->
+{% for d in drivers %}
+<div class="modal fade" id="qrModal{{ d.driver_id }}" tabindex="-1" aria-labelledby="qrModalLabel{{ d.driver_id }}" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border shadow-lg" style="background-color: #111827; border-color: #1E293B;">
+      <div class="modal-header border-bottom py-3 px-4" style="background-color: #0F172A; border-color: #1E293B;">
+        <h5 class="modal-title text-white fw-bold d-flex align-items-center gap-2 mb-0" id="qrModalLabel{{ d.driver_id }}">
+          <i class="fa-solid fa-shield-halved" style="color: #06B6D4;"></i> Official Vehicle QR Code
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center p-4">
+        <!-- Driver Info -->
+        <h5 class="fw-bold text-white mb-1">{{ d.name|default:d.user.get_full_name|default:d.user.username }}</h5>
+        <div class="small text-white opacity-75 mb-3 font-monospace">
+          <i class="fa-solid fa-id-card text-info me-1"></i> License: {{ d.license_number }}
+        </div>
+
+        <!-- Vehicle Plate Badge -->
+        <div class="mb-3">
+          <span class="d-inline-flex align-items-center bg-warning text-dark font-monospace fw-bold px-3 py-1 rounded-3 border border-dark shadow-sm" style="letter-spacing: 1px; font-size: 1.15rem;">
+            <span class="bg-primary text-white rounded px-1 me-2" style="font-size: 0.65rem;">IND</span>
+            {{ d.vehicle_number|default:d.vehicle.registration_number|default:"N/A" }}
+          </span>
+          <div class="small text-white opacity-75 mt-1">{{ d.get_vehicle_type_display }} &bull; Reputation: <span class="text-success fw-bold">{{ d.reputation_score }}/100</span></div>
+        </div>
+
+        <!-- QR Code Image Box -->
+        <div class="d-inline-block p-3 bg-white rounded-3 shadow my-2" style="border: 3px solid #06B6D4;">
+          <img src="{{ d.qr_code_url }}" alt="Driver QR Code" class="img-fluid" style="width: 240px; height: 240px; object-fit: contain; display: block;">
+        </div>
+        
+        <div class="mt-2 text-cyan fw-bold small">
+          <i class="fa-solid fa-qrcode me-1"></i> SCAN TO VERIFY & START RIDE
+        </div>
+        <div class="small text-white opacity-75 mt-1">
+          Passengers can scan this code with any phone camera to verify credentials & initiate journey.
+        </div>
+      </div>
+      <div class="modal-footer border-top d-flex justify-content-between flex-wrap gap-2 py-3 px-4" style="background-color: #0F172A; border-color: #1E293B;">
+        <a href="{{ d.qr_code_url }}" download="SafeRide_QR_{{ d.license_number }}.png" class="btn rounded-pill px-3 py-2 fw-bold shadow-sm" style="background: linear-gradient(135deg, #EA580C 0%, #C2410C 100%); border: 1px solid #F97316; color: #FFFFFF;">
+          <i class="fa-solid fa-download me-1"></i> Download PNG
+        </a>
+        <div class="d-flex gap-2">
+          <a href="{% url 'verify_driver_token' d.verification_token %}" target="_blank" class="btn btn-outline-info rounded-pill px-3 py-2 fw-semibold">
+            <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Open Safety Card
+          </a>
+          <button type="button" class="btn btn-secondary rounded-pill px-3 py-2" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}
 {% endblock %}

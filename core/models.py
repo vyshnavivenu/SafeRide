@@ -4,6 +4,7 @@ import qrcode
 from io import BytesIO
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
 from django.utils import timezone
@@ -374,7 +375,19 @@ class Driver(models.Model):
                 return f"{self.registration_number} ({self.get_vehicle_type_display()})"
         return VehicleProxy(self)
 
+    def clean(self):
+        super().clean()
+        if self.upi_id:
+            self.upi_id = self.upi_id.strip().lower()
+            import re
+            if not re.match(r"^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z0-9]{2,64}$", self.upi_id):
+                raise ValidationError({
+                    'upi_id': "UPI ID must follow valid Virtual Payment Address (VPA) format (e.g. driver@oksbi, 9876543210@paytm, or username@bank)."
+                })
+
     def save(self, *args, **kwargs):
+        if self.upi_id:
+            self.upi_id = self.upi_id.strip().lower()
         if self.user:
             self.name = self.name or (self.user.get_full_name() or self.user.username)
             self.email = self.email or self.user.email
@@ -490,6 +503,25 @@ class Trip(models.Model):
     @property
     def id(self):
         return self.trip_id
+
+    @property
+    def formatted_trip_id(self):
+        """Generates sequential standard Trip ID format, e.g. TRIP001, TRIP002, TRIP015."""
+        if self.trip_id is not None:
+            return f"TRIP{self.trip_id:03d}"
+        return "TRIP000"
+
+    @property
+    def display_code(self):
+        return self.formatted_trip_id
+
+    @property
+    def boarding_point(self):
+        return self.boarding_address or self.start_location or self.pickup_location_name or "Current Boarding Point"
+
+    @property
+    def destination_point(self):
+        return self.destination_address or self.end_location or getattr(self, 'drop_location_name', None) or "Drop Point Recorded"
 
     def save(self, *args, **kwargs):
         # Synchronize boarding & destination coordinates with legacy aliases
@@ -823,6 +855,13 @@ class Complaint(models.Model):
     @property
     def id(self):
         return self.complaint_id
+
+    @property
+    def formatted_complaint_id(self):
+        """Generates standard Complaint ID format, e.g. CMP001, CMP002."""
+        if self.complaint_id is not None:
+            return f"CMP{self.complaint_id:03d}"
+        return "CMP000"
 
     def resolve(self, remarks="", penalty=5, dismiss=False):
         if dismiss:

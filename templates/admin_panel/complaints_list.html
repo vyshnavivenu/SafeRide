@@ -3,7 +3,7 @@
 {% block title %}Complaints - SafeRide Admin{% endblock %}
 
 {% block content %}
-<div class="container py-5">
+<div class="container-fluid py-4 px-3 px-xl-5" style="max-width: 1720px;">
   <div class="card rounded-4 border shadow-sm p-4" style="background-color: #131C2E !important;">
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
       <div>
@@ -41,9 +41,11 @@
             {% for c in complaints %}
             <tr>
               <td>
-                <span class="badge bg-dark border text-warning font-monospace">
-                  {% if c.trip %}#TRP-{{ c.trip.trip_id }}{% else %}#CMP-{{ c.complaint_id|stringformat:".8s" }}{% endif %}
-                </span>
+                {% if c.trip %}
+                  <span class="badge-trip-id">{{ c.trip.formatted_trip_id }}</span>
+                {% else %}
+                  <span class="badge font-monospace px-2 py-1" style="background-color: #0F172A; color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.4);">{{ c.formatted_complaint_id }}</span>
+                {% endif %}
                 <div class="small text-white opacity-50 mt-1">{{ c.created_at|date:"M d, H:i" }}</div>
               </td>
               <td>
@@ -96,9 +98,11 @@
         <div class="mobile-data-card shadow-sm p-3 rounded-4 border" style="background-color: #0F172A; border-color: #1E293B !important;">
           <div class="d-flex justify-content-between align-items-start mb-2">
             <div>
-              <span class="badge bg-dark border text-warning font-monospace">
-                {% if c.trip %}#TRP-{{ c.trip.trip_id }}{% else %}#CMP-{{ c.complaint_id|stringformat:".8s" }}{% endif %}
-              </span>
+              {% if c.trip %}
+                <span class="badge-trip-id">{{ c.trip.formatted_trip_id }}</span>
+              {% else %}
+                <span class="badge font-monospace px-2 py-1" style="background-color: #0F172A; color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.4);">{{ c.formatted_complaint_id }}</span>
+              {% endif %}
               <div class="small text-white opacity-50 mt-1">{{ c.created_at|date:"M d, H:i" }}</div>
             </div>
             <div>
@@ -137,7 +141,7 @@
         <div class="modal-dialog">
           <div class="modal-content rounded-4 border shadow" style="background-color: #131C2E; border-color: #334155 !important;">
             <div class="modal-header border-bottom" style="border-color: #334155 !important;">
-              <h6 class="modal-title fw-bold text-white">Resolve Complaint #{{ c.complaint_id|stringformat:".8s" }}</h6>
+              <h6 class="modal-title fw-bold text-white">Resolve Complaint {% if c.trip %}{{ c.trip.formatted_trip_id }}{% else %}{{ c.formatted_complaint_id }}{% endif %}</h6>
               <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="{% url 'admin_resolve_complaint' c.complaint_id %}" method="POST">

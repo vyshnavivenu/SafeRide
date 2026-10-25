@@ -2,9 +2,28 @@
 
 {% block title %}Passenger Trip History - SafeRide{% endblock %}
 
+{% block extra_css %}
+<style>
+  .table-responsive {
+    scrollbar-width: thin;
+    scrollbar-color: #334155 #0F172A;
+  }
+  .table-responsive::-webkit-scrollbar {
+    height: 6px;
+  }
+  .table-responsive::-webkit-scrollbar-thumb {
+    background-color: #334155;
+    border-radius: 4px;
+  }
+  .table-responsive::-webkit-scrollbar-track {
+    background-color: #0F172A;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container py-5">
-  <div class="card rounded-4 border shadow-lg p-4 p-md-5" style="background-color: #0F172A; border: 1px solid #1E293B;">
+<div class="container-fluid py-4 px-3 px-xl-5" style="max-width: 1720px;">
+  <div class="card rounded-4 border shadow-lg p-3 p-md-4" style="background-color: #0F172A; border: 1px solid #1E293B;">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 border-bottom border-secondary border-opacity-25 pb-3">
       <div>
         <h4 class="fw-bold text-white mb-1">
@@ -20,29 +39,31 @@
     {% if trips %}
     <!-- 1. DESKTOP VIEW (≥ 768px): Full Table -->
     <div class="d-none d-md-block">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0" style="color: #E2E8F0;">
+      <div class="table-responsive" style="overflow-x: auto;">
+        <table class="table table-hover align-middle mb-0" style="color: #E2E8F0; width: 100%;">
           <thead class="small text-uppercase" style="background-color: #131C2E; color: #94A3B8; border-bottom: 1px solid #1E293B;">
             <tr>
-              <th class="py-3 ps-3">Trip ID</th>
-              <th class="py-3">Driver & Vehicle</th>
-              <th class="py-3">Boarding Point</th>
-              <th class="py-3">Destination Point</th>
-              <th class="py-3">Fare</th>
-              <th class="py-3">Date & Time</th>
-              <th class="py-3">Status</th>
-              <th class="py-3 pe-3 text-end">Your Rating</th>
+              <th class="py-3 ps-3 text-nowrap" style="min-width: 95px;">Trip ID</th>
+              <th class="py-3 text-nowrap" style="min-width: 170px;">Driver & Vehicle</th>
+              <th class="py-3" style="min-width: 200px;">Boarding Point</th>
+              <th class="py-3" style="min-width: 180px;">Destination Point</th>
+              <th class="py-3 text-nowrap" style="min-width: 100px;">Fare</th>
+              <th class="py-3 text-nowrap" style="min-width: 125px;">Date & Time</th>
+              <th class="py-3 text-nowrap" style="min-width: 140px;">Status</th>
+              <th class="py-3 pe-3 text-end text-nowrap" style="min-width: 160px;">Your Rating</th>
             </tr>
           </thead>
           <tbody style="border-top: none;">
             {% for t in trips %}
             <tr style="border-bottom: 1px solid #1E293B;">
-              <td class="ps-3">
-                <span class="badge font-monospace" style="background-color: #1E293B; color: #60A5FA;">#{{ t.trip_id|stringformat:".8s" }}</span>
+              <td class="ps-3 text-nowrap">
+                <span class="badge font-monospace fw-bold px-2 py-1" style="background-color: rgba(37, 99, 235, 0.15); color: #60A5FA; border: 1px solid rgba(96, 165, 250, 0.3);">
+                  {{ t.formatted_trip_id }}
+                </span>
               </td>
-              <td>
+              <td class="text-nowrap">
                 <div class="d-flex align-items-center gap-2">
-                  <span class="rounded-circle bg-primary bg-opacity-10 text-primary p-2 small">
+                  <span class="rounded-circle bg-primary bg-opacity-10 text-primary p-2 small flex-shrink-0">
                     <i class="fa-solid fa-user-tie"></i>
                   </span>
                   <div>
@@ -54,14 +75,14 @@
                 </div>
               </td>
               <td>
-                <div class="small">
+                <div class="small" style="max-width: 280px; line-height: 1.35;">
                   <span class="text-success fw-semibold">
                     <i class="fa-solid fa-circle-dot me-1"></i> {{ t.boarding_point|default:t.pickup_location_name }}
                   </span>
                 </div>
               </td>
               <td>
-                <div class="small">
+                <div class="small" style="max-width: 240px; line-height: 1.35;">
                   {% if t.destination_point %}
                   <span class="text-danger fw-semibold">
                     <i class="fa-solid fa-location-dot me-1"></i> {{ t.destination_point }}
@@ -73,26 +94,28 @@
                   {% endif %}
                 </div>
               </td>
-              <td>
-                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 font-monospace fw-bold px-2 py-1">
+              <td class="text-nowrap">
+                <span class="badge font-monospace fw-bold px-3 py-1 shadow-sm d-inline-block" style="background-color: #1E293B; border: 1.5px solid #FF9800; color: #FFB74D !important; font-size: 0.88rem;">
                   ₹{{ t.fare_amount|default:"30.00" }}
                 </span>
                 {% if t.distance_km is not None %}
-                <div class="text-white opacity-75 small mt-1 font-monospace" style="font-size: 0.72rem;">
-                  <i class="fa-solid fa-arrows-left-right text-info me-1"></i>{{ t.distance_km }} km
+                <div class="small mt-1 font-monospace text-light" style="font-size: 0.76rem;">
+                  <i class="fa-solid fa-route text-info me-1"></i>{{ t.distance_km }} km
                 </div>
                 {% endif %}
                 {% if t.fare_qr_code %}
-                <a href="{{ t.fare_qr_code.url }}" target="_blank" class="badge bg-dark border text-info text-decoration-none mt-1 d-inline-block font-monospace" style="font-size: 0.7rem;" title="View Digital Fare Receipt QR">
-                  <i class="fa-solid fa-qrcode me-1"></i> Fare QR
-                </a>
+                <div>
+                  <a href="{{ t.fare_qr_code.url }}" target="_blank" class="badge rounded-pill text-decoration-none mt-1 d-inline-block font-monospace fw-bold px-2 py-1 shadow-sm" style="background-color: #0F172A; border: 1px solid #0284C7; color: #38BDF8 !important; font-size: 0.72rem;" title="View Digital Fare Receipt QR">
+                    <i class="fa-solid fa-qrcode me-1"></i> Fare QR
+                  </a>
+                </div>
                 {% endif %}
               </td>
-              <td class="small text-muted">
-                <span class="text-white fw-semibold">{{ t.start_time|date:"M d, Y" }}</span><br>
+              <td class="small text-muted text-nowrap">
+                <span class="text-white fw-semibold d-block">{{ t.start_time|date:"M d, Y" }}</span>
                 <span>{{ t.start_time|date:"h:i A" }}</span>
               </td>
-              <td>
+              <td class="text-nowrap">
                 {% if t.status == 'Completed' or t.status == 'COMPLETED' %}
                   <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3 py-1">
                     <i class="fa-solid fa-circle-check me-1"></i> Completed Safely
@@ -117,7 +140,7 @@
                   </span>
                 {% endif %}
               </td>
-              <td class="pe-3 text-end">
+              <td class="pe-3 text-end text-nowrap">
                 {% if t.rating_entry %}
                   <span class="badge bg-warning text-dark px-3 py-1 rounded-pill fw-bold">
                     <i class="fa-solid fa-star me-1"></i> {{ t.rating_entry.rating }}.0
@@ -129,6 +152,9 @@
                 {% else %}
                   <span class="text-muted small">-</span>
                 {% endif %}
+                <a href="{% url 'report_incident' %}?trip_id={{ t.trip_id }}" class="btn btn-sm btn-outline-danger rounded-pill px-2 py-1 ms-1" title="Report safety issue with this ride">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                </a>
               </td>
             </tr>
             {% endfor %}
@@ -144,7 +170,9 @@
         <div class="mobile-data-card shadow-sm p-3 rounded-4 border" style="background-color: #131C2E; border-color: #1E293B !important;">
           <div class="d-flex justify-content-between align-items-start mb-2">
             <div>
-              <span class="badge font-monospace" style="background-color: #1E293B; color: #60A5FA;">#{{ t.trip_id|stringformat:".8s" }}</span>
+              <span class="badge font-monospace fw-bold px-2 py-1" style="background-color: rgba(37, 99, 235, 0.15); color: #60A5FA; border: 1px solid rgba(96, 165, 250, 0.3);">
+                {{ t.formatted_trip_id }}
+              </span>
               <div class="small text-white opacity-50 mt-1">{{ t.start_time|date:"M d, Y &bull; h:i A" }}</div>
             </div>
             <div>
@@ -177,11 +205,11 @@
 
           <div class="d-flex justify-content-between align-items-center mb-2">
             <div>
-              <span class="badge bg-warning bg-opacity-10 text-warning border border-warning font-monospace fw-bold px-2 py-1">
+              <span class="badge font-monospace fw-bold px-3 py-1 shadow-sm d-inline-block" style="background-color: #1E293B; border: 1.5px solid #FF9800; color: #FFB74D !important; font-size: 0.88rem;">
                 ₹{{ t.fare_amount|default:"30.00" }}
               </span>
               {% if t.fare_qr_code %}
-              <a href="{{ t.fare_qr_code.url }}" target="_blank" class="badge bg-dark border text-info text-decoration-none ms-1 font-monospace" style="font-size: 0.7rem;">
+              <a href="{{ t.fare_qr_code.url }}" target="_blank" class="badge rounded-pill text-decoration-none ms-1 font-monospace fw-bold px-2 py-1 shadow-sm" style="background-color: #0F172A; border: 1px solid #0284C7; color: #38BDF8 !important; font-size: 0.72rem;" title="View Digital Fare Receipt QR">
                 <i class="fa-solid fa-qrcode me-1"></i> QR
               </a>
               {% endif %}
@@ -197,6 +225,9 @@
                   <i class="fa-solid fa-star-half-stroke me-1"></i> Rate Ride
                 </a>
               {% endif %}
+              <a href="{% url 'report_incident' %}?trip_id={{ t.trip_id }}" class="btn btn-sm btn-outline-danger rounded-pill px-2 py-1 ms-1" title="Report safety issue with this ride">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </a>
             </div>
           </div>
 

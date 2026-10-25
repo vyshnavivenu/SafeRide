@@ -36,25 +36,61 @@
   <div class="card text-white rounded-4 p-4 border shadow-lg mb-4" style="background-color: #131C2E !important; border-color: #1E293B !important;">
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
       <div class="d-flex align-items-center gap-3">
-        <span class="p-3 rounded-circle text-white border shadow" style="background-color: #065F46; border-color: #10B981 !important;">
-          <i class="fa-solid fa-satellite-dish fa-spin fs-4 text-warning"></i>
-        </span>
+        <!-- Verified Driver Avatar & Verification Badge -->
+        <div class="position-relative flex-shrink-0" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#verifiedDriverModal" title="Click to view verified driver details">
+          {% if driver.driver_photo %}
+          <img src="{{ driver.driver_photo.url }}" class="rounded-circle border border-2 border-success shadow" style="width: 58px; height: 58px; object-fit: cover;" alt="Driver Photo">
+          {% else %}
+          <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold fs-4 shadow" style="width: 58px; height: 58px; background: linear-gradient(135deg, #1E3A8A, #2563EB); border: 2px solid #60A5FA;">
+            {{ driver.user.first_name|slice:":1"|default:driver.name|slice:":1"|default:"D" }}
+          </div>
+          {% endif %}
+          <span class="position-absolute bottom-0 end-0 bg-success rounded-circle border border-dark p-1 d-flex align-items-center justify-content-center" style="width: 18px; height: 18px;" title="Police & RTO Verified Driver">
+            <i class="fa-solid fa-check text-white" style="font-size: 9px;"></i>
+          </span>
+        </div>
+
         <div>
           <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
             <span class="badge bg-success px-3 py-1 rounded-pill fw-bold" id="trip-status-pill">
               <i class="fa-solid fa-circle-dot fa-beat me-1"></i> LIVE TRIP IN PROGRESS
             </span>
-            <span class="badge bg-dark border text-warning font-monospace small">#TRP-{{ trip.trip_id|stringformat:'s'|slice:':8' }}</span>
+            <span class="badge-trip-id">{{ trip.formatted_trip_id }}</span>
+            <span class="badge bg-success bg-opacity-25 text-success border border-success px-2 py-1 rounded-pill small fw-bold">
+              <i class="fa-solid fa-shield-check me-1"></i> VERIFIED DRIVER
+            </span>
           </div>
-          <h4 class="fw-bold mb-0 text-white">Ride with {{ driver.name|default:driver.user.get_full_name|default:driver.user.username }}</h4>
-          <span class="small text-white opacity-75">Boarded: {{ trip.start_time|date:"h:i A, M d, Y" }} &bull; {{ trip.start_location|default:trip.pickup_location_name|default:"Safe Transit Corridor" }}</span>
+          <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+            <h4 class="fw-bold mb-0 text-white">Ride with {{ driver.name|default:driver.user.get_full_name|default:driver.user.username }}</h4>
+            <span class="badge bg-dark border border-secondary text-warning font-monospace px-2 py-1">
+              <i class="fa-solid fa-car-side me-1"></i> {{ vehicle.registration_number|default:driver.vehicle_number|default:'Not Available' }}
+            </span>
+            <span class="badge bg-dark border border-secondary text-info font-monospace px-2 py-1">
+              <i class="fa-solid fa-id-card me-1"></i> {{ driver.license_number|default:'Not Available' }}
+            </span>
+            <span class="badge bg-success bg-opacity-25 text-success border border-success px-2 py-1">
+              ⭐ {{ driver.reputation_score|default:95 }}/100
+            </span>
+          </div>
+          <div class="small text-white opacity-75 d-flex align-items-center gap-2 flex-wrap">
+            <span><i class="fa-solid fa-taxi text-secondary me-1"></i> {{ vehicle.get_vehicle_type_display|default:driver.vehicle_type|default:"Auto Rickshaw" }}</span>
+            &bull;
+            <span><i class="fa-solid fa-phone text-success me-1"></i> {{ driver.phone_number|default:driver.user.phone|default:"Phone not provided" }}</span>
+            &bull;
+            <span>Boarded: {{ trip.start_time|date:"h:i A, M d, Y" }}</span>
+          </div>
         </div>
       </div>
 
-      <!-- Action Buttons: Share Location & SOS Trigger -->
+      <!-- Action Buttons: Share Location, End Trip & SOS Trigger -->
       <div class="d-flex flex-wrap gap-2 align-items-center">
         <button type="button" class="btn btn-warning rounded-pill fw-bold px-3 shadow text-dark" id="btn-share-live-location" data-bs-toggle="modal" data-bs-target="#shareLocationModal">
           <i class="fa-solid fa-share-nodes me-1"></i> Share Live Location
+        </button>
+
+        <!-- Arrived Safely (End Trip) Action -->
+        <button type="button" class="btn btn-success rounded-pill fw-bold px-3 shadow text-white text-uppercase" id="btn-top-end-trip" onclick="submitEndTripForm()">
+          <i class="fa-solid fa-circle-check me-1"></i> Arrived Safely (End Trip)
         </button>
         
         <!-- Red SOS Emergency Button with Pulse Animation -->
@@ -81,20 +117,25 @@
     <!-- ========================================== -->
     <!-- 2. LIVE GPS MAP & TELEMETRY -->
     <!-- ========================================== -->
-    <div class="col-lg-8">
+    <div class="col-12">
       <div class="card rounded-4 p-3 p-md-4 border shadow-sm mb-4" style="background-color: #131C2E !important; border-color: #1E293B !important;">
         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
           <div>
             <h5 class="fw-bold mb-0 text-white"><i class="fa-solid fa-map-location-dot text-warning me-2"></i> Real-Time GPS Tracking Map</h5>
-            <span class="small text-white opacity-75">SafeRide Real-Time GPS Telemetry</span>
+            <span class="small text-white opacity-75">SafeRide Real-Time GPS Telemetry &bull; Leaflet Live</span>
           </div>
-          <span class="badge bg-success bg-opacity-25 text-success border border-success px-3 py-1 rounded-pill small" id="gps-status-badge">
-            <i class="fa-solid fa-circle text-success me-1 fa-beat"></i> GPS Transmitting
-          </span>
+          <div class="d-flex align-items-center gap-2">
+            <a href="https://www.google.com/maps/search/?api=1&query={{ trip.live_latitude|default:9.6843 }},{{ trip.live_longitude|default:76.6853 }}" id="open-gmaps-link" target="_blank" class="btn btn-sm btn-outline-info rounded-pill px-3 fw-bold" title="Open in Google Maps">
+              <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Open Maps
+            </a>
+            <span class="badge bg-success bg-opacity-25 text-success border border-success px-3 py-1 rounded-pill small" id="gps-status-badge">
+              <i class="fa-solid fa-circle text-success me-1 fa-beat"></i> GPS Transmitting
+            </span>
+          </div>
         </div>
 
         <!-- Responsive Map Container -->
-        <div id="live-trip-map" class="rounded-3 border" style="height: 420px; width: 100%; border-color: #334155 !important; overflow: hidden; position: relative;"></div>
+        <div id="live-trip-map" class="rounded-3 border" style="height: 480px; width: 100%; border-color: #334155 !important; overflow: hidden; position: relative;"></div>
         
         <!-- Live Coordinates & Actions Bar -->
         <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top small text-white flex-wrap gap-2" style="border-color: #1E293B !important;">
@@ -117,155 +158,14 @@
         </div>
       </div>
 
-      <!-- In-Panel SOS Action Card -->
-      <div class="card rounded-4 border shadow-sm p-4 mb-4" style="background-color: #131C2E !important; border-color: #DC2626 !important;">
-        <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2" style="border-color: #334155 !important;">
-          <div class="d-flex align-items-center gap-2">
-            <i class="fa-solid fa-triangle-exclamation fs-3 text-danger"></i>
-            <div>
-              <h5 class="fw-bold text-danger mb-0 text-uppercase tracking-wide">1-TOUCH SOS EMERGENCY BEACON</h5>
-              <span class="small text-white opacity-75">Instantly alerts SafeRide Command Center & dispatches your coordinates.</span>
-            </div>
-          </div>
-        </div>
+      <!-- Hidden Form for Arrived Safely (End Trip) Action -->
+      <form action="{% url 'end_trip' trip.trip_id %}" method="POST" id="end-trip-form" onsubmit="return handleEndTrip(event);" class="d-none">
+        {% csrf_token %}
+        <input type="hidden" name="final_lat" id="final_drop_lat" value="">
+        <input type="hidden" name="final_lng" id="final_drop_lng" value="">
+        <input type="hidden" name="final_address" id="final_drop_address" value="">
+      </form>
 
-        <div class="row g-3 mb-3">
-          <!-- Route Corridor: Boarding & Destination Points -->
-          <div class="col-12">
-            <div class="p-3 rounded-3 border" style="background-color: #0F172A; border-color: #334155;">
-              <div class="row g-2 align-items-center">
-                <div class="col-12 col-md-5">
-                  <span class="text-white opacity-75 small d-block mb-1">
-                    <i class="fa-solid fa-circle-dot text-warning me-1"></i> Boarding / Pickup Point:
-                  </span>
-                  <strong class="text-white small text-truncate d-block" title="{{ trip.boarding_point }}">
-                    <i class="fa-solid fa-map-pin text-warning me-1"></i>{{ trip.boarding_point|default:trip.pickup_location_name|default:"Current Boarding Point" }}
-                  </strong>
-                </div>
-                <div class="col-12 col-md-2 text-center d-none d-md-block">
-                  <i class="fa-solid fa-arrow-right text-warning fs-5"></i>
-                </div>
-                <div class="col-12 col-md-5">
-                  <span class="text-white opacity-75 small d-block mb-1">
-                    <i class="fa-solid fa-flag-checkered text-danger me-1"></i> Destination Drop Place:
-                  </span>
-                  <strong class="text-white small text-truncate d-block" title="{{ trip.destination_point }}">
-                    {% if trip.destination_address or trip.end_location or trip.drop_location_name %}
-                      <span class="text-danger fw-bold"><i class="fa-solid fa-location-dot me-1"></i>{{ trip.destination_point }}</span>
-                    {% else %}
-                      <span class="text-muted fst-italic"><i class="fa-solid fa-route me-1"></i>Open / Metered Destination</span>
-                    {% endif %}
-                  </strong>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label fw-bold text-light small">Passenger Name :</label>
-            <input type="text" class="form-control py-2 text-white font-monospace" style="background-color: #0F172A; border-color: #334155;" value="{{ request.user.get_full_name|default:request.user.username }}" readonly>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label fw-bold text-light small">Assigned Driver :</label>
-            <input type="text" class="form-control py-2 text-white font-monospace" style="background-color: #0F172A; border-color: #334155;" value="{{ driver.name|default:driver.user.get_full_name|default:driver.user.username }}" readonly>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label fw-bold text-light small">Vehicle Plate Number :</label>
-            <input type="text" class="form-control py-2 text-warning font-monospace fw-bold" style="background-color: #0F172A; border-color: #334155;" value="{{ vehicle.registration_number|default:driver.vehicle_number|default:'Not Available' }}" readonly>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label fw-bold text-light small">Live Coordinates :</label>
-            <input type="text" class="form-control py-2 text-warning font-monospace small" style="background-color: #0F172A; border-color: #334155;" id="sos-live-loc-display" value="GPS: {{ trip.live_latitude|default:9.6843|floatformat:4 }}, {{ trip.live_longitude|default:76.6853|floatformat:4 }}" readonly>
-          </div>
-          <div class="col-12">
-            <label class="form-label fw-bold text-light small"><i class="fa-solid fa-indian-rupee-sign text-warning me-1"></i> Government Regulated Tariff :</label>
-            <div class="p-2 rounded-3 border d-flex justify-content-between align-items-center flex-wrap gap-2" style="background-color: #0F172A; border-color: #334155;">
-              <span class="small text-white opacity-75">
-                {% if 'taxi' in driver.vehicle_type or 'cab' in driver.vehicle_type %}
-                  Base ₹200.00 (first 5 km) + ₹18.00/km thereafter
-                {% else %}
-                  Base ₹30.00 (first 1.5 km) + ₹15.00/km thereafter
-                {% endif %}
-              </span>
-              <div class="d-flex align-items-center gap-2">
-                <span class="badge bg-secondary text-light font-monospace small px-2 py-1" id="live-dist-badge"><i class="fa-solid fa-route me-1"></i>{{ trip.distance_km|default:'0.00' }} km</span>
-                <span class="badge bg-warning text-dark font-monospace fs-6 px-3 py-1" id="live-est-fare-badge">Est. Fare: ₹{{ trip.fare_amount|default:'30.00' }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {% if trip.status == 'SOS_Triggered' %}
-        <div id="panel-sos-container">
-          <button type="button" class="btn btn-danger btn-lg w-100 fw-bold rounded-pill shadow-lg py-3 text-uppercase disabled mb-2" id="panel-sos-btn" style="opacity: 0.85;">
-            <i class="fa-solid fa-tower-broadcast fa-fade me-2"></i> DISTRESS SIGNAL ACTIVE
-          </button>
-          <button type="button" class="btn btn-outline-light btn-lg w-100 fw-bold rounded-pill shadow-lg py-3 text-uppercase" onclick="cancelSOSDispatch()">
-            <i class="fa-solid fa-xmark me-2"></i> CANCEL SOS
-          </button>
-        </div>
-        {% else %}
-        <button type="button" class="btn btn-danger btn-lg w-100 fw-bold rounded-pill shadow-lg py-3 text-uppercase sos-pulse-btn" id="panel-sos-btn" onclick="executeSOSDispatch(1)">
-          <i class="fa-solid fa-bell me-2 fa-shake"></i> TRIGGER 1-TOUCH SOS EMERGENCY
-        </button>
-        {% endif %}
-      </div>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- 3. DRIVER PROFILE & SAFE ARRIVAL -->
-    <!-- ========================================== -->
-    <div class="col-lg-4">
-      <div class="card rounded-4 border shadow-sm p-4 mb-4" style="background-color: #131C2E !important; border-color: #1E293B !important;">
-        <h6 class="fw-bold text-white text-uppercase small mb-3"><i class="fa-solid fa-id-card text-warning me-2"></i> Verified Driver Profile</h6>
-        
-        <div class="d-flex align-items-center gap-3 mb-3">
-          <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold fs-4 shadow" style="width: 58px; height: 58px; background: linear-gradient(135deg, #1E3A8A, #2563EB); border: 2px solid #60A5FA;">
-            {{ driver.user.first_name|slice:":1"|default:driver.name|slice:":1"|default:"D" }}
-          </div>
-          <div>
-            <h6 class="fw-bold mb-0 text-white">{{ driver.name|default:driver.user.get_full_name|default:driver.user.username }}</h6>
-            <span class="small text-warning font-monospace">{{ vehicle.registration_number|default:driver.vehicle_number|default:'Not Available' }}</span>
-            <div>
-              <span class="badge bg-success bg-opacity-25 text-success border border-success small">
-                ⭐ {{ driver.reputation_score|default:95 }}/100 Reputation
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div class="p-3 rounded-3 small mb-3 border text-white" style="background-color: #0F172A; border-color: #334155 !important;">
-          <div class="d-flex justify-content-between mb-1">
-            <span class="text-white opacity-75">License Number:</span>
-            <strong class="text-white font-monospace">{{ driver.license_number|default:"Not Available" }}</strong>
-          </div>
-          <div class="d-flex justify-content-between mb-1">
-            <span class="text-white opacity-75">Vehicle Type:</span>
-            <span class="text-white">{{ vehicle.get_vehicle_type_display|default:driver.vehicle_type|default:"Auto Rickshaw" }}</span>
-          </div>
-          <div class="d-flex justify-content-between">
-            <span class="text-white opacity-75">Driver Contact:</span>
-            <span class="text-white">{{ driver.phone_number|default:driver.user.phone|default:"Phone not provided" }}</span>
-          </div>
-        </div>
-
-        <div class="d-grid mb-3 mt-4">
-          <button type="button" class="btn btn-outline-warning fw-bold rounded-pill shadow-sm py-2" data-bs-toggle="modal" data-bs-target="#shareLocationModal">
-            <i class="fa-solid fa-share-nodes me-2"></i> SHARE LIVE TRACKING
-          </button>
-        </div>
-
-        <!-- Arrived Safely (End Trip Form) -->
-        <form action="{% url 'end_trip' trip.trip_id %}" method="POST" id="end-trip-form" onsubmit="return handleEndTrip(event);">
-          {% csrf_token %}
-          <input type="hidden" name="final_lat" id="final_drop_lat" value="">
-          <input type="hidden" name="final_lng" id="final_drop_lng" value="">
-          <input type="hidden" name="final_address" id="final_drop_address" value="">
-          <button type="submit" class="btn btn-success btn-lg w-100 fw-bold rounded-pill shadow text-uppercase py-3">
-            <i class="fa-solid fa-circle-check me-2"></i> ARRIVED SAFELY (END TRIP)
-          </button>
-        </form>
-      </div>
     </div>
 
   </div>
@@ -293,9 +193,9 @@
         </p>
 
         <div class="p-3 rounded-3 bg-dark border text-start small mb-3">
-          <div class="d-flex justify-content-between mb-1">
+          <div class="d-flex justify-content-between align-items-center mb-1">
             <span class="text-white opacity-75">Trip Session:</span>
-            <span class="font-monospace text-warning">#TRP-{{ trip.trip_id|stringformat:'s'|slice:':8' }}</span>
+            <span class="badge-trip-id">{{ trip.formatted_trip_id }}</span>
           </div>
           <div class="d-flex justify-content-between mb-1">
             <span class="text-white opacity-75">Driver:</span>
@@ -449,18 +349,129 @@
           </div>
         </div>
 
-        {% if not profile.emergency_contact_phone and not profile.emergency_contact_1_phone %}
-        <div class="alert alert-warning py-2 px-3 small rounded-3 mb-0">
-          <i class="fa-solid fa-circle-info me-1"></i> You haven't configured an emergency contact yet. <a href="{% url 'emergency_contacts' %}" class="alert-link text-decoration-underline">Add Contact Here</a>.
-        </div>
-        {% endif %}
 
       </div>
-      <div class="modal-footer border-top justify-content-between" style="border-color: #334155 !important;">
-        <button type="button" class="btn btn-outline-light btn-sm rounded-pill" onclick="shareViaSystem()">
-          <i class="fa-solid fa-share-nodes me-1"></i> More Apps...
-        </button>
-        <button type="button" class="btn btn-secondary btn-sm rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- VERIFIED DRIVER DETAILS MODAL -->
+<!-- ========================================== -->
+<div class="modal fade" id="verifiedDriverModal" tabindex="-1" aria-labelledby="verifiedDriverModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content rounded-4 border shadow-lg text-white" style="background-color: #131C2E; border-color: #334155 !important;">
+      <div class="modal-header border-bottom" style="border-color: #334155 !important;">
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-success p-2 rounded-circle">
+            <i class="fa-solid fa-shield-check text-white fs-6"></i>
+          </span>
+          <h5 class="modal-title fw-bold text-white mb-0" id="verifiedDriverModalLabel">
+            VERIFIED DRIVER DETAILS
+          </h5>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <!-- Driver Profile Header -->
+        <div class="d-flex align-items-center gap-3 p-3 rounded-3 mb-3 border flex-wrap" style="background-color: #0F172A; border-color: #1E293B !important;">
+          {% if driver.driver_photo %}
+          <img src="{{ driver.driver_photo.url }}" class="rounded-circle border border-3 border-success shadow" style="width: 75px; height: 75px; object-fit: cover;" alt="Driver Photo">
+          {% else %}
+          <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold fs-2 shadow" style="width: 75px; height: 75px; background: linear-gradient(135deg, #1E3A8A, #2563EB); border: 3px solid #10B981;">
+            {{ driver.user.first_name|slice:":1"|default:driver.name|slice:":1"|default:"D" }}
+          </div>
+          {% endif %}
+          <div class="flex-grow-1">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <h4 class="fw-bold mb-0 text-white">{{ driver.name|default:driver.user.get_full_name|default:driver.user.username }}</h4>
+              <span class="badge bg-success fw-bold px-3 py-1">
+                <i class="fa-solid fa-circle-check me-1"></i> POLICE &amp; RTO VERIFIED
+              </span>
+            </div>
+            <div class="text-white-50 small mt-1">
+              SafeRide Authorized Commercial Driver &bull; SafeRide Safety Protocol Form 7
+            </div>
+          </div>
+          <div class="text-center px-3 py-2 rounded-3 border" style="background-color: #131C2E; border-color: #334155 !important;">
+            <div class="fs-4 fw-bold text-success">{{ driver.reputation_score|default:95 }}</div>
+            <div class="small text-white-50 text-uppercase" style="font-size: 11px;">Safety Score</div>
+            <div class="text-warning small mt-1">
+              <i class="fa-solid fa-star"></i>
+              <i class="fa-solid fa-star"></i>
+              <i class="fa-solid fa-star"></i>
+              <i class="fa-solid fa-star"></i>
+              <i class="fa-solid fa-star"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Structured Credential Table -->
+        <div class="table-responsive rounded-3 border mb-3" style="border-color: #334155 !important;">
+          <table class="table table-borderless text-white mb-0" style="background-color: #0F172A;">
+            <tbody>
+              <tr class="border-bottom" style="border-color: #1E293B !important;">
+                <td class="text-white-50 small px-3 py-2" style="width: 180px;"><i class="fa-solid fa-user me-2 text-warning"></i> Driver Name</td>
+                <td class="fw-bold px-3 py-2">{{ driver.name|default:driver.user.get_full_name|default:driver.user.username }}</td>
+              </tr>
+              <tr class="border-bottom" style="border-color: #1E293B !important;">
+                <td class="text-white-50 small px-3 py-2"><i class="fa-solid fa-car-side me-2 text-warning"></i> Vehicle Number</td>
+                <td class="px-3 py-2">
+                  <span class="badge bg-dark border border-secondary text-warning px-3 py-2 font-monospace fs-6">
+                    {{ vehicle.registration_number|default:driver.vehicle_number|default:"Not Available" }}
+                  </span>
+                </td>
+              </tr>
+              <tr class="border-bottom" style="border-color: #1E293B !important;">
+                <td class="text-white-50 small px-3 py-2"><i class="fa-solid fa-id-card me-2 text-info"></i> Driving License</td>
+                <td class="fw-semibold px-3 py-2 font-monospace">{{ driver.license_number|default:"Not Available" }}</td>
+              </tr>
+              <tr class="border-bottom" style="border-color: #1E293B !important;">
+                <td class="text-white-50 small px-3 py-2"><i class="fa-solid fa-taxi me-2 text-info"></i> Vehicle Type</td>
+                <td class="px-3 py-2">{{ vehicle.get_vehicle_type_display|default:driver.vehicle_type|default:"Commercial Auto Rickshaw" }}{% if vehicle.make_model and vehicle.make_model != 'N/A' %} &bull; {{ vehicle.make_model }}{% endif %}</td>
+              </tr>
+              <tr class="border-bottom" style="border-color: #1E293B !important;">
+                <td class="text-white-50 small px-3 py-2"><i class="fa-solid fa-phone me-2 text-success"></i> Driver Contact</td>
+                <td class="px-3 py-2">
+                  <a href="tel:{{ driver.phone_number|default:driver.user.phone }}" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold">
+                    <i class="fa-solid fa-phone me-1"></i> {{ driver.phone_number|default:driver.user.phone|default:"Phone not provided" }}
+                  </a>
+                </td>
+              </tr>
+              {% if driver.upi_id %}
+              <tr class="border-bottom" style="border-color: #1E293B !important;">
+                <td class="text-white-50 small px-3 py-2"><i class="fa-solid fa-money-bill-transfer me-2 text-success"></i> Verified UPI ID</td>
+                <td class="px-3 py-2">
+                  <span class="badge bg-dark border border-success text-success px-3 py-1 font-monospace">
+                    {{ driver.upi_id }}
+                  </span>
+                </td>
+              </tr>
+              {% endif %}
+              <tr>
+                <td class="text-white-50 small px-3 py-2"><i class="fa-solid fa-shield-halved me-2 text-success"></i> Verification Status</td>
+                <td class="px-3 py-2">
+                  <span class="badge bg-success px-3 py-1 fw-bold">
+                    <i class="fa-solid fa-check me-1"></i> VERIFIED &amp; ACTIVE
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {% if driver.verification_token %}
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 pt-2">
+          <a href="{% url 'verify_driver_token' driver.verification_token %}" target="_blank" class="btn btn-outline-info rounded-pill px-3 fw-bold small">
+            <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> View Full Form 7 Safety Card
+          </a>
+          <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+        </div>
+        {% else %}
+        <div class="text-end pt-2">
+          <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+        </div>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -479,14 +490,37 @@
 {% block extra_css %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
-  .leaflet-container {
+  #live-trip-map {
     background: #0f172a !important;
   }
-  .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+  .leaflet-container {
+    background: #0f172a !important;
+    font-family: 'Inter', system-ui, sans-serif !important;
+  }
+  .leaflet-popup-content-wrapper {
     background: #131C2E !important;
     color: #FFFFFF !important;
-    border: 1px solid #3B82F6 !important;
+    border: 1px solid #334155 !important;
     border-radius: 12px !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;
+    padding: 4px !important;
+  }
+  .leaflet-popup-tip {
+    background: #131C2E !important;
+  }
+  .leaflet-control-zoom a {
+    background: #131C2E !important;
+    color: #FFFFFF !important;
+    border-color: #334155 !important;
+  }
+  .leaflet-control-zoom a:hover {
+    background: #1E293B !important;
+    color: #FF9800 !important;
+  }
+  .custom-car-marker-wrap, .custom-dest-marker-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   /* Pulse Ripple Effect for SOS Buttons */
@@ -506,13 +540,13 @@
     }
   }
 
-  /* Fixed Floating SOS Button Styles */
+  /* Fixed Floating SOS Button Styles (Cleanly positioned above mobile bottom appbar) */
   .fixed-sos-bottom-container {
     position: fixed;
-    bottom: 20px;
+    bottom: calc(76px + var(--sab));
     left: 50%;
     transform: translateX(-50%);
-    z-index: 9999;
+    z-index: 1025;
     width: calc(100% - 32px);
     max-width: 440px;
     text-align: center;
@@ -544,52 +578,20 @@
   @keyframes sosPulsingGlowKeyframe {
     0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.85), 0 10px 30px rgba(0, 0, 0, 0.6); transform: scale(1); }
     50% { box-shadow: 0 0 0 18px rgba(239, 68, 68, 0), 0 10px 30px rgba(0, 0, 0, 0.6); transform: scale(1.03); }
-  /* Custom Premium Dark Leaflet Popups */
-  .leaflet-popup-content-wrapper {
-    background: #131C2E !important;
-    color: #F8FAFC !important;
-    border: 1px solid #334155 !important;
-    border-radius: 12px !important;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.75) !important;
-    padding: 2px !important;
-  }
-  .leaflet-popup-tip-container {
-    overflow: visible !important;
-  }
-  .leaflet-popup-tip {
-    background: #131C2E !important;
-    border: 1px solid #334155 !important;
-    box-shadow: none !important;
-  }
-  .leaflet-popup-content {
-    margin: 10px 14px !important;
-    line-height: 1.45 !important;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
-    color: #F8FAFC !important;
-  }
-  .leaflet-container a.leaflet-popup-close-button {
-    color: #94A3B8 !important;
-    top: 8px !important;
-    right: 10px !important;
-    font-size: 18px !important;
-    line-height: 14px !important;
-    font-weight: 700 !important;
-    text-decoration: none !important;
-    transition: color 0.15s ease-in-out;
-  }
-  .leaflet-container a.leaflet-popup-close-button:hover {
-    color: #EF4444 !important;
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0), 0 10px 30px rgba(0, 0, 0, 0.6); transform: scale(1); }
   }
 </style>
 {% endblock %}
 
 {% block extra_js %}
+<!-- Leaflet JavaScript Library -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-  // Global Map & Telemetry Variables
+  // Global Leaflet & Telemetry Variables
   let lMap = null;
   let lMarker = null;
+  let lDestMarker = null;
   let lRouteLine = null;
   let watchId = null;
   let wakeLock = null;
@@ -623,64 +625,82 @@
     }
   }
 
-  // 1. Initialize Map View (Leaflet Esri Real-Time Telemetry Map)
+  // 1. Initialize Leaflet Map (High performance Esri World Street Map tiles - 100% free, zero watermark)
   let lHistory = [[currentLat, currentLng]];
 
   function initLiveTripMap() {
-    renderLeafletTripMap();
-  }
-
-  function renderLeafletTripMap() {
     const mapContainer = document.getElementById('live-trip-map');
-    if (!mapContainer) return;
+    if (!mapContainer || typeof L === 'undefined') return;
     mapContainer.innerHTML = '';
 
-    lMap = L.map('live-trip-map', {
-      zoomControl: true,
-      attributionControl: true
-    }).setView([currentLat, currentLng], 15);
+    try {
+      lMap = L.map('live-trip-map', {
+        zoomControl: false,
+        attributionControl: false
+      }).setView([currentLat, currentLng], 16);
 
-    // High performance Esri World Street Map tiles (Zero keys, no rate-limits, crisp road & highway rendering)
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Tiles &copy; Esri &mdash; SafeRide Real-Time GPS Telemetry',
-      maxZoom: 19
-    }).addTo(lMap);
+      L.control.zoom({ position: 'topright' }).addTo(lMap);
 
-    const markerColor = isDistressActive ? '#DC2626' : '#2563EB';
-    const carIcon = L.divIcon({
-      className: 'custom-car-marker',
-      html: `<div style="background:${markerColor}; width:38px; height:38px; border-radius:50%; border:3px solid #FFF; display:flex; align-items:center; justify-content:center; color:#FFF; font-size:17px; box-shadow:0 0 14px ${markerColor};"><i class="fa-solid fa-car-side"></i></div>`,
-      iconSize: [38, 38],
-      iconAnchor: [19, 19]
-    });
-
-    lMarker = L.marker([currentLat, currentLng], { icon: carIcon }).addTo(lMap);
-    lMarker.bindPopup(`
-      <div style="font-family: 'Inter', sans-serif; padding: 2px; color: #FFFFFF;">
-        <h6 style="margin:0 0 4px 0; font-weight:700; color:#60A5FA;">{{ driver.name|default:driver.user.username }}</h6>
-        <p style="margin:0 0 4px 0; font-size:12px; color:#E2E8F0;">Vehicle: <b>{{ vehicle.registration_number|default:driver.vehicle_number }}</b></p>
-        <span style="background:${isDistressActive ? '#DC2626' : '#065F46'}; color:#FFF; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:700;">${isDistressActive ? '🚨 SOS ACTIVE' : 'SafeRide GPS Live'}</span>
-      </div>
-    `).openPopup();
-
-    lRouteLine = L.polyline(lHistory, {
-      color: '#3B82F6',
-      weight: 5,
-      opacity: 0.85,
-      dashArray: '8, 8'
-    }).addTo(lMap);
-
-    if (destLat && destLng) {
-      const destIcon = L.divIcon({
-        className: 'custom-dest-marker',
-        html: `<div style="background:#DC2626; width:36px; height:36px; border-radius:50%; border:3px solid #FFF; display:flex; align-items:center; justify-content:center; color:#FFF; font-size:16px; box-shadow:0 0 12px #DC2626;"><i class="fa-solid fa-flag-checkered"></i></div>`,
-        iconSize: [36, 36],
-        iconAnchor: [18, 18]
+      const googleTileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        attribution: 'Map data &copy; Google'
       });
-      const destLMarker = L.marker([destLat, destLng], { icon: destIcon }).addTo(lMap);
-      destLMarker.bindPopup(`<b>Destination:</b> ${destName || 'Drop-off Location'}`);
-      const group = L.featureGroup([lMarker, destLMarker]);
-      lMap.fitBounds(group.getBounds().pad(0.25));
+      googleTileLayer.on('tileerror', function() {
+        if (!lMap._hasOsmFallback) {
+          lMap._hasOsmFallback = true;
+          L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+            maxZoom: 20,
+            subdomains: ['a', 'b', 'c'],
+            attribution: '&copy; OpenStreetMap contributors'
+          }).addTo(lMap);
+        }
+      });
+      googleTileLayer.addTo(lMap);
+
+      const markerColor = isDistressActive ? '#DC2626' : '#2563EB';
+      const carIcon = L.divIcon({
+        className: 'custom-car-marker-wrap',
+        html: `<div style="background:${markerColor}; width:38px; height:38px; border-radius:50%; border:3px solid #FFF; display:flex; align-items:center; justify-content:center; color:#FFF; font-size:17px; box-shadow:0 0 14px ${markerColor};"><i class="fa-solid fa-car-side"></i></div>`,
+        iconSize: [38, 38],
+        iconAnchor: [19, 19],
+        popupAnchor: [0, -20]
+      });
+
+      lMarker = L.marker([currentLat, currentLng], { icon: carIcon }).addTo(lMap);
+
+      const popupHtml = `
+        <div style="font-family: 'Inter', system-ui, sans-serif; padding: 2px; color: #FFFFFF;">
+          <h6 style="margin:0 0 4px 0; font-weight:700; color:#60A5FA;">{{ driver.name|default:driver.user.username }}</h6>
+          <p style="margin:0 0 4px 0; font-size:12px; color:#E2E8F0;">Vehicle: <b>{{ vehicle.registration_number|default:driver.vehicle_number }}</b></p>
+          <span style="background:${isDistressActive ? '#DC2626' : '#065F46'}; color:#FFF; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:700;">${isDistressActive ? '🚨 SOS ACTIVE' : 'SafeRide GPS Live'}</span>
+        </div>
+      `;
+      lMarker.bindPopup(popupHtml).openPopup();
+
+      lRouteLine = L.polyline(lHistory, {
+        color: '#3B82F6',
+        weight: 5,
+        opacity: 0.85
+      }).addTo(lMap);
+
+      if (destLat && destLng) {
+        const destIcon = L.divIcon({
+          className: 'custom-dest-marker-wrap',
+          html: `<div style="background:#DC2626; width:36px; height:36px; border-radius:50%; border:3px solid #FFF; display:flex; align-items:center; justify-content:center; color:#FFF; font-size:16px; box-shadow:0 0 12px #DC2626;"><i class="fa-solid fa-flag-checkered"></i></div>`,
+          iconSize: [36, 36],
+          iconAnchor: [18, 18],
+          popupAnchor: [0, -18]
+        });
+
+        lDestMarker = L.marker([destLat, destLng], { icon: destIcon }).addTo(lMap);
+        lDestMarker.bindPopup(`<div style="font-family:'Inter', system-ui, sans-serif; color:#FFF; padding:2px;"><b style="color:#60A5FA;">Destination:</b> <span style="color:#E2E8F0;">${destName || 'Drop-off Location'}</span></div>`);
+
+        const bounds = L.latLngBounds([[currentLat, currentLng], [destLat, destLng]]);
+        lMap.fitBounds(bounds, { padding: [50, 50] });
+      }
+    } catch (e) {
+      console.warn("Leaflet initialization error:", e);
     }
 
     fallbackReverseGeocode(currentLat, currentLng, (name) => {
@@ -715,7 +735,7 @@
     }
   });
 
-  // 3. Geolocation Tracking (Strict enableHighAccuracy: true, Zero IP fallback)
+  // 3. Geolocation Tracking (Strict enableHighAccuracy: true)
   function startContinuousGPSWatch() {
     if ("geolocation" in navigator) {
       watchId = navigator.geolocation.watchPosition(
@@ -806,6 +826,12 @@
       lHistory.push([lat, lng]);
       if (lRouteLine) lRouteLine.setLatLngs(lHistory);
       reverseGeocodePosition(lat, lng);
+    }
+
+    // Update Open Maps navigation link
+    const openGmaps = document.getElementById('open-gmaps-link');
+    if (openGmaps) {
+      openGmaps.href = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
     }
 
     const roundedAcc = Math.round(accuracy);
@@ -1220,6 +1246,19 @@
       modal.show();
     } else {
       copyShareUrlToClipboard();
+    }
+  }
+
+  function submitEndTripForm() {
+    const form = document.getElementById('end-trip-form');
+    if (!form) return;
+    if (typeof form.requestSubmit === 'function') {
+      form.requestSubmit();
+    } else {
+      const submitEvent = new Event('submit', { cancelable: true, bubbles: true });
+      if (form.dispatchEvent(submitEvent)) {
+        form.submit();
+      }
     }
   }
 

@@ -3,10 +3,10 @@
 {% block title %}VERIFIED DRIVER DETAILS - SafeRide{% endblock %}
 
 {% block content %}
-<div class="container py-5">
+<div class="container py-3 py-md-5">
   <div class="row g-4 justify-content-center">
-    <div class="col-12 col-lg-10 col-xl-9">
-      <div class="card rounded-4 border shadow-lg p-4 p-md-5" style="background-color: #131C2E !important;">
+    <div class="col-12 col-lg-11 col-xl-10">
+      <div class="card rounded-4 border shadow-lg p-3 p-sm-4 p-md-5" style="background-color: #131C2E !important;">
         
         <!-- Form Header (Form 7 Specification) -->
         <div class="text-center mb-4 border-bottom pb-3">
@@ -14,24 +14,24 @@
         </div>
 
         <!-- Driver Photo & Summary -->
-        <div class="row align-items-center g-4 pb-4 border-bottom mb-4">
+        <div class="row align-items-center g-3 pb-4 border-bottom mb-4">
           <div class="col-auto text-center">
             {% if driver.driver_photo %}
-            <img src="{{ driver.driver_photo.url }}" class="rounded-circle border border-4 border-success shadow" style="width: 110px; height: 110px; object-fit: cover;" alt="Driver Photo">
+            <img src="{{ driver.driver_photo.url }}" class="rounded-circle border border-4 border-success shadow" style="width: 105px; height: 105px; object-fit: cover;" alt="Driver Photo">
             {% else %}
-            <div class="rounded-circle shadow d-flex align-items-center justify-content-center text-white fw-bold fs-2" style="width: 110px; height: 110px; background: #065F46; border: 4px solid #10B981;">
+            <div class="rounded-circle shadow d-flex align-items-center justify-content-center text-white fw-bold fs-2" style="width: 105px; height: 105px; background: #065F46; border: 4px solid #10B981;">
               {{ driver.user.first_name|slice:":1" }}{{ driver.user.last_name|slice:":1"|default:"D" }}
             </div>
             {% endif %}
           </div>
 
           <div class="col">
-            <h3 class="fw-bold text-white mb-1">{{ driver.user.get_full_name|default:driver.user.username }}</h3>
+            <h3 class="fw-bold text-white mb-1 fs-4 fs-md-3">{{ driver.user.get_full_name|default:driver.user.username }}</h3>
             <div class="text-white small mb-1"><i class="fa-solid fa-phone me-1 text-warning"></i> {{ driver.phone_number|default:driver.user.phone|default:"Phone not provided" }}</div>
-            <div class="text-white small d-flex align-items-center gap-1"><i class="fa-solid fa-id-card text-info"></i> <span>License:</span> <span class="badge bg-dark border border-secondary text-white font-monospace px-2 py-1">{{ driver.license_number }}</span></div>
+            <div class="text-white small d-flex align-items-center gap-1 flex-wrap"><i class="fa-solid fa-id-card text-info"></i> <span>License:</span> <span class="badge bg-dark border border-secondary text-white font-monospace px-2 py-1">{{ driver.license_number }}</span></div>
           </div>
 
-          <div class="col-md-auto text-center border-start ps-md-4">
+          <div class="col-12 col-md-auto text-center border-top border-md-top-0 border-md-start pt-3 pt-md-0 ps-md-4 mt-3 mt-md-0">
             <div class="display-6 fw-bold text-success">{{ driver.reputation_score }}</div>
             <div class="small fw-bold text-white text-uppercase">Safety Score</div>
             <div class="mt-1" style="color: #FF9800;">
@@ -46,10 +46,10 @@
 
         <!-- Structured Details Table (Form 7 Exact Fields) -->
         <div class="table-responsive mb-4">
-          <table class="table table-borderless rounded-3 p-3 mb-0" style="background-color: #0F172A;">
+          <table class="table table-borderless rounded-3 p-3 mb-0 driver-details-table" style="background-color: #0F172A;">
             <tbody>
               <tr>
-                <th class="text-white fw-bold small text-nowrap" style="width: 200px;">Driver Name :</th>
+                <th class="text-white fw-bold small text-nowrap" style="width: 180px; max-width: 45%;">Driver Name :</th>
                 <td class="fw-bold text-white">{{ driver.user.get_full_name|default:driver.user.username }}</td>
               </tr>
               <tr>
@@ -147,186 +147,178 @@
           {% endif %}
         </div>
 
-        <!-- Regulated Fare Tariff Notice -->
-        <div class="p-3 rounded-3 mb-3 border d-flex justify-content-between align-items-center flex-wrap gap-2" style="background-color: #0F172A; border-color: #334155 !important;">
-          <div class="d-flex align-items-center gap-2">
-            <span class="rounded-circle d-inline-flex align-items-center justify-content-center text-warning" style="width: 36px; height: 36px; background: rgba(245, 158, 11, 0.15);">
-              <i class="fa-solid fa-indian-rupee-sign"></i>
-            </span>
-            <div>
-              <strong class="text-white small d-block">Government Regulated Fare Tariff</strong>
-              {% if 'taxi' in driver.vehicle_type or 'cab' in driver.vehicle_type %}
-                <span class="text-white opacity-75 small">₹200.00 Base Fare (first 5.0 km) + ₹18.00 per km thereafter</span>
-              {% else %}
-                <span class="text-white opacity-75 small">₹30.00 Base Fare (first 1.5 km) + ₹15.00 per km thereafter</span>
-              {% endif %}
-            </div>
-          </div>
-          <span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-50 px-3 py-1 font-monospace">
-            Metered GPS Transit
-          </span>
-        </div>
-
         <!-- Proceed with Trip Action (Form 7 Primary Action) -->
         <div class="pt-2">
           {% if user.is_authenticated and user.is_passenger_user %}
             <form action="{% url 'start_trip' driver.id %}" method="POST" id="start-trip-form">
               {% csrf_token %}
-              <div class="card rounded-3 p-3 mb-3 text-start shadow-sm" style="background-color: #131C2E; border: 1px solid #334155;">
-                <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
-                  <label class="form-label fw-bold text-white small mb-0">
-                    <i class="fa-solid fa-map-pin text-warning me-1"></i> 1. Boarding / Pickup Point:
-                  </label>
-                  <span id="boarding-gps-status-pill" class="badge border font-monospace py-1 px-2" style="background-color: #0F172A; border-color: #334155 !important; color: #FF9800; font-size: 11px;">
-                    <i class="fa-solid fa-satellite-dish me-1"></i> Detecting GPS...
-                  </span>
-                </div>
-
-                <!-- 1. Boarding / Pickup Point Input -->
-                <div class="position-relative mb-2">
-                  <div class="input-group">
-                    <span class="input-group-text border-end-0 text-white" style="background-color: #0F172A; border-color: #334155;">
-                      <i class="fa-solid fa-circle-dot text-warning"></i>
-                    </span>
-                    <input type="text" name="pickup_name" id="pickup_name" class="form-control text-white" style="background-color: #0F172A; border-color: #334155;" placeholder="Detecting your live GPS location..." value="" required autocomplete="off">
-                    <button class="btn btn-outline-secondary text-white-50" type="button" onclick="clearPickupInput()" title="Clear and type your exact address">
-                      <i class="fa-solid fa-xmark"></i>
-                    </button>
-                    <button class="btn btn-warning text-dark fw-bold px-3" type="button" onclick="recenterOnGps()" title="Lock to Live GPS">
-                      <i class="fa-solid fa-crosshairs me-1"></i> Live GPS
-                    </button>
-                  </div>
-                  <!-- Auto-Caption Suggestions Dropdown for Boarding -->
-                  <div id="pickup-suggestions-dropdown" class="place-suggestion-dropdown list-group position-absolute w-100 d-none" style="top: 100%; left: 0;"></div>
-                  <div class="form-text text-white-50 small mt-1" style="font-size: 0.76rem;">
-                    <i class="fa-solid fa-hand-pointer text-warning me-1"></i> Type your doorstep address above or drag the orange pin on the map.
-                  </div>
-                </div>
-
-                <!-- Live Precision GPS Status Banner (Grouped with Boarding Point) -->
-                <div id="gps-accuracy-alert" class="alert d-flex align-items-center gap-2 py-2 px-3 rounded-3 mb-2 small shadow-sm d-none" role="alert" style="border-width: 1px;">
-                  <i id="gps-accuracy-icon" class="fa-solid fa-satellite-dish fs-5 flex-shrink-0"></i>
-                  <div class="flex-grow-1" id="gps-accuracy-message">
-                    <strong>Acquiring high-precision GPS...</strong>
-                  </div>
-                  <button type="button" class="btn btn-sm btn-dark text-white rounded-pill px-2 py-0" onclick="detectUserLocation(false)" style="font-size: 0.72rem;">
-                    <i class="fa-solid fa-rotate me-1"></i> Refresh
-                  </button>
-                </div>
-
-                <input type="hidden" name="pickup_lat" id="pickup_lat" value="">
-                <input type="hidden" name="pickup_lng" id="pickup_lng" value="">
-                <input type="hidden" name="pickup_accuracy" id="pickup_accuracy" value="">
-
-                <!-- 2. Destination / Drop-off Location -->
-                <div class="mt-3 pt-2 border-top" style="border-color: #334155 !important;">
-                  <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
-                    <label class="form-label fw-bold text-white small mb-0" for="destination_name">
-                      <i class="fa-solid fa-flag-checkered text-danger me-1"></i> 2. Destination / Drop-off Location: <span class="text-danger">*</span>
-                    </label>
-                    <span class="badge bg-dark border text-info small font-monospace" id="dest-coords-badge">
-                      <i class="fa-solid fa-route me-1"></i> Drop Point
-                    </span>
-                  </div>
-
-                  <div class="position-relative mb-2">
-                    <div class="input-group">
-                      <span class="input-group-text border-end-0 text-white" style="background-color: #0F172A; border-color: #334155;">
-                        <i class="fa-solid fa-location-dot text-danger"></i>
+              
+              <!-- Responsive Layout: 2 Columns on Laptop/Desktop (≥ 992px), 1 Column Stack on Mobile (< 992px) -->
+              <div class="row g-3 mb-3">
+                
+                <!-- Left Column: Location Inputs, Tariff Estimate & Confirm (col-12 col-lg-6) -->
+                <div class="col-12 col-lg-6 d-flex flex-column gap-3">
+                  <div class="card rounded-3 p-3 text-start shadow-sm flex-grow-1" style="background-color: #0F172A; border: 1px solid #334155;">
+                    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
+                      <label class="form-label fw-bold text-white small mb-0">
+                        <i class="fa-solid fa-map-pin text-warning me-1"></i> 1. Boarding / Pickup Point:
+                      </label>
+                      <span id="boarding-gps-status-pill" class="badge border font-monospace py-1 px-2" style="background-color: #131C2E; border-color: #334155 !important; color: #FF9800; font-size: 11px;">
+                        <i class="fa-solid fa-satellite-dish me-1"></i> Detecting GPS...
                       </span>
-                      <input type="text" name="destination_name" id="destination_name" class="form-control text-white" style="background-color: #0F172A; border-color: #334155;" placeholder="Enter destination or search drop-off location..." autocomplete="off" required>
-                      <button class="btn btn-outline-secondary text-white-50" type="button" id="clear-dest-btn" onclick="clearDestination()" title="Clear destination">
-                        <i class="fa-solid fa-xmark"></i>
+                    </div>
+
+                    <!-- 1. Boarding / Pickup Point Input -->
+                    <div class="position-relative mb-2">
+                      <div class="input-group">
+                        <span class="input-group-text border-end-0 text-white" style="background-color: #131C2E; border-color: #334155;">
+                          <i class="fa-solid fa-circle-dot text-warning"></i>
+                        </span>
+                        <input type="text" name="pickup_name" id="pickup_name" class="form-control text-white" style="background-color: #131C2E; border-color: #334155;" placeholder="Detecting your live GPS location..." value="" required autocomplete="off">
+                        <button class="btn btn-outline-secondary text-white-50" type="button" onclick="clearPickupInput()" title="Clear and type your exact address">
+                          <i class="fa-solid fa-xmark"></i>
+                        </button>
+                        <button class="btn btn-warning text-dark fw-bold px-3" type="button" onclick="recenterOnGps()" title="Lock to Live GPS">
+                          <i class="fa-solid fa-crosshairs me-1"></i> Live GPS
+                        </button>
+                      </div>
+                      <!-- Auto-Caption Suggestions Dropdown for Boarding -->
+                      <div id="pickup-suggestions-dropdown" class="place-suggestion-dropdown list-group position-absolute w-100 d-none" style="top: 100%; left: 0; z-index: 1050;"></div>
+                    </div>
+
+                    <!-- Live Precision GPS Status Banner (Grouped with Boarding Point) -->
+                    <div id="gps-accuracy-alert" class="alert d-flex align-items-center gap-2 py-2 px-3 rounded-3 mb-2 small shadow-sm d-none" role="alert" style="border-width: 1px;">
+                      <i id="gps-accuracy-icon" class="fa-solid fa-satellite-dish fs-5 flex-shrink-0"></i>
+                      <div class="flex-grow-1" id="gps-accuracy-message">
+                        <strong>Acquiring high-precision GPS...</strong>
+                      </div>
+                      <button type="button" class="btn btn-sm btn-dark text-white rounded-pill px-2 py-0" onclick="detectUserLocation(false)" style="font-size: 0.72rem;">
+                        <i class="fa-solid fa-rotate me-1"></i> Refresh
                       </button>
                     </div>
-                    <!-- Auto-Caption Suggestions Dropdown for Destination -->
-                    <div id="dest-suggestions-dropdown" class="place-suggestion-dropdown list-group position-absolute w-100 d-none" style="top: 100%; left: 0;"></div>
-                    
-                    <div class="form-text text-white-50 small mt-1" style="font-size: 0.76rem;">
-                      <i class="fa-solid fa-circle-info text-info me-1"></i> Search drop-off destination above to calculate route fare and distance.
+
+                    <input type="hidden" name="pickup_lat" id="pickup_lat" value="">
+                    <input type="hidden" name="pickup_lng" id="pickup_lng" value="">
+                    <input type="hidden" name="pickup_accuracy" id="pickup_accuracy" value="">
+
+                    <!-- 2. Destination / Drop-off Location -->
+                    <div class="mt-3 pt-2 border-top" style="border-color: #334155 !important;">
+                      <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
+                        <label class="form-label fw-bold text-white small mb-0" for="destination_name">
+                          <i class="fa-solid fa-flag-checkered text-danger me-1"></i> 2. Destination / Drop-off Location: <span class="text-danger">*</span>
+                        </label>
+                        <span class="badge bg-dark border text-info small font-monospace" id="dest-coords-badge">
+                          <i class="fa-solid fa-route me-1"></i> Drop Point
+                        </span>
+                      </div>
+
+                      <div class="position-relative mb-2">
+                        <div class="input-group">
+                          <span class="input-group-text border-end-0 text-white" style="background-color: #131C2E; border-color: #334155;">
+                            <i class="fa-solid fa-location-dot text-danger"></i>
+                          </span>
+                          <input type="text" name="destination_name" id="destination_name" class="form-control text-white" style="background-color: #131C2E; border-color: #334155;" placeholder="Enter destination or search drop-off location..." autocomplete="off" required>
+                          <button class="btn btn-outline-secondary text-white-50" type="button" id="clear-dest-btn" onclick="clearDestination()" title="Clear destination">
+                            <i class="fa-solid fa-xmark"></i>
+                          </button>
+                        </div>
+                        <!-- Auto-Caption Suggestions Dropdown for Destination -->
+                        <div id="dest-suggestions-dropdown" class="place-suggestion-dropdown list-group position-absolute w-100 d-none" style="top: 100%; left: 0; z-index: 1050;"></div>
+                        
+                        <div class="form-text text-white-50 small mt-1" style="font-size: 0.76rem;">
+                          <i class="fa-solid fa-circle-info text-info me-1"></i> Search drop-off destination above to calculate route fare and distance.
+                        </div>
+                      </div>
+
+                      <input type="hidden" name="destination_lat" id="destination_lat" value="">
+                      <input type="hidden" name="destination_lng" id="destination_lng" value="">
                     </div>
                   </div>
 
-                  <input type="hidden" name="destination_lat" id="destination_lat" value="">
-                  <input type="hidden" name="destination_lng" id="destination_lng" value="">
-                </div>
-
-                <!-- Interactive Boarding & Destination Map Viewfinder -->
-                <div id="boarding-map-container" class="rounded-3 overflow-hidden border mb-2 position-relative shadow-sm" style="height: 290px; width: 100%; border-color: #334155 !important; background: #0F172A;">
-                  <div id="map-loading-spinner" class="position-absolute top-50 start-50 translate-middle text-white small opacity-75 text-center">
-                    <span class="spinner-border spinner-border-sm text-warning mb-1"></span><br>Detecting high-precision GPS & loading map...
+                  <!-- Live Route, Distance & Government Meter Fare Estimate Card -->
+                  <div id="route-fare-estimate-card" class="card rounded-3 p-3 border shadow-sm d-none" style="background: linear-gradient(135deg, #131C2E, #0F172A); border-color: #334155 !important;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-50 small fw-bold">
+                        <i class="fa-solid fa-calculator me-1"></i> TRIP ESTIMATE
+                      </span>
+                      <span class="text-white-50 small font-monospace" style="font-size: 0.72rem;">Govt. MVD Regulated Tariff</span>
+                    </div>
+                    <div class="row g-2 text-center">
+                      <div class="col-4">
+                        <div class="p-2 rounded-2 border border-secondary border-opacity-25" style="background: rgba(15, 23, 42, 0.6);">
+                          <span class="text-white-50 d-block small" style="font-size: 0.7rem;">DISTANCE</span>
+                          <strong class="text-white font-monospace" id="estimate-dist-text">0.0 km</strong>
+                        </div>
+                      </div>
+                      <div class="col-4">
+                        <div class="p-2 rounded-2 border border-secondary border-opacity-25" style="background: rgba(15, 23, 42, 0.6);">
+                          <span class="text-white-50 d-block small" style="font-size: 0.7rem;">EST. TIME</span>
+                          <strong class="text-info font-monospace" id="estimate-time-text">~0 mins</strong>
+                        </div>
+                      </div>
+                      <div class="col-4">
+                        <div class="p-2 rounded-2 border border-warning border-opacity-50" style="background: rgba(255, 152, 0, 0.08);">
+                          <span class="text-warning d-block small fw-bold" style="font-size: 0.7rem;">EST. FARE</span>
+                          <strong class="text-warning font-monospace fs-6" id="estimate-fare-text">₹30.00</strong>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="text-white opacity-75 small mt-2 d-flex align-items-center justify-content-between" style="font-size: 0.72rem;">
+                      <span><i class="fa-solid fa-circle-check text-success me-1"></i> Fixed Meter Rates</span>
+                      <span id="vehicle-rate-pill" class="text-white-50 font-monospace">Auto: ₹30 min (1.5 km) + ₹15/km</span>
+                    </div>
                   </div>
-                </div>
 
-                <!-- Real-Time GPS Precision Telemetry Bar -->
-                <div class="d-flex align-items-center justify-content-between text-muted small flex-wrap gap-2 pt-1">
-                  <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <span id="coords-status" class="badge bg-dark border text-warning font-monospace py-1 px-2">
-                      <i class="fa-solid fa-crosshairs text-warning me-1"></i> Lat: --, Lng: --
-                    </span>
-                    <span id="accuracy-pill" class="badge bg-secondary bg-opacity-25 text-white border border-secondary py-1 px-2">
-                      <i class="fa-solid fa-bullseye me-1"></i> Accuracy: -- m
-                    </span>
+                  <!-- Live Location Sharing Checkbox (Form 7 Safety Feature) -->
+                  <div class="card p-3 rounded-3 text-start shadow-sm" style="background-color: #0F172A; border: 1px solid #334155;">
+                    <div class="form-check form-switch d-flex align-items-center gap-2 mb-0">
+                      <input class="form-check-input" type="checkbox" role="switch" id="live_location_sharing" name="live_location_sharing" value="true" checked style="cursor: pointer; width: 2.5em; height: 1.3em;">
+                      <label class="form-check-label text-white fw-bold small mb-0" for="live_location_sharing" style="cursor: pointer;">
+                        <i class="fa-solid fa-satellite-dish text-success me-1 fa-beat"></i> Enable Live Location Sharing
+                      </label>
+                    </div>
                   </div>
-                  <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="btn btn-sm btn-outline-warning text-warning rounded-pill py-0 px-2" style="font-size: 0.72rem;" onclick="recenterOnGps()" title="Center map on live GPS">
-                      <i class="fa-solid fa-crosshairs me-1"></i> Recenter GPS
+
+                  <!-- Proceed with Trip Action -->
+                  <div class="text-center pt-1">
+                    <button type="submit" class="btn btn-primary btn-lg fw-bold w-100 rounded-pill shadow text-uppercase py-3">
+                      <i class="fa-solid fa-shield-halved me-2"></i> PROCEED WITH TRIP
                     </button>
                   </div>
                 </div>
-              </div>
 
-              <!-- Live Route, Distance & Government Meter Fare Estimate Card -->
-              <div id="route-fare-estimate-card" class="card rounded-3 p-3 mb-3 border shadow-sm d-none" style="background: linear-gradient(135deg, #131C2E, #0F172A); border-color: #334155 !important;">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                  <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-50 small fw-bold">
-                    <i class="fa-solid fa-calculator me-1"></i> TRIP ESTIMATE
-                  </span>
-                  <span class="text-white-50 small font-monospace" style="font-size: 0.72rem;">Govt. MVD Regulated Tariff</span>
-                </div>
-                <div class="row g-2 text-center">
-                  <div class="col-4">
-                    <div class="p-2 rounded-2 border border-secondary border-opacity-25" style="background: rgba(15, 23, 42, 0.6);">
-                      <span class="text-white-50 d-block small" style="font-size: 0.7rem;">DISTANCE</span>
-                      <strong class="text-white font-monospace" id="estimate-dist-text">0.0 km</strong>
+                <!-- Right Column: Interactive Boarding & Destination Map Viewfinder (col-12 col-lg-6) -->
+                <div class="col-12 col-lg-6 d-flex flex-column">
+                  <div class="card rounded-3 p-3 shadow-sm h-100 d-flex flex-column" style="background-color: #0F172A; border: 1px solid #334155;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <label class="form-label fw-bold text-white small mb-0">
+                        <i class="fa-solid fa-map-location-dot text-warning me-1"></i> Live Pickup & Route Map:
+                      </label>
+                      <button type="button" class="btn btn-sm btn-outline-warning text-warning rounded-pill py-0 px-2" style="font-size: 0.72rem;" onclick="recenterOnGps()" title="Center map on live GPS">
+                        <i class="fa-solid fa-crosshairs me-1"></i> Recenter
+                      </button>
+                    </div>
+
+                    <div id="boarding-map-container" class="rounded-3 overflow-hidden border mb-2 position-relative shadow-sm flex-grow-1" style="min-height: 350px; border-color: #334155 !important; background: #090D16;">
+                      <div id="map-loading-spinner" class="position-absolute top-50 start-50 translate-middle text-white small opacity-75 text-center">
+                        <span class="spinner-border spinner-border-sm text-warning mb-1"></span><br>Detecting high-precision GPS & loading map...
+                      </div>
+                    </div>
+
+                    <!-- Real-Time GPS Precision Telemetry Bar -->
+                    <div class="d-flex align-items-center justify-content-between text-muted small flex-wrap gap-2 pt-1 mt-auto">
+                      <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <span id="coords-status" class="badge bg-dark border text-warning font-monospace py-1 px-2">
+                          <i class="fa-solid fa-crosshairs text-warning me-1"></i> Lat: --, Lng: --
+                        </span>
+                        <span id="accuracy-pill" class="badge bg-secondary bg-opacity-25 text-white border border-secondary py-1 px-2">
+                          <i class="fa-solid fa-bullseye me-1"></i> Accuracy: -- m
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <div class="col-4">
-                    <div class="p-2 rounded-2 border border-secondary border-opacity-25" style="background: rgba(15, 23, 42, 0.6);">
-                      <span class="text-white-50 d-block small" style="font-size: 0.7rem;">EST. TIME</span>
-                      <strong class="text-info font-monospace" id="estimate-time-text">~0 mins</strong>
-                    </div>
-                  </div>
-                  <div class="col-4">
-                    <div class="p-2 rounded-2 border border-warning border-opacity-50" style="background: rgba(255, 152, 0, 0.08);">
-                      <span class="text-warning d-block small fw-bold" style="font-size: 0.7rem;">EST. FARE</span>
-                      <strong class="text-warning font-monospace fs-6" id="estimate-fare-text">₹30.00</strong>
-                    </div>
-                  </div>
                 </div>
-                <div class="text-white opacity-75 small mt-2 d-flex align-items-center justify-content-between" style="font-size: 0.72rem;">
-                  <span><i class="fa-solid fa-circle-check text-success me-1"></i> Fixed Meter Rates</span>
-                  <span id="vehicle-rate-pill" class="text-white-50 font-monospace">Auto: ₹30 min (1.5 km) + ₹15/km</span>
-                </div>
-              </div>
 
-              <!-- Live Location Sharing Checkbox (Form 7 Safety Feature) -->
-              <div class="card p-3 mb-3 rounded-3 text-start shadow-sm" style="background-color: #0F172A; border: 1px solid #334155;">
-                <div class="form-check form-switch d-flex align-items-center gap-2 mb-1">
-                  <input class="form-check-input" type="checkbox" role="switch" id="live_location_sharing" name="live_location_sharing" value="true" checked style="cursor: pointer; width: 2.5em; height: 1.3em;">
-                  <label class="form-check-label text-white fw-bold small mb-0" for="live_location_sharing" style="cursor: pointer;">
-                    <i class="fa-solid fa-satellite-dish text-success me-1 fa-beat"></i> Enable Live Location Sharing
-                  </label>
-                </div>
-                <div class="text-white opacity-75 small ps-4 ms-2">
-                  Transmits live GPS coordinates and route telemetry to your designated emergency contact and SafeRide safety monitors throughout the trip.
-                </div>
-              </div>
-
-              <div class="text-center">
-                <button type="submit" class="btn btn-primary btn-lg fw-bold px-5 rounded-pill shadow text-uppercase">
-                  <i class="fa-solid fa-shield-halved me-2"></i> PROCEED WITH TRIP
-                </button>
               </div>
             </form>
           {% elif user.is_authenticated %}
@@ -351,102 +343,96 @@
 {% endblock %}
 
 {% block extra_css %}
-<!-- Leaflet CSS Fallback -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
-.pac-container {
-  z-index: 99999 !important;
-  background-color: #131C2E !important;
-  border: 1px solid #334155 !important;
-  border-radius: 8px !important;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;
-  font-family: 'Inter', sans-serif !important;
-}
-.pac-item {
-  color: #E2E8F0 !important;
-  border-top-color: #1E293B !important;
-  padding: 8px 12px !important;
-}
-.pac-item:hover {
-  background-color: #1E293B !important;
-}
-.pac-item-query {
-  color: #FF9800 !important;
-}
-.pac-matched {
-  font-weight: 700 !important;
-  color: #60A5FA !important;
-}
-.place-suggestion-dropdown {
-  z-index: 99999 !important;
-  background-color: #131C2E !important;
-  border: 1px solid #334155 !important;
-  border-radius: 10px !important;
-  box-shadow: 0 14px 35px rgba(0,0,0,0.65) !important;
-  max-height: 280px;
-  overflow-y: auto;
-}
-.place-suggestion-item {
-  background-color: #131C2E !important;
-  border-bottom: 1px solid #1E293B !important;
-  color: #FFFFFF !important;
-  transition: all 0.15s ease-in-out;
-  cursor: pointer;
-  text-decoration: none !important;
-}
-.place-suggestion-item:last-child {
-  border-bottom: none !important;
-}
-.place-suggestion-item:hover, .place-suggestion-item.active {
-  background-color: #1E293B !important;
-  border-left: 3px solid #FF9800 !important;
-}
-.place-suggestion-item:hover strong, .place-suggestion-item.active strong {
-  color: #FF9800 !important;
-}
+  /* Leaflet Dark Container & InfoWindow Custom Styling */
+  #boarding-map-container {
+    background-color: #0f172a !important;
+  }
 
-/* Custom Premium Dark Leaflet Popups */
-.leaflet-popup-content-wrapper {
-  background: #131C2E !important;
-  color: #F8FAFC !important;
-  border: 1px solid #334155 !important;
-  border-radius: 12px !important;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.75) !important;
-  padding: 2px !important;
-}
-.leaflet-popup-tip-container {
-  overflow: visible !important;
-}
-.leaflet-popup-tip {
-  background: #131C2E !important;
-  border: 1px solid #334155 !important;
-  box-shadow: none !important;
-}
-.leaflet-popup-content {
-  margin: 10px 14px !important;
-  line-height: 1.45 !important;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
-  color: #F8FAFC !important;
-}
-.leaflet-container a.leaflet-popup-close-button {
-  color: #94A3B8 !important;
-  top: 8px !important;
-  right: 10px !important;
-  font-size: 18px !important;
-  line-height: 14px !important;
-  font-weight: 700 !important;
-  text-decoration: none !important;
-  transition: color 0.15s ease-in-out;
-}
-.leaflet-container a.leaflet-popup-close-button:hover {
-  color: #EF4444 !important;
-}
+  .leaflet-container {
+    background: #0f172a !important;
+    font-family: 'Inter', sans-serif !important;
+  }
 
+  .leaflet-popup-content-wrapper {
+    background-color: #131C2E !important;
+    color: #F8FAFC !important;
+    border: 1px solid #334155 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.75) !important;
+  }
+
+  .leaflet-popup-tip {
+    background-color: #131C2E !important;
+  }
+
+  .pac-container {
+    z-index: 99999 !important;
+    background-color: #131C2E !important;
+    border: 1px solid #334155 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+    font-family: 'Inter', sans-serif !important;
+  }
+
+  .pac-item {
+    color: #E2E8F0 !important;
+    border-top-color: #1E293B !important;
+    padding: 8px 12px !important;
+  }
+
+  .pac-item:hover {
+    background-color: #1E293B !important;
+  }
+
+  .pac-item-query {
+    color: #FF9800 !important;
+  }
+
+  .pac-matched {
+    font-weight: 700 !important;
+    color: #60A5FA !important;
+  }
+
+  .place-suggestion-dropdown {
+    z-index: 99999 !important;
+    background-color: #131C2E !important;
+    border: 1px solid #334155 !important;
+    border-radius: 10px !important;
+    box-shadow: 0 14px 35px rgba(0, 0, 0, 0.65) !important;
+    max-height: 280px;
+    overflow-y: auto;
+  }
+
+  .place-suggestion-item {
+    background-color: #131C2E !important;
+    border-bottom: 1px solid #1E293B !important;
+    color: #FFFFFF !important;
+    transition: all 0.15s ease-in-out;
+    cursor: pointer;
+    text-decoration: none !important;
+  }
+
+  .place-suggestion-item:last-child {
+    border-bottom: none !important;
+  }
+
+  .place-suggestion-item:hover,
+  .place-suggestion-item.active {
+    background-color: #1E293B !important;
+    border-left: 3px solid #FF9800 !important;
+  }
+
+  .place-suggestion-item:hover strong,
+  .place-suggestion-item.active strong {
+    color: #FF9800 !important;
+  }
 </style>
 {% endblock %}
 
 {% block extra_js %}
-<!-- Leaflet Map JS -->
+<!-- Leaflet JavaScript Library -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
@@ -767,11 +753,11 @@
       badgeHtml = `<span class="badge border" style="background-color: #92400E; color: #FFFFFF; border-color: #FF9800 !important; font-size: 11px;"><i class="fa-solid fa-triangle-exclamation me-1"></i> ±${roundedAcc}m Coarse</span>`;
     }
 
-    const helperText = isManualPin 
-      ? '<span style="color:#10B981;"><i class="fa-solid fa-circle-check me-1"></i> Doorstep locked. Ready to proceed.</span>'
-      : (roundedAcc > 65 
-          ? '<span style="color:#FFB74D;"><i class="fa-solid fa-hand-pointer me-1"></i> Drag pin to doorstep.</span>'
-          : '<span style="color:#E2E8F0;"><i class="fa-solid fa-hand-pointer me-1 text-warning"></i> Drag orange pin to refine spot.</span>');
+    const helperText = isManualPin
+      ? '<span style="color:#10B981;"><i class="fa-solid fa-circle-check me-1"></i> Pickup spot locked. Ready to proceed.</span>'
+      : (roundedAcc > 65
+        ? '<span style="color:#FFB74D;"><i class="fa-solid fa-hand-pointer me-1"></i> Drag pin to pickup location.</span>'
+        : '<span style="color:#E2E8F0;"><i class="fa-solid fa-hand-pointer me-1 text-warning"></i> Drag orange pin to refine spot.</span>');
 
     return `
       <div style="font-family: 'Inter', system-ui, sans-serif; color: #FFFFFF; min-width: 230px; max-width: 290px;">
@@ -815,7 +801,7 @@
   }
 
   // 2. Initialize Leaflet Map Viewfinder
-  function initBoardingMap(lat, lng) {
+  function initBoardingMap(lat, lng, isDefaultFallback = false) {
     const mapDiv = document.getElementById('boarding-map-container');
     if (!mapDiv || typeof L === 'undefined') return;
 
@@ -823,17 +809,29 @@
     if (spinner) spinner.style.display = 'none';
 
     if (!leafletMap) {
-      leafletMap = L.map('boarding-map-container', { 
+      leafletMap = L.map('boarding-map-container', {
         zoomControl: false,
         attributionControl: false
-      }).setView([lat, lng], 17);
+      }).setView([lat, lng], isDefaultFallback ? 14 : 17);
 
       L.control.zoom({ position: 'bottomright' }).addTo(leafletMap);
 
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri &mdash; SafeRide Real-Time GPS',
-        maxZoom: 19
-      }).addTo(leafletMap);
+      const googleTileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        attribution: 'Map data &copy; Google'
+      });
+      googleTileLayer.on('tileerror', function () {
+        if (!leafletMap._hasOsmFallback) {
+          leafletMap._hasOsmFallback = true;
+          L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+            maxZoom: 20,
+            subdomains: ['a', 'b', 'c'],
+            attribution: '&copy; OpenStreetMap contributors'
+          }).addTo(leafletMap);
+        }
+      });
+      googleTileLayer.addTo(leafletMap);
 
       const customIcon = L.divIcon({
         className: 'boarding-marker-pin',
@@ -844,22 +842,42 @@
       });
 
       leafletMarker = L.marker([lat, lng], { icon: customIcon, draggable: true }).addTo(leafletMap);
-      updateBoardingMarkerPopup(document.getElementById('pickup_name')?.value || "Current Boarding Spot", lastGpsAccuracy, userManuallyMovedPin);
 
-      leafletMarker.on('dragstart', function() {
+      if (!isDefaultFallback) {
+        updateBoardingMarkerPopup(document.getElementById('pickup_name')?.value || "Current Boarding Spot", lastGpsAccuracy, userManuallyMovedPin);
+
+        if (!document.getElementById('pickup_name').value) {
+          reverseGeocodeCoordinates(lat, lng);
+        }
+        if (!document.getElementById('pickup_lat').value) {
+          document.getElementById('pickup_lat').value = lat;
+          document.getElementById('pickup_lng').value = lng;
+          const coordsStatus = document.getElementById('coords-status');
+          if (coordsStatus) {
+            coordsStatus.innerHTML = `<i class="fa-solid fa-location-dot text-info me-1"></i> Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}`;
+          }
+        }
+      } else {
+        const coordsStatus = document.getElementById('coords-status');
+        if (coordsStatus && !document.getElementById('pickup_lat').value) {
+          coordsStatus.innerHTML = `<i class="fa-solid fa-satellite-dish fa-fade text-warning me-1"></i> Acquiring live GPS...`;
+        }
+      }
+
+      leafletMarker.on('dragstart', function () {
         userManuallyMovedPin = true;
         followGps = false;
         updateBoardingGpsStatusPill(0, true);
       });
 
-      leafletMarker.on('dragend', function(e) {
+      leafletMarker.on('dragend', function (e) {
         userManuallyMovedPin = true;
         followGps = false;
         const coord = e.target.getLatLng();
         document.getElementById('pickup_lat').value = coord.lat;
         document.getElementById('pickup_lng').value = coord.lng;
         reverseGeocodeCoordinates(coord.lat, coord.lng);
-        showGpsStatus("info", `<strong>Doorstep Pin Placed:</strong> Boarding spot locked at ${coord.lat.toFixed(5)}, ${coord.lng.toFixed(5)}. <a href="javascript:recenterOnGps()" class="alert-link ms-2"><i class="fa-solid fa-crosshairs me-1"></i>Click refresh to resume Live GPS.</a>`);
+        showGpsStatus("info", `<strong>Pickup Pin Placed:</strong> Boarding spot locked at ${coord.lat.toFixed(5)}, ${coord.lng.toFixed(5)}. <a href="javascript:recenterOnGps()" class="alert-link ms-2"><i class="fa-solid fa-crosshairs me-1"></i>Click refresh to resume Live GPS.</a>`);
         updateGpsAccuracyDisplay(coord.lat, coord.lng, 0);
         updateBoardingGpsStatusPill(0, true);
         if (leafletRouteLine && leafletDestMarker) {
@@ -868,7 +886,7 @@
         }
       });
 
-      leafletMap.on('click', function(e) {
+      leafletMap.on('click', function (e) {
         userManuallyMovedPin = true;
         followGps = false;
         leafletMarker.setLatLng(e.latlng);
@@ -876,7 +894,7 @@
         document.getElementById('pickup_lng').value = e.latlng.lng;
         updateBoardingGpsStatusPill(0, true);
         reverseGeocodeCoordinates(e.latlng.lat, e.latlng.lng);
-        showGpsStatus("info", `<strong>Doorstep Pin Placed:</strong> Boarding spot locked at ${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}. <a href="javascript:recenterOnGps()" class="alert-link ms-2"><i class="fa-solid fa-crosshairs me-1"></i>Click refresh to resume Live GPS.</a>`);
+        showGpsStatus("info", `<strong>Pickup Pin Placed:</strong> Boarding spot locked at ${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}. <a href="javascript:recenterOnGps()" class="alert-link ms-2"><i class="fa-solid fa-crosshairs me-1"></i>Click refresh to resume Live GPS.</a>`);
         updateGpsAccuracyDisplay(e.latlng.lat, e.latlng.lng, 0);
         if (leafletRouteLine && leafletDestMarker) {
           leafletRouteLine.setLatLngs([e.latlng, leafletDestMarker.getLatLng()]);
@@ -884,7 +902,7 @@
         }
       });
     } else {
-      leafletMap.setView([lat, lng], 17);
+      leafletMap.setView([lat, lng], isDefaultFallback ? 14 : 17);
       if (leafletMarker) leafletMarker.setLatLng([lat, lng]);
     }
   }
@@ -984,18 +1002,18 @@
 
     const accPill = document.getElementById('accuracy-pill');
     if (accPill) {
-      accPill.innerHTML = `<i class="fa-solid fa-location-crosshairs text-info me-1"></i> Pinpointed Doorstep`;
+      accPill.innerHTML = `<i class="fa-solid fa-location-crosshairs text-info me-1"></i> Pinpointed Pickup`;
       accPill.className = 'badge bg-primary bg-opacity-25 text-info border border-primary py-1 px-2';
     }
 
-    showGpsStatus("info", `<strong>Doorstep Pin Placed:</strong> Boarding spot locked at ${escapeHtml(addressName || 'selected location')}. <a href="javascript:recenterOnGps()" class="alert-link ms-2"><i class="fa-solid fa-crosshairs me-1"></i>Click refresh to resume Live GPS.</a>`);
+    showGpsStatus("info", `<strong>Pickup Pin Placed:</strong> Boarding spot locked at ${escapeHtml(addressName || 'selected location')}. <a href="javascript:recenterOnGps()" class="alert-link ms-2"><i class="fa-solid fa-crosshairs me-1"></i>Click refresh to resume Live GPS.</a>`);
 
-    if (leafletMap && typeof L !== 'undefined') {
+    if (leafletMap) {
       if (!leafletMarker) {
         initBoardingMap(lat, lng);
       } else {
         leafletMarker.setLatLng([lat, lng]);
-        leafletMap.setView([lat, lng], 17);
+        leafletMap.panTo([lat, lng]);
       }
       updateBoardingMarkerPopup(addressName || `${lat.toFixed(5)}, ${lng.toFixed(5)}`, 0, true);
 
@@ -1003,8 +1021,7 @@
         if (leafletRouteLine) {
           leafletRouteLine.setLatLngs([[lat, lng], leafletDestMarker.getLatLng()]);
         }
-        const group = L.featureGroup([leafletMarker, leafletDestMarker]);
-        leafletMap.fitBounds(group.getBounds().pad(0.2));
+        leafletMap.fitBounds(L.latLngBounds([[lat, lng], leafletDestMarker.getLatLng()]), { padding: [40, 40] });
       }
     } else {
       initBoardingMap(lat, lng);
@@ -1035,42 +1052,42 @@
 
     updateLiveRouteEstimate(lat, lng);
 
-    if (leafletMap && typeof L !== 'undefined') {
+    if (leafletMap) {
+      const destIcon = L.divIcon({
+        className: 'dest-marker-pin',
+        html: '<div style="background:#EF4444; width:28px; height:28px; border-radius:50%; border:3px solid #FFF; box-shadow:0 0 12px #EF4444; display:flex; align-items:center; justify-content:center; color:#FFF; font-size:13px; cursor:grab;"><i class="fa-solid fa-flag"></i></div>',
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
+        popupAnchor: [0, -16]
+      });
+
       if (!leafletDestMarker) {
-        const destIcon = L.divIcon({
-          className: 'dest-marker-pin',
-          html: '<div style="background:#EF4444; width:26px; height:26px; border-radius:50%; border:3px solid #FFF; box-shadow:0 0 12px #EF4444; display:flex; align-items:center; justify-content:center; color:#FFF; font-size:12px;"><i class="fa-solid fa-flag"></i></div>',
-          iconSize: [26, 26],
-          iconAnchor: [13, 13],
-          popupAnchor: [0, -16]
-        });
         leafletDestMarker = L.marker([lat, lng], { icon: destIcon, draggable: true }).addTo(leafletMap);
         leafletDestMarker.bindPopup(buildDestPopupHtml(addressName || 'Selected Drop-off')).openPopup();
-        leafletDestMarker.on('dragend', function(e) {
+
+        leafletDestMarker.on('dragend', function (e) {
           const coord = e.target.getLatLng();
+          setDestinationLocation(coord.lat, coord.lng, '');
           reverseGeocodeDestination(coord.lat, coord.lng);
         });
       } else {
         leafletDestMarker.setLatLng([lat, lng]);
-        leafletDestMarker.addTo(leafletMap);
-        leafletDestMarker.bindPopup(buildDestPopupHtml(addressName || 'Selected Drop-off')).openPopup();
+        leafletDestMarker.setPopupContent(buildDestPopupHtml(addressName || 'Selected Drop-off')).openPopup();
       }
 
       if (leafletMarker) {
-        const pickupLatLng = leafletMarker.getLatLng();
+        const mPos = leafletMarker.getLatLng();
         if (leafletRouteLine) {
-          leafletRouteLine.setLatLngs([pickupLatLng, [lat, lng]]);
+          leafletRouteLine.setLatLngs([mPos, [lat, lng]]);
         } else {
-          leafletRouteLine = L.polyline([pickupLatLng, [lat, lng]], {
+          leafletRouteLine = L.polyline([mPos, [lat, lng]], {
             color: '#3B82F6',
             weight: 4,
-            dashArray: '6, 8',
-            opacity: 0.9
+            opacity: 0.9,
+            dashArray: '8, 8'
           }).addTo(leafletMap);
         }
-
-        const group = L.featureGroup([leafletMarker, leafletDestMarker]);
-        leafletMap.fitBounds(group.getBounds().pad(0.2));
+        leafletMap.fitBounds(L.latLngBounds([mPos, [lat, lng]]), { padding: [40, 40] });
       } else {
         leafletMap.panTo([lat, lng]);
       }
@@ -1094,17 +1111,16 @@
     const estimateCard = document.getElementById('route-fare-estimate-card');
     if (estimateCard) estimateCard.classList.add('d-none');
 
-    if (leafletRouteLine && leafletMap) {
+    if (leafletRouteLine) {
       leafletMap.removeLayer(leafletRouteLine);
       leafletRouteLine = null;
     }
-    if (leafletDestMarker && leafletMap) {
+    if (leafletDestMarker) {
       leafletMap.removeLayer(leafletDestMarker);
       leafletDestMarker = null;
     }
     if (leafletMarker && leafletMap) {
-      leafletMap.panTo(leafletMarker.getLatLng());
-      leafletMap.setZoom(17);
+      leafletMap.setView(leafletMarker.getLatLng(), 17);
     }
   }
 
@@ -1130,7 +1146,7 @@
           const cleanName = data.display_name.split(',').slice(0, 3).join(',').trim();
           destName.value = cleanName;
           if (leafletDestMarker) {
-            leafletDestMarker.bindPopup(buildDestPopupHtml(cleanName)).openPopup();
+            leafletDestMarker.setPopupContent(buildDestPopupHtml(cleanName)).openPopup();
           }
         }
       })
@@ -1143,8 +1159,8 @@
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return Math.round(R * c * 10) / 10;
   }
@@ -1193,10 +1209,13 @@
     }
   }
 
-  // 5. Continuous Real-Time High-Accuracy GPS Engine (enableHighAccuracy: true, Zero IP fallback)
+  // 5. Intelligent Multi-Tier GPS Engine (High-Accuracy GPS -> Network Location -> IP City Fallback)
   function startContinuousGpsTracking() {
+    showGpsStatus("info", `<strong><i class="fa-solid fa-satellite-dish fa-fade me-1 text-warning"></i> Acquiring Live GPS:</strong> Detecting your exact pickup location...`);
+
     if (!("geolocation" in navigator)) {
-      showGpsStatus("danger", "<strong>Geolocation Unsupported:</strong> Your browser does not support HTML5 Geolocation.");
+      showGpsStatus("warning", "<strong>Device GPS Unavailable:</strong> Geolocation not supported by browser. Centering using network location...");
+      fetchIpLocationFallback();
       return;
     }
 
@@ -1207,36 +1226,105 @@
         permissionStatus.onchange = () => {
           handlePermissionState(permissionStatus.state);
         };
-      }).catch(() => {});
+      }).catch(() => { });
     }
 
-    const gpsOptions = {
-      enableHighAccuracy: true,
-      timeout: 30000, // 30s gives device enough time without false timeout warnings
-      maximumAge: 0   // Fresh position, zero cached data
-    };
+    let initialFixReceived = false;
 
+    // Tier 1: Fast High-Accuracy check (6s timeout)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        initialFixReceived = true;
+        handleGpsPositionUpdate(pos, true);
+      },
+      (err) => {
+        console.warn("High-accuracy GPS request error, trying standard network location...", err);
+        if (!initialFixReceived && !userManuallyMovedPin) {
+          // Tier 2: Standard accuracy (fast Wi-Fi / cell triangulation, 5s timeout)
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              initialFixReceived = true;
+              handleGpsPositionUpdate(pos, true);
+            },
+            (err2) => {
+              console.warn("Standard geolocation error, attempting IP geolocation fallback...", err2);
+              if (!initialFixReceived && !userManuallyMovedPin) {
+                // Tier 3: IP Geolocation Fallback
+                fetchIpLocationFallback(err);
+              }
+            },
+            { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
+          );
+        }
+      },
+      { enableHighAccuracy: true, timeout: 6000, maximumAge: 5000 }
+    );
+
+    // Tier 4: Background Continuous GPS Watch for continuous refinement as satellite fix improves
     if (gpsWatchId !== null) {
       navigator.geolocation.clearWatch(gpsWatchId);
       gpsWatchId = null;
     }
 
-    let initialFixReceived = false;
-
     gpsWatchId = navigator.geolocation.watchPosition(
       (pos) => {
         initialFixReceived = true;
-        handleGpsPositionUpdate(pos, !initialFixReceived);
+        handleGpsPositionUpdate(pos, false);
       },
       (err) => {
-        if (!initialFixReceived) {
+        if (!initialFixReceived && !userManuallyMovedPin) {
           handleGpsError(err);
-        } else {
-          console.warn("Background GPS update warning:", err);
         }
       },
-      gpsOptions
+      { enableHighAccuracy: true, timeout: 25000, maximumAge: 3000 }
     );
+  }
+
+  function fetchIpLocationFallback(originalGpsErr = null) {
+    if (isGpsLocked && !userManuallyMovedPin) return;
+
+    fetch('https://ipapi.co/json/')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.latitude && data.longitude && !userManuallyMovedPin && !isGpsLocked) {
+          const lat = parseFloat(data.latitude);
+          const lng = parseFloat(data.longitude);
+          const city = data.city || data.region || 'your area';
+
+          lastGpsLat = lat;
+          lastGpsLng = lng;
+          lastGpsAccuracy = 2000;
+
+          if (gMap) {
+            gMap.panTo({ lat, lng });
+            gMap.setZoom(14);
+            if (gMarker) gMarker.position = { lat, lng };
+          }
+          document.getElementById('pickup_lat').value = lat;
+          document.getElementById('pickup_lng').value = lng;
+          reverseGeocodeCoordinates(lat, lng);
+
+          const coordsStatus = document.getElementById('coords-status');
+          if (coordsStatus) {
+            coordsStatus.style.backgroundColor = '#0F172A';
+            coordsStatus.style.borderColor = '#3B82F6';
+            coordsStatus.style.color = '#93C5FD';
+            coordsStatus.innerHTML = `<i class="fa-solid fa-network-wired text-info me-1"></i> ${city} (~${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+          }
+          const accPill = document.getElementById('accuracy-pill');
+          if (accPill) {
+            accPill.style.backgroundColor = '#1E3A8A';
+            accPill.style.borderColor = '#3B82F6';
+            accPill.style.color = '#FFFFFF';
+            accPill.innerHTML = `<i class="fa-solid fa-tower-broadcast text-info me-1"></i> Network Approx Location`;
+          }
+          showGpsStatus("info", `<strong>Location Detected:</strong> Centered near ${city}. Tap anywhere on the map or drag the orange pin to lock your exact pickup spot.`);
+        }
+      })
+      .catch(e => {
+        console.warn("IP location fallback error:", e);
+        if (originalGpsErr) handleGpsError(originalGpsErr);
+      });
   }
 
   function handleGpsPositionUpdate(pos, isInitial = false) {
@@ -1260,10 +1348,12 @@
       if (accInput) accInput.value = Math.round(accuracy);
 
       if (!leafletMap) {
-        initBoardingMap(lat, lng);
+        initBoardingMap(lat, lng, false);
       } else {
         if (leafletMarker) leafletMarker.setLatLng([lat, lng]);
-        if (isInitial || followGps) leafletMap.setView([lat, lng], 17);
+        if (isInitial || followGps) {
+          leafletMap.setView([lat, lng], 17);
+        }
       }
 
       updateAccuracyCircle(lat, lng, accuracy);
@@ -1297,7 +1387,7 @@
   }
 
   function updateAccuracyCircle(lat, lng, accuracy) {
-    if (!leafletMap) return;
+    if (!leafletMap || typeof L === 'undefined') return;
     const circleColor = accuracy <= 25 ? '#10B981' : (accuracy <= 65 ? '#3B82F6' : '#F59E0B');
     if (!accuracyCircle) {
       accuracyCircle = L.circle([lat, lng], {
@@ -1341,7 +1431,7 @@
         accPill.style.backgroundColor = '#1E3A8A';
         accPill.style.borderColor = '#3B82F6';
         accPill.style.color = '#FFFFFF';
-        accPill.innerHTML = `<i class="fa-solid fa-location-crosshairs text-info me-1"></i> Custom Doorstep Pin`;
+        accPill.innerHTML = `<i class="fa-solid fa-location-crosshairs text-info me-1"></i> Custom Pickup Pin`;
       } else if (accuracy <= 25) {
         accPill.style.backgroundColor = '#065F46';
         accPill.style.borderColor = '#10B981';
@@ -1361,10 +1451,9 @@
     }
 
     if (userManuallyMovedPin) {
-      return; // Preserve manual doorstep lock banner
+      return;
     }
 
-    // Keep alert banner hidden during standard GPS tracking (clean UI without coarse warning box)
     const alertBox = document.getElementById('gps-accuracy-alert');
     if (alertBox) {
       alertBox.classList.add('d-none');
@@ -1372,46 +1461,36 @@
   }
 
   function handleGpsError(err) {
-    console.warn("High-accuracy GPS request error:", err);
+    console.warn("GPS request warning:", err);
     isGpsLocked = false;
-    let msg = "GPS location request failed.";
+    let msg = "GPS satellite request delayed.";
     let type = "warning";
 
     if (err.code === err.PERMISSION_DENIED) {
       type = "danger";
-      msg = `<strong>Location Permission Denied:</strong> SafeRide requires exact coordinates to verify your ride safety. Please allow location access in your browser or search your address below.`;
+      msg = `<strong>Location Permission Denied:</strong> Please allow location access in your browser or search your address below.`;
     } else if (err.code === err.POSITION_UNAVAILABLE) {
       type = "warning";
-      msg = `<strong>GPS Fix Unavailable:</strong> Satellite fix could not be acquired. Please turn ON device GPS or drag the orange marker to your exact doorstep.`;
+      msg = `<strong>GPS Fix Unavailable:</strong> Satellite fix could not be acquired directly. Drag the orange marker or tap the map to lock your pickup spot.`;
     } else if (err.code === err.TIMEOUT) {
       type = "warning";
-      msg = `<strong>GPS Fix Delayed:</strong> Satellite lock is taking longer than expected. You can drag the orange marker on the map or type your street address to continue without waiting.`;
+      msg = `<strong>GPS Fix Delayed:</strong> Satellite lock is taking longer than expected. You can tap the map or search your street address.`;
     }
 
     showGpsStatus(type, msg);
 
     const coordsStatus = document.getElementById('coords-status');
-    if (coordsStatus && !userManuallyMovedPin) {
+    if (coordsStatus && !userManuallyMovedPin && !document.getElementById('pickup_lat').value) {
       coordsStatus.style.backgroundColor = '#0F172A';
       coordsStatus.style.borderColor = '#DC2626';
       coordsStatus.style.color = '#FCA5A5';
       coordsStatus.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-warning me-1"></i> GPS Unavailable`;
     }
-    const accPill = document.getElementById('accuracy-pill');
-    if (accPill && !userManuallyMovedPin) {
-      accPill.style.backgroundColor = '#450A0A';
-      accPill.style.borderColor = '#DC2626';
-      accPill.style.color = '#FFFFFF';
-      accPill.innerHTML = `<i class="fa-solid fa-circle-xmark text-danger me-1"></i> No GPS Signal`;
-    }
 
-    const statusPill = document.getElementById('boarding-gps-status-pill');
-    if (statusPill && !userManuallyMovedPin) {
-      statusPill.className = 'badge border font-monospace py-1 px-2';
-      statusPill.style.backgroundColor = '#450A0A';
-      statusPill.style.borderColor = '#DC2626';
-      statusPill.style.color = '#FFFFFF';
-      statusPill.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i> GPS Unavailable';
+    const spinner = document.getElementById('map-loading-spinner');
+    if (spinner) spinner.style.display = 'none';
+    if (!leafletMap) {
+      initBoardingMap(9.6843, 76.6853, true);
     }
   }
 
@@ -1495,7 +1574,17 @@
   document.addEventListener('DOMContentLoaded', function () {
     initPlacesAutocomplete();
 
-    // Start real-time continuous high-accuracy GPS tracking
+    // 1. Immediately initialize Boarding Map viewfinder
+    const existingLat = parseFloat(document.getElementById('pickup_lat')?.value);
+    const existingLng = parseFloat(document.getElementById('pickup_lng')?.value);
+    if (existingLat && existingLng) {
+      initBoardingMap(existingLat, existingLng, false);
+    } else {
+      // Default initial view without hardcoding fake boarding coordinates
+      initBoardingMap(9.6843, 76.6853, true);
+    }
+
+    // 2. Start fast real-time GPS tracking with network IP fallback in parallel
     startContinuousGpsTracking();
 
     // Client-side exact GPS validation guard before ride initiation
@@ -1509,13 +1598,13 @@
         if (!lat || !lng || isNaN(lat) || isNaN(lng) || !pickupName || pickupName === 'Current Boarding Point') {
           e.preventDefault();
           document.getElementById('pickup_name')?.focus();
-          alert("⚠️ Exact boarding location required. Please allow location or drag the orange marker to your doorstep.");
+          alert("⚠️ Exact boarding location required. Please allow location or drag the orange marker to your pickup spot.");
           return false;
         }
 
         // If user hasn't manually pinned and signal is very coarse (> 100m)
         if (!userManuallyMovedPin && lastGpsAccuracy && lastGpsAccuracy > 100) {
-          if (!confirm(`⚠️ Your device GPS accuracy is approximate (±${Math.round(lastGpsAccuracy)}m). Do you want to proceed with this approximate boarding spot, or cancel and drag the pin to your exact doorstep?`)) {
+          if (!confirm(`⚠️ Your device GPS accuracy is approximate (±${Math.round(lastGpsAccuracy)}m). Do you want to proceed with this approximate boarding spot, or cancel and drag the pin to your exact pickup location?`)) {
             e.preventDefault();
             return false;
           }
@@ -1536,5 +1625,3 @@
 
 {% block floating_sos %}{% endblock %}
 {% block footer %}{% endblock %}
-
-

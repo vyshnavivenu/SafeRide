@@ -17,6 +17,8 @@ class DriverListAPIView(APIView):
     GET /api/v1/drivers/?query=KL05AT4455
     """
     def get(self, request):
+        from .signals import sync_all_driver_upis
+        sync_all_driver_upis()
         query = request.query_params.get('query', '').strip()
         drivers = Driver.objects.all()
         if query:
