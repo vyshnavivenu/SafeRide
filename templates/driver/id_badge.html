@@ -258,8 +258,7 @@
           {% endif %}
           <div class="text-start">
             <h4 class="fw-bold text-white mb-0">{{ driver.user.get_full_name|default:driver.user.username }}</h4>
-            <span class="small text-white opacity-75"><i class="fa-solid fa-id-card text-cyan me-1"></i> Lic: {{
-              driver.license_number }}</span>
+            <span class="small text-white opacity-75"><i class="fa-solid fa-id-card text-cyan me-1"></i> Lic: {{ driver.license_number }}</span>
           </div>
         </div>
 
@@ -286,15 +285,13 @@
           <div class="col-6">
             <div class="p-2 p-sm-3 rounded-3 info-grid-box" style="background: #0F172A; border: 1px solid #1E293B;">
               <span class="text-white opacity-75 small">Vehicle Type:</span><br>
-              <strong class="text-white fs-6">{{
-                vehicle.get_vehicle_type_display|default:driver.vehicle_type|default:"Commercial" }}</strong>
+              <strong class="text-white fs-6">{{ vehicle.get_vehicle_type_display|default:driver.vehicle_type|default:"Commercial" }}</strong>
             </div>
           </div>
           <div class="col-6">
             <div class="p-2 p-sm-3 rounded-3 info-grid-box" style="background: #0F172A; border: 1px solid #1E293B;">
               <span class="text-white opacity-75 small">Safety Rating:</span><br>
-              <strong class="text-success fs-6"><i class="fa-solid fa-star text-warning me-1"></i>{{
-                driver.reputation_score|floatformat:1 }}/100</strong>
+              <strong class="text-success fs-6"><i class="fa-solid fa-star text-warning me-1"></i>{{ driver.reputation_score|floatformat:1 }}/100</strong>
             </div>
           </div>
           <div class="col-6">

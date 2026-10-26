@@ -54,11 +54,9 @@
           <span class="badge bg-success text-white px-3 py-1 rounded-pill fw-bold mb-1 border border-light">
             <i class="fa-solid fa-circle-dot fa-beat me-1"></i> ACTIVE TRIP IN PROGRESS
           </span>
-          <h5 class="fw-bold mb-1 text-white">Ride with {{
-            active_trip.driver.name|default:active_trip.driver.user.username }}</h5>
+          <h5 class="fw-bold mb-1 text-white">Ride with {{ active_trip.driver.name|default:active_trip.driver.user.username }}</h5>
           <span class="small text-white opacity-90">
-            Vehicle: <b class="text-warning font-monospace">{{
-              active_trip.driver.vehicle_number|default:active_trip.driver.vehicle.registration_number }}</b> &bull;
+            Vehicle: <b class="text-warning font-monospace">{{ active_trip.driver.vehicle_number|default:active_trip.driver.vehicle.registration_number }}</b> &bull;
             Live GPS Tracking Enabled
           </span>
         </div>
@@ -136,7 +134,7 @@
                     style="background-color: #0F172A; border-color: #334155;">
                     <i class="fa-solid fa-id-card text-warning fs-5"></i>
                   </span>
-                  <input type="text" name="query"
+                  <input type="text" name="query" id="vehicle-search-input"
                     class="form-control text-uppercase fw-bold text-white fs-5 rounded-end-3"
                     style="background-color: #0F172A; border-color: #334155;" placeholder="e.g. KL 05 AT 4455" required
                     autofocus>
@@ -157,8 +155,7 @@
               <i class="fa-solid fa-vial me-1 text-info"></i> Valid Test Vehicles:
               <div class="d-flex flex-wrap gap-2 mt-1">
                 {% for d in verified_drivers|slice:":5" %}
-                <span class="badge bg-dark border border-secondary font-monospace user-select-all">{{ d.vehicle_number
-                  }}</span>
+                <span class="badge bg-dark border border-secondary font-monospace user-select-all" style="cursor: pointer;" onclick="document.getElementById('vehicle-search-input').value='{{ d.vehicle_number }}'" title="Click to auto-fill">{{ d.vehicle_number }}</span>
                 {% endfor %}
               </div>
             </div>

@@ -680,8 +680,10 @@ def ensure_diverse_driver_ecosystem(user=None):
 @passenger_required
 def passenger_dashboard(request):
     """Passenger command center."""
-    ensure_diverse_driver_ecosystem(user=request.user)
-    profile, _ = PassengerProfile.objects.get_or_create(user=request.user)
+    if request.user.is_passenger_user():
+        profile, _ = PassengerProfile.objects.get_or_create(user=request.user)
+    else:
+        profile = getattr(request.user, 'passenger_profile', None) or Passenger(user=request.user)
     active_trip = TripSession.objects.filter(passenger=request.user, status__in=['Ongoing', 'IN_PROGRESS', 'Active', 'SOS_Triggered']).first()
     recent_trips = TripSession.objects.filter(passenger=request.user).select_related('driver', 'driver__user').order_by('-start_time')[:5]
     recent_complaints = Complaint.objects.filter(passenger=request.user).order_by('-created_at')[:3]
@@ -869,9 +871,39 @@ def rate_trip(request, trip_id):
         return redirect('passenger_dashboard')
 
     from django.core.files.storage import default_storage
+    import base64
+    from io import BytesIO
+    from urllib.parse import quote
+    import qrcode
 
     # Ensure distance & valid regulated fare are calculated
     trip.calculate_distance_and_fare()
+
+    driver_upi = (trip.driver.upi_id if (trip.driver and getattr(trip.driver, 'upi_id', None)) else 'saferide@upi').strip()
+    payee_name = quote(getattr(trip.driver, 'name', None) or 'SafeRide Driver')
+    fare_val = f"{trip.fare_amount:.2f}" if trip.fare_amount else "30.00"
+    upi_pay_str = f"upi://pay?pa={driver_upi}&pn={payee_name}&am={fare_val}&cu=INR&tn=SafeRide_TRP_{trip.trip_id}&tr=TRP{trip.trip_id}"
+
+    # Generate QR Code in-memory as Base64 Data URI so it NEVER fails, 404s, or renders blank
+    fare_qr_data_uri = None
+    try:
+        qr = qrcode.QRCode(
+            version=None,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=8,
+            border=2,
+        )
+        qr.add_data(upi_pay_str)
+        qr.make(fit=True)
+        try:
+            img = qr.make_image(fill_color="#0F172A", back_color="white")
+        except Exception:
+            img = qr.make_image()
+        buf = BytesIO()
+        img.save(buf, format='PNG')
+        fare_qr_data_uri = f"data:image/png;base64,{base64.b64encode(buf.getvalue()).decode('utf-8')}"
+    except Exception as e:
+        print(f"Error generating in-memory fare QR data URI: {e}")
 
     # Ensure fare QR code actually exists on disk; if missing or invalid, regenerate it
     qr_exists = bool(trip.fare_qr_code and trip.fare_qr_code.name and default_storage.exists(trip.fare_qr_code.name))
@@ -886,14 +918,10 @@ def rate_trip(request, trip_id):
 
     fare_qr_url = trip.fare_qr_code.url if (trip.fare_qr_code and trip.fare_qr_code.name and default_storage.exists(trip.fare_qr_code.name)) else f"/api/trip/{trip.trip_id}/qr-fallback/"
 
-    from urllib.parse import quote
-    driver_upi = (trip.driver.upi_id if (trip.driver and trip.driver.upi_id) else 'saferide@upi').strip()
-    payee_name = quote(trip.driver.name or 'SafeRide Driver')
-    upi_pay_str = f"upi://pay?pa={driver_upi}&pn={payee_name}&am={trip.fare_amount}&cu=INR&tn=SafeRide_TRP_{trip.trip_id}&tr=TRP{trip.trip_id}"
-
     profile = getattr(request.user, 'passenger_profile', None)
     return render(request, 'trip_feedback.html', {
         'trip': trip,
+        'fare_qr_data_uri': fare_qr_data_uri,
         'fare_qr_url': fare_qr_url,
         'upi_pay_str': upi_pay_str,
         'driver_upi': driver_upi,
@@ -1738,8 +1766,12 @@ def admin_resolve_complaint(request, complaint_id):
 
 @admin_required
 def admin_passenger_list(request):
-    """List registered passengers."""
-    passengers = PassengerProfile.objects.select_related('user').all().order_by('-passenger_id')
+    """List registered passengers (strictly excluding administrators)."""
+    passengers = PassengerProfile.objects.select_related('user').filter(
+        user__role=User.Role.PASSENGER
+    ).exclude(
+        user__is_superuser=True
+    ).order_by('-passenger_id')
     return render(request, 'admin_panel/passenger_list.html', {'passengers': passengers})
 
 @admin_required
@@ -1748,6 +1780,9 @@ def admin_delete_passenger(request, passenger_id):
     if request.method == 'POST':
         passenger = get_object_or_404(PassengerProfile.objects.select_related('user'), passenger_id=passenger_id)
         user = passenger.user
+        if user.is_superuser or user.role == User.Role.ADMIN:
+            messages.error(request, "Security violation: System Administrator accounts cannot be deleted.")
+            return redirect('admin_passenger_list')
         passenger_name = user.get_full_name() or user.username
         
         # Delete user account (which also cascades to passenger profile and emergency records)
@@ -2148,28 +2183,21 @@ def serve_trip_fare_qr(request, trip_id):
     from urllib.parse import quote
     import qrcode
 
+    clean_id = str(trip_id).upper().replace('TRIP', '').replace('TRP-', '').replace('TRP', '').replace('#', '').strip()
+    lookup_id = int(clean_id) if clean_id.isdigit() else -1
+
     trip = Trip.objects.filter(
-        Q(trip_id=int(trip_id) if str(trip_id).isdigit() else -1) | Q(trip_uuid=trip_id if len(str(trip_id)) > 30 else uuid.uuid4())
+        Q(trip_id=lookup_id) | Q(trip_uuid=trip_id if len(str(trip_id)) > 30 else uuid.uuid4())
     ).first()
     if not trip:
         raise Http404("Trip not found")
 
     trip.calculate_distance_and_fare()
 
-    # Formatted digital receipt & UPI payment string
-    driver_upi = (trip.driver.upi_id if (trip.driver and trip.driver.upi_id) else 'saferide@upi').strip()
-    payee_name = quote(trip.driver.name or 'SafeRide Driver')
-    upi_pay_str = f"upi://pay?pa={driver_upi}&pn={payee_name}&am={trip.fare_amount}&cu=INR&tn=SafeRide_TRP_{trip.trip_id}&tr=TRP{trip.trip_id}"
-    receipt_text = (
-        f"SafeRide Verified Fare Receipt\n"
-        f"Trip ID: #TRP-{str(trip.trip_id).zfill(4)}\n"
-        f"Passenger: {trip.passenger.get_full_name() or trip.passenger.username}\n"
-        f"Driver: {trip.driver.name or trip.driver.user.get_full_name()}\n"
-        f"Vehicle: {trip.driver.vehicle_number}\n"
-        f"Distance: {trip.distance_km} km\n"
-        f"Total Fare: INR {trip.fare_amount}\n"
-        f"UPI Pay: {upi_pay_str}\n"
-    )
+    driver_upi = (trip.driver.upi_id if (trip.driver and getattr(trip.driver, 'upi_id', None)) else 'saferide@upi').strip()
+    payee_name = quote(getattr(trip.driver, 'name', None) or 'SafeRide Driver')
+    fare_val = f"{trip.fare_amount:.2f}" if trip.fare_amount else "30.00"
+    upi_pay_str = f"upi://pay?pa={driver_upi}&pn={payee_name}&am={fare_val}&cu=INR&tn=SafeRide_TRP_{trip.trip_id}&tr=TRP{trip.trip_id}"
 
     qr = qrcode.QRCode(
         version=None,
@@ -2179,8 +2207,7 @@ def serve_trip_fare_qr(request, trip_id):
     )
     qr.add_data(upi_pay_str)
     qr.make(fit=True)
-    # Simplify make_image to prevent PIL color factory crashes on some serverless/mobile environments
-    img = qr.make_image()
+    img = qr.make_image(fill_color="#0F172A", back_color="white")
     buffer = BytesIO()
     img.save(buffer, format='PNG')
 

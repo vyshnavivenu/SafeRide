@@ -111,37 +111,117 @@ body {
   padding-right: var(--sar);
 }
 
-h1, h2, h3, h4, h5, h6, .brand-font {
+h1, h2, h3, h4, h5, h6, .brand-font, .display-1, .display-2, .display-3, .display-4, .display-5, .display-6 {
   font-family: 'Outfit', 'Inter', sans-serif;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.015em;
   color: #FFFFFF !important;
 }
 
-p, span, label, td, th, div, li, strong {
+p, span, label, td, th, div, li, strong, b {
   color: var(--color-text-light);
 }
 
-/* Clear High-Contrast Text Classes */
-.text-muted, .text-secondary {
-  color: #E2E8F0 !important;
+/* ==========================================================================
+   HIGH-CONTRAST ACCESSIBILITY & TEXT VISIBILITY ENGINE
+   Guarantees 100% solid, razor-sharp, crystal-clear text readability across
+   all pages, dashboards, cards, tables, modals, badges, and forms in SafeRide.
+   ========================================================================== */
+
+/* 1. Core High-Contrast Text Classes */
+.text-white {
+  color: #FFFFFF !important;
+}
+
+.text-light {
+  color: #F8FAFC !important;
+}
+
+.text-muted,
+.text-secondary {
+  color: #CBD5E1 !important;
+  font-weight: 500;
+}
+
+/* 2. Eliminate all washed-out, faint, or low-contrast opacity across all templates */
+.text-white-50,
+.text-black-50,
+.text-opacity-25,
+.text-opacity-50,
+.text-opacity-75,
+.text-light.text-opacity-75,
+.text-white.text-opacity-75,
+.text-white.text-opacity-50 {
+  color: #F1F5F9 !important;
+  opacity: 1 !important;
+  --bs-text-opacity: 1 !important;
+}
+
+.opacity-25,
+.opacity-50,
+.opacity-75,
+.opacity-90 {
+  opacity: 1 !important;
+}
+
+.text-white.opacity-25,
+.text-white.opacity-50,
+.text-white.opacity-75,
+.text-white.opacity-90,
+.text-light.opacity-25,
+.text-light.opacity-50,
+.text-light.opacity-75,
+.text-light.opacity-90 {
+  color: #F8FAFC !important;
+  opacity: 1 !important;
+}
+
+/* 3. Luminous Accent Text Classes (Never blend into dark navy backgrounds) */
+.text-primary {
+  color: #60A5FA !important; /* Luminous sky blue with > 7:1 contrast */
+}
+
+.text-info,
+.text-cyan {
+  color: #38BDF8 !important; /* Electric cyan */
+}
+
+.text-warning,
+.text-amber {
+  color: #FBBF24 !important; /* Vivid gold/amber */
+}
+
+.text-success {
+  color: #34D399 !important; /* Mint emerald */
+}
+
+.text-danger {
+  color: #F87171 !important; /* Bright coral red */
 }
 
 .text-dark {
   color: #FFFFFF !important;
 }
 
-/* Ensure Amber/Warning Badges and Buttons Always Have Sharp High Contrast Dark Text */
-.badge.bg-warning, .badge.text-dark, .btn-warning, .btn-warning.text-dark, .badge.bg-warning * {
+/* 4. Amber/Warning Badges and Buttons Always Have Sharp High Contrast Dark Text */
+.badge.bg-warning,
+.badge.bg-light,
+.badge.bg-white,
+.badge.text-dark,
+.btn-warning,
+.btn-warning.text-dark,
+.btn-light,
+.btn-white {
   color: #0F172A !important;
   font-weight: 700 !important;
 }
 
-.text-white {
-  color: #FFFFFF !important;
+.badge.bg-warning *,
+.btn-warning * {
+  color: #0F172A !important;
 }
 
-.small {
+.small, small {
   color: #E2E8F0 !important;
   font-weight: 500;
 }
@@ -856,8 +936,35 @@ button,
   outline: none;
 }
 
-.form-control::placeholder {
+.form-control::placeholder,
+.auth-input-control::placeholder {
   color: #94A3B8 !important;
+  opacity: 1 !important;
+}
+
+.form-control:disabled,
+.form-control[readonly],
+.form-select:disabled {
+  background-color: #162032 !important;
+  color: #F8FAFC !important;
+  border-color: #334155 !important;
+  opacity: 1 !important;
+}
+
+/* Ensure Native HTML Select Options Always Have Solid Dark Background and Crisp White Text */
+select option,
+.form-select option {
+  background-color: #0F172A !important;
+  color: #FFFFFF !important;
+  padding: 10px 14px;
+}
+
+.form-text,
+.form-text.text-white-50,
+.form-text.opacity-75 {
+  color: #CBD5E1 !important;
+  opacity: 1 !important;
+  font-weight: 500 !important;
 }
 
 .form-label, .auth-label {
@@ -900,16 +1007,17 @@ button,
   margin-bottom: 1rem;
 }
 
-/* Tables (100% Solid Dark Theme) */
+/* Tables (100% Solid Dark Theme with High-Contrast Typography) */
 .table {
-  color: #FFFFFF !important;
+  color: #F8FAFC !important;
+  --bs-table-color: #F8FAFC !important;
   border-color: var(--color-dark-border) !important;
   width: 100% !important;
   max-width: 100% !important;
   margin-bottom: 0 !important;
 }
 
-.table thead, .table thead th, .table-light, .table-light th {
+.table thead, .table thead th, .table th, .table-light, .table-light th {
   background-color: #0F172A !important;
   color: #FFFFFF !important;
   font-weight: 700 !important;
@@ -924,9 +1032,84 @@ button,
   border-bottom: 1px solid var(--color-dark-border) !important;
 }
 
+.table td strong, .table td b {
+  color: #FFFFFF !important;
+}
+
+.table td small, .table td .small, .table td span.small {
+  color: #CBD5E1 !important;
+  opacity: 1 !important;
+  font-weight: 500;
+}
+
 .table-hover > tbody > tr:hover > * {
   background-color: #1A2438 !important;
   color: #FFFFFF !important;
+}
+
+/* Badges with bg-opacity-10 or bg-opacity-25 (Solid high-contrast styling) */
+.badge.bg-opacity-10,
+.badge.bg-opacity-25 {
+  background-color: #1E293B !important;
+  border-width: 1.5px !important;
+  font-weight: 700 !important;
+}
+
+.badge.bg-opacity-10.text-warning,
+.badge.bg-opacity-25.text-warning,
+.badge.border-warning {
+  color: #FBBF24 !important;
+  border-color: #F59E0B !important;
+}
+
+.badge.bg-opacity-10.text-success,
+.badge.bg-opacity-25.text-success,
+.badge.border-success {
+  color: #34D399 !important;
+  border-color: #10B981 !important;
+}
+
+.badge.bg-opacity-10.text-danger,
+.badge.bg-opacity-25.text-danger,
+.badge.border-danger {
+  color: #F87171 !important;
+  border-color: #EF4444 !important;
+}
+
+.badge.bg-opacity-10.text-primary,
+.badge.bg-opacity-25.text-primary,
+.badge.border-primary {
+  color: #60A5FA !important;
+  border-color: #3B82F6 !important;
+}
+
+.badge.bg-opacity-10.text-info,
+.badge.bg-opacity-25.text-info,
+.badge.border-info {
+  color: #38BDF8 !important;
+  border-color: #0284C7 !important;
+}
+
+/* Light-Background Surface Resets (e.g. Floating live tracking card & QR containers) */
+.floating-driver-card {
+  color: #0F172A !important;
+}
+
+.floating-driver-card .driver-name,
+.floating-driver-card .metric-title,
+.floating-driver-card .destination-title {
+  color: #0F172A !important;
+  font-weight: 800 !important;
+}
+
+.floating-driver-card .driver-submeta,
+.floating-driver-card .metric-label,
+.floating-driver-card .time-badge,
+.floating-driver-card .dest-label,
+.floating-driver-card .destination-label,
+.floating-driver-card .destination-sub {
+  color: #1E293B !important;
+  font-weight: 600 !important;
 }
 
 /* Modals & Dropdowns */

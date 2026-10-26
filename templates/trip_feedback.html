@@ -129,29 +129,27 @@
                 <!-- Fare QR Code (Digital Receipt & UPI Settlement) -->
                 <div class="col-md-5 text-center">
                   <div class="p-3 rounded-3 border d-inline-block shadow" style="background-color: #FFFFFF;">
-                    {% if fare_qr_url %}
-                      <img src="{{ fare_qr_url }}" alt="Fare Receipt QR Code" style="width: 175px; height: 175px; image-rendering: pixelated;" class="rounded" onerror="this.onerror=null; this.src='/api/trip/{{ trip.trip_id }}/qr-fallback/';">
-                    {% elif trip.fare_qr_code %}
-                      <img src="{{ trip.fare_qr_code.url }}" alt="Fare Receipt QR Code" style="width: 175px; height: 175px; image-rendering: pixelated;" class="rounded" onerror="this.onerror=null; this.src='/api/trip/{{ trip.trip_id }}/qr-fallback/';">
-                    {% else %}
-                      <div style="width: 175px; height: 175px;" class="d-flex align-items-center justify-content-center text-dark small">
-                        <div class="text-center">
-                          <i class="fa-solid fa-qrcode fs-1 text-secondary mb-2 d-block"></i>
-                          Generating Fare QR...
-                        </div>
-                      </div>
-                    {% endif %}
+                    <img src="{% if fare_qr_data_uri %}{{ fare_qr_data_uri }}{% elif fare_qr_url %}{{ fare_qr_url }}{% elif trip.fare_qr_code %}{{ trip.fare_qr_code.url }}{% else %}/api/trip/{{ trip.trip_id }}/qr-fallback/{% endif %}" 
+                         alt="Fare Receipt QR Code" 
+                         style="width: 175px; height: 175px; image-rendering: pixelated; display: block;" 
+                         class="rounded mx-auto" 
+                         id="fare-qr-image"
+                         onerror="this.onerror=null; this.src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ upi_pay_str|urlencode }}';">
                   </div>
                   <div class="mt-2">
                     <span class="badge bg-dark border text-warning font-monospace small px-3 py-1">
-                      <i class="fa-solid fa-qrcode me-1"></i> FARE RECEIPT QR
+                      <i class="fa-solid fa-qrcode me-1"></i> FARE RECEIPT & UPI QR
                     </span>
                     <p class="text-white opacity-75 small mt-1 mb-2" style="font-size: 0.8rem;">
-                      Scan to view digital fare receipt & UPI payment
+                      Scan with any UPI app (GPay, PhonePe, Paytm) to settle metered fare
                     </p>
-                    <a href="{{ upi_pay_str|default:'#' }}" class="btn btn-outline-success btn-sm px-4 rounded-pill fw-bold">
-                      <i class="fa-solid fa-money-bill-transfer me-1"></i> Pay with UPI
-                    </a>
+                    <div class="d-inline-flex align-items-center gap-2 p-1 px-3 rounded-pill border shadow-sm" style="background-color: #0b1120; border-color: #334155 !important;">
+                      <span class="text-white-50 small">UPI ID:</span>
+                      <strong class="text-info font-monospace small" id="driver-upi-text">{{ driver_upi|default:"saferide@upi" }}</strong>
+                      <button type="button" class="btn btn-sm btn-outline-info rounded-pill py-0 px-2 ms-1" onclick="copyDriverUPI()" title="Copy UPI ID" id="btn-copy-upi">
+                        <i class="fa-regular fa-copy me-1"></i> Copy
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -359,6 +357,27 @@
     const separator = isIOS ? '&body=' : '?body=';
     const smsUrl = phone ? `sms:${phone}${separator}${msg}` : `sms:${separator}${msg}`;
     window.location.href = smsUrl;
+  }
+
+  function copyDriverUPI() {
+    const upiId = "{{ driver_upi|default:'saferide@upi'|escapejs }}";
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(upiId).then(() => {
+        const btn = document.getElementById('btn-copy-upi');
+        if (btn) {
+          btn.innerHTML = '<i class="fa-solid fa-check me-1"></i> Copied!';
+          btn.className = 'btn btn-sm btn-success rounded-pill py-0 px-2 ms-1';
+          setTimeout(() => {
+            btn.innerHTML = '<i class="fa-regular fa-copy me-1"></i> Copy';
+            btn.className = 'btn btn-sm btn-outline-info rounded-pill py-0 px-2 ms-1';
+          }, 2000);
+        }
+      }).catch(() => {
+        prompt("Copy Driver UPI ID:", upiId);
+      });
+    } else {
+      prompt("Copy Driver UPI ID:", upiId);
+    }
   }
 </script>
 {% endblock %}

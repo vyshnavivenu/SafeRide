@@ -132,18 +132,18 @@
             box-shadow: 0 6px 18px rgba(13, 110, 253, 0.42);
         }
 
-        /* Floating Driver Info Card on the Left (Exact 360px match to screenshot) */
+        /* Floating Driver Info Card on the Left */
         .floating-driver-card {
             position: absolute;
             top: 85px;
             left: 20px;
-            width: 360px;
+            width: 460px;
             max-width: calc(100vw - 40px);
             background: #ffffff;
             border-radius: 22px;
             box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04);
             border: 1px solid rgba(226, 232, 240, 0.9);
-            padding: 24px 18px 20px 18px;
+            padding: 24px 20px 20px 20px;
             z-index: 1000;
             pointer-events: auto;
             box-sizing: border-box;
@@ -235,7 +235,7 @@
         .metric-grid {
             display: grid;
             grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-            gap: 10px;
+            gap: 12px;
             margin-bottom: 12px;
             width: 100%;
             box-sizing: border-box;
@@ -243,7 +243,7 @@
         .metric-box {
             background: #f8fafc;
             border-radius: 16px;
-            padding: 12px 12px;
+            padding: 12px 14px;
             border: 1px solid #f1f5f9;
             display: flex;
             flex-direction: column;
@@ -264,12 +264,12 @@
             font-weight: 500;
             color: #64748b;
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             gap: 6px;
             line-height: 1.25;
+            white-space: nowrap;
         }
         .metric-label i {
-            margin-top: 2px;
             flex-shrink: 0;
         }
         .metric-title {
@@ -365,7 +365,7 @@
         .action-button-grid {
             display: grid;
             grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-            gap: 10px;
+            gap: 12px;
             width: 100%;
             box-sizing: border-box;
         }
@@ -374,7 +374,7 @@
             color: #ffffff !important;
             border: none;
             border-radius: 50px;
-            padding: 10px 8px;
+            padding: 10px 14px;
             font-weight: 700;
             font-size: 13.5px;
             text-decoration: none !important;
@@ -399,16 +399,17 @@
             color: #0d6efd !important;
             border: 2px solid #0d6efd;
             border-radius: 50px;
-            padding: 6px 6px;
+            padding: 10px 14px;
             font-weight: 700;
-            font-size: 12.5px;
+            font-size: 13.5px;
             text-decoration: none !important;
             display: flex;
             align-items: center;
             justify-content: center;
             text-align: center;
-            line-height: 1.15;
+            line-height: 1.2;
             transition: all 0.2s ease;
+            white-space: nowrap;
             min-height: 46px;
             width: 100%;
             box-sizing: border-box;
@@ -602,7 +603,7 @@
                 <div>
                     <div class="metric-label">
                         <i class="fa-solid fa-location-crosshairs text-danger"></i>
-                        <span>Current<br>Location</span>
+                        <span>Current Location</span>
                     </div>
                     <div class="metric-title" id="text-coords" title="Fetching live location...">
                         Detecting spot...
@@ -633,8 +634,8 @@
                 <i class="fa-solid fa-phone me-2"></i> Call Driver
             </a>
             <a href="tel:{{ trip.passenger.phone|default:'+919876543211' }}" class="btn-call-passenger">
-                <i class="fa-solid fa-phone me-1.5"></i>
-                <span>Call<br>Passenger</span>
+                <i class="fa-solid fa-phone me-2"></i>
+                <span>Call Passenger</span>
             </a>
         </div>
 
@@ -773,7 +774,7 @@
             const bounds = L.latLngBounds([[currentLat, currentLng], [destLat, destLng]]);
             const isDesktop = window.innerWidth >= 768;
             map.fitBounds(bounds, {
-                paddingTopLeft: isDesktop ? [400, 60] : [40, 40],
+                paddingTopLeft: isDesktop ? [490, 60] : [40, 40],
                 paddingBottomRight: [60, 60]
             });
         } else if (destName && destName !== 'Drop-off Location') {
@@ -788,7 +789,7 @@
                         const bounds = L.latLngBounds([[currentLat, currentLng], [dLat, dLng]]);
                         const isDesktop = window.innerWidth >= 768;
                         map.fitBounds(bounds, {
-                            paddingTopLeft: isDesktop ? [400, 60] : [40, 40],
+                            paddingTopLeft: isDesktop ? [490, 60] : [40, 40],
                             paddingBottomRight: [60, 60]
                         });
                     }

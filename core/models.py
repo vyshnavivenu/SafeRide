@@ -661,21 +661,10 @@ class Trip(models.Model):
 
         # Formatted digital receipt & UPI payment string
         from urllib.parse import quote
-        driver_upi = (self.driver.upi_id if (self.driver and self.driver.upi_id) else 'saferide@upi').strip()
-        payee_name = quote(self.driver.name or 'SafeRide Driver')
-        upi_pay_str = f"upi://pay?pa={driver_upi}&pn={payee_name}&am={self.fare_amount}&cu=INR&tn=SafeRide_TRP_{self.trip_id}&tr=TRP{self.trip_id}"
-        receipt_text = (
-            f"SafeRide Verified Fare Receipt\n"
-            f"Trip ID: #TRP-{str(self.trip_id).zfill(4)}\n"
-            f"Passenger: {self.passenger.get_full_name() or self.passenger.username}\n"
-            f"Driver: {self.driver.name or self.driver.user.get_full_name()}\n"
-            f"Vehicle: {self.driver.vehicle_number}\n"
-            f"Distance: {self.distance_km} km\n"
-            f"Total Fare: INR {self.fare_amount}\n"
-            f"Date: {self.start_time.strftime('%d-%m-%Y %I:%M %p') if self.start_time else 'N/A'}\n"
-            f"UPI Pay: {upi_pay_str}\n"
-            f"Verify: {base_url}/verify/{self.driver.verification_token}/"
-        )
+        driver_upi = (self.driver.upi_id if (self.driver and getattr(self.driver, 'upi_id', None)) else 'saferide@upi').strip()
+        payee_name = quote(getattr(self.driver, 'name', None) or 'SafeRide Driver')
+        fare_val = f"{self.fare_amount:.2f}" if self.fare_amount else "30.00"
+        upi_pay_str = f"upi://pay?pa={driver_upi}&pn={payee_name}&am={fare_val}&cu=INR&tn=SafeRide_TRP_{self.trip_id}&tr=TRP{self.trip_id}"
 
         qr = qrcode.QRCode(
             version=None,
@@ -696,18 +685,20 @@ class Trip(models.Model):
         filename = f"fare_qr_trip_{self.trip_id}.png"
 
         # Guarantee media directory exists and write file directly to disk
-        fare_dir = settings.MEDIA_ROOT / 'fare_qrcodes'
-        fare_dir.mkdir(parents=True, exist_ok=True)
-        file_path = fare_dir / filename
-
         try:
+            fare_dir = settings.MEDIA_ROOT / 'fare_qrcodes'
+            fare_dir.mkdir(parents=True, exist_ok=True)
+            file_path = fare_dir / filename
             with open(file_path, 'wb') as f:
                 f.write(buffer.getvalue())
         except Exception as e:
             print(f"Error saving fare QR directly to disk: {e}")
 
-        # Set model ImageField path
-        self.fare_qr_code = f"fare_qrcodes/{filename}"
+        # Set model ImageField path via ContentFile and direct path
+        try:
+            self.fare_qr_code.save(filename, ContentFile(buffer.getvalue()), save=False)
+        except Exception:
+            self.fare_qr_code = f"fare_qrcodes/{filename}"
         return self.fare_qr_code
 
     def complete_trip(self, end_lat=None, end_lng=None, end_address=None):
