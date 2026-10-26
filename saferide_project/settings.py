@@ -42,11 +42,11 @@ allowed_hosts_env = os.getenv('ALLOWED_HOSTS', '')
 if allowed_hosts_env:
     ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',') if host.strip()]
 elif IS_PRODUCTION:
-    ALLOWED_HOSTS = ['.pythonanywhere.com', 'localhost', '127.0.0.1']
+    ALLOWED_HOSTS = ['.pythonanywhere.com', '.vercel.app', 'localhost', '127.0.0.1']
 else:
     ALLOWED_HOSTS = ['*']
 
-# CSRF Trusted Origins for development, PythonAnywhere, & public mobile tunnels
+# CSRF Trusted Origins for development, PythonAnywhere, Vercel & public mobile tunnels
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8000',
@@ -61,6 +61,7 @@ CSRF_TRUSTED_ORIGINS = [
     'http://0.0.0.0:8000',
     'https://*.pythonanywhere.com',
     'http://*.pythonanywhere.com',
+    'https://*.vercel.app',
     'https://*.trycloudflare.com',
     'https://book-attempted-classifieds-kissing.trycloudflare.com',
     'https://*.loca.lt',
@@ -200,6 +201,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+WHITENOISE_USE_FINDERS = True
 
 # Media files (Uploaded KYC Documents, Photos, Generated QR Codes)
 MEDIA_URL = '/media/'
